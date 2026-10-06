@@ -1,0 +1,32 @@
+# Виртуальное окружение и кэш Python
+venv/
+.venv/
+__pycache__/
+*.pyc
+
+# Тома Docker (локальные данные БД и S3)
+pg_data/
+minio_data/
+
+# Логи и PID-файлы
+logs/
+*.log
+logs_*.txt
+*.pid
+
+# Внутренние файлы Airflow (оставляем только папку dags и конфиги, если нужно)
+airflow_home/logs/
+airflow_home/*.db
+airflow_home/*.pid
+airflow_home/*.cfg
+airflow_home/webserver_config.py
+
+# Артефакты dbt (на случай, если не покрыты внутренним .gitignore)
+analytics/target/
+analytics/dbt_packages/
+analytics/logs/
+
+# Временные CSV семплы и файлы ОС (macOS)
+sample_*.csv
+.DS_Store
+.env

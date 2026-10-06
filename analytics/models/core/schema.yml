@@ -1,0 +1,148 @@
+version: 2
+
+models:
+  - name: dim_client
+    description: "Измерение клиентов со стратегией обновления SCD Type 2"
+    columns:
+      - name: client_id
+        description: "Суррогатный первичный ключ версии клиента (PK)"
+        tests:
+          # Уникальность и отсутствие NULL для суррогатного ключа по всей витрине
+          - unique
+          - not_null
+
+      - name: client_natural_key
+        description: "Натуральный бизнес-ключ клиента (NK)"
+        tests:
+          - not_null
+          # Для среза current_row_indicator = true натуральный ключ обязан быть уникальным
+          # (это гарантирует, что число строк = числу уникальных NK = числу уникальных PK в активном срезе)
+          - unique:
+              name: unique_active_client_natural_key
+              config:
+                where: "current_row_indicator = true"
+
+      - name: row_effective_date
+        tests:
+          - not_null
+
+      - name: row_expiration_date
+        tests:
+          - not_null
+
+      - name: current_row_indicator
+        tests:
+          - not_null
+  - name: dim_calendar
+    description: "Ролевое измерение календаря (SCD Type 0) с праздниками и сезонами Таиланда"
+    columns:
+      - name: date
+        description: "Первичный ключ календаря (гранулярность 1 день)"
+        tests:
+          - unique
+          - not_null
+      - name: dow_number
+        tests:
+          - not_null
+          - accepted_values:
+              values: [1, 2, 3, 4, 5, 6, 7]
+              quote: false
+      - name: is_holiday_flg
+        tests:
+          - not_null
+  - name: dim_bike
+    description: "Измерение парка байков (SCD Type 1)"
+    columns:
+      - name: bike_id
+        description: "Суррогатный первичный ключ байка (PK)"
+        tests:
+          - unique
+          - not_null
+
+      - name: bike_natural_key
+        description: "Натуральный бизнес-ключ байка (NK)"
+        tests:
+          - unique
+          - not_null
+
+      - name: win_number
+        description: "Уникальный VIN-номер рамы байка"
+        tests:
+          - unique
+          - not_null
+
+      - name: plate_number
+        description: "Государственный регистрационный номер"
+        tests:
+          - unique
+          - not_null
+
+      - name: usb_charging_availability
+        tests:
+          - not_null
+  - name: dim_bike_condition
+    description: "Мини-измерение (SCD Type 4) регламента оценки технического состояния байка"
+    columns:
+      - name: rental_condition_score
+        description: "Первичный ключ — балл состояния байка от 1 до 10 (PK)"
+        tests:
+          - unique
+          - not_null
+          - accepted_values:
+              values: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+              quote: false
+
+      - name: engine_condition
+        tests:
+          - not_null
+
+      - name: plastic_condition
+        tests:
+          - not_null
+
+      - name: suspension_condition
+        tests:
+          - not_null
+
+      - name: mileage_band
+        tests:
+          - not_null
+  - name: dim_location
+    description: "Согласованное ролевое измерение локаций бизнеса (SCD Type 1)"
+    columns:
+      - name: location_id
+        description: "Суррогатный первичный ключ локации (PK)"
+        tests:
+          - unique
+          - not_null
+
+      - name: location_natural_key
+        description: "Натуральный бизнес-ключ локации (NK)"
+        tests:
+          - unique
+          - not_null
+
+      - name: title
+        tests:
+          - unique
+          - not_null
+
+      - name: full_address
+        tests:
+          - not_null
+
+      - name: post_index
+        tests:
+          - not_null
+
+      - name: is_garage_flag
+        tests:
+          - not_null
+
+      - name: is_shop_flag
+        tests:
+          - not_null
+
+      - name: is_warehouse_flag
+        tests:
+          - not_null

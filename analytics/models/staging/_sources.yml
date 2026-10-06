@@ -1,0 +1,9 @@
+version: 2
+
+sources:
+  - name: raw_data
+    description: "Сырые данные из Kafka/S3"
+    schema: ods_events # <--- Новая схема
+    tables:
+      - name: ods_client_events
+      - name: ods_mechanic_events
