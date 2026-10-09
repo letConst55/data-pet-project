@@ -45,11 +45,7 @@
 
 ## Bus matrix snippet
 
-В этом блоке чуть подробнее рассмотрим каждый элемент архитектуры нашей модели данных. Все бизнес процессы разделим условно на три группы - каждая для своего отдела (Магазин, Аренда, Гараж (мастерская)). 
-
-### Аренда
-
-Модель данных для этого отдела представляет из себя классическую звезду с 1 главной таблицей фактов и несколькими измерениями, а именно:
+В этом блоке чуть подробнее рассмотрим каждый элемент архитектуры нашей модели данных. 
 
  - **client_bike_rent**. 
  
@@ -110,3 +106,78 @@
 
 
 ## Объекты модели данных
+
+### client_bike_rent
+
+| column name                      | data type | description                                                   |
+|----------------------------------|-----------|---------------------------------------------------------------|
+| rental_id (PK) (DD)              | text      | Идентификатор факта аренды                                    |
+| client_id (FK)                   | text      | Идентификатор клиента                                         |
+| bike_id (FK)                     | text      | Идентификатор байка                                           |
+| location_dis_id (FK)             | text      | Идентификатор точки выдачи байка                              |
+| location_return_id (FK)          | text      | Идентификатор точки возврата байка                            |
+| planned_start_date (FK)          | date      | Планируемая дата начала аренды                                |
+| planned_end_date (FK)            | date      | Планируемая дата окончания аренды                             |
+| fact_start_date (FK)             | date      | Фактическая дата начала аренды                                |
+| fact_end_date (FK)               | date      | Фактические дата окончания аренды                             |
+| rental_price_daily               | numeric   | Цена аренды в день                                            |
+| deposit_amount                   | numeric   | Сумма залога                                                  |
+| deposit_deducted_amount          | numeric   | Удержанная сумма из залога                                    |
+| deduction_reason_code (FK)       | text      | Причина удержания части залога                                |
+| discount_amount                  | numeric   | Сумма скидки                                                  |
+| total_amount                     | numeric   | Итоговая стоимость аренды                                     |
+| employee_disp_id (FK)            | text      | Идентификатор выдавшего байка сотрудника                      |
+| employee_return_id (FK)          | text      | Идентификатор сотрудника, кто принял возврат байка            |
+| actual_start_mileage             | numeric   | Пробег байка на начало аренды                                 |
+| actual_end_mileage               | numeric   | Пробег байка после завершения аренды                          |
+| fuel_start_percent               | numeric   | Уровень топлива на начало аренды                              |
+| fuel_end_percent                 | numeric   | Уровень топлива после завершения аренды                       |
+| pre_rental_condition_score (FK)  | int       | Оценка технического состояния байка перед выдачей             |
+| post_rental_condition_score (FK) | int       | Оценка технического состояния байка после возврата            |
+| helmets_issued_qty               | int       | Количество выданных шлемов                                    |
+| helmet_damage_flag               | boolean   | Факт повреждения хотя бы одного шлема после завершения аренды |
+| field_service_flag               | boolean   | Факт наличия хотя бы одного выезда механика к клиенту         |
+| rent_extend_flag                 | boolean   | Факт продления аренды (после завершения текущей)              |
+| bike_exchange_flag               | boolean   | Факт замены байка и продления аренды                                      |
+ 
+
+### dim_bike
+ 
+
+### dim_client
+ 
+
+### dim_calendar
+ 
+
+### dim_employee
+ 
+
+### dim_location
+ 
+
+### dim_bike_condition
+ 
+
+### dim_product
+ 
+
+### dim_vendor
+
+
+### dim_carrier
+
+
+### fct_shop_order
+  
+
+### fct_procurement
+ 
+
+### fct_repair
+
+
+### fct_service_events
+
+
+### fct_tech_maintenance
