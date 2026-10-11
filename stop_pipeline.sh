@@ -29,7 +29,7 @@ if [ -f .airflow.pid ]; then
     rm .airflow.pid
 fi
 
-pkill -f "data_generator.py" 2>/dev/null
+pkill -f "data_generator/main.py" 2>/dev/null
 pkill -f "consumer_s3.py" 2>/dev/null
 pkill -f "airflow" 2>/dev/null
 sleep 2

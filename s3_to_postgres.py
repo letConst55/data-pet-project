@@ -19,7 +19,10 @@ target_date = datetime.now().strftime('%Y-%m-%d')
 # Маппинг: Топик (папка в S3) -> Таблица в PostgreSQL
 topics_to_tables = {
     'client_app_events': 'ods_client_events',
-    'mechanic_app_events': 'ods_mechanic_events'
+    'mechanic_app_events': 'ods_mechanic_events',
+    'hr_app_events': 'ods_hr_events',              # НОВОЕ
+    'shop_app_events': 'ods_shop_events',          # НОВОЕ
+    'inventory_events': 'ods_inventory_events'     # НОВОЕ
 }
 
 print(f"Подключение к PostgreSQL...")

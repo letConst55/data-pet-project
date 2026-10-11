@@ -12,7 +12,9 @@ source venv/bin/activate
 
 # 3. Запуск генератора данных (наш новый "бэкенд")
 echo "🏍 Запуск генератора событий (Top Bikes)..."
-python3 data_generator.py > logs_generator.txt 2>&1 &
+# Добавляем PYTHONPATH, чтобы питон корректно видел модули core и modules
+export PYTHONPATH=$(pwd)/data_generator
+python3 data_generator/main.py > logs_generator.txt 2>&1 &
 GEN_PID=$!
 echo $GEN_PID > .generator.pid
 echo "Генератор запущен (PID: $GEN_PID). Логи: logs_generator.txt"

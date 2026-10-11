@@ -9,14 +9,14 @@ renamed as (
         event_id,
         event_timestamp,
         (payload->>'rental_id')::varchar as rental_id,
-        (payload->>'mechanic_id')::varchar as mechanic_id,
-        (payload->>'location_id')::varchar as location_id,
+        (payload->>'employee_disp_id')::varchar as employee_disp_id, -- Изменено
+        (payload->>'location_dis_id')::varchar as location_dis_id,    -- Изменено
         (payload->>'fact_start_date')::date as fact_start_date,
-        (payload->>'fuel_level_percent')::numeric(10, 2) as fuel_level_percent,
-        (payload->>'helmets_issued_qty')::int as helmets_issued_qty,
+        (payload->>'fact_start_datetime')::timestamp as fact_start_datetime, -- Новое
         (payload->>'actual_start_mileage')::numeric(10, 2) as actual_start_mileage,
-        (payload->>'actual_payment_method')::varchar as actual_payment_method,
+        (payload->>'fuel_start_percent')::numeric(10, 2) as fuel_start_percent,
         (payload->>'pre_rental_condition_score')::int as pre_rental_condition_score,
+        (payload->>'helmets_issued_qty')::int as helmets_issued_qty,
         loaded_at
     from source
 )

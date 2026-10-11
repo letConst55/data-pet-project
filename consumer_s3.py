@@ -4,6 +4,9 @@ import json
 from datetime import datetime
 import time
 
+import warnings
+warnings.filterwarnings("ignore", category=DeprecationWarning)
+
 # 1. Настройки S3
 s3_client = boto3.client('s3',
     endpoint_url='http://localhost:9000',

@@ -1,7 +1,9 @@
+import os
 import time
 import random
 import signal
 import pandas as pd
+
 from core.state import SimulationState
 from core.publisher import EventPublisher
 from modules.rent_api import RentAPI
@@ -12,15 +14,20 @@ from modules.inventory_api import InventoryAPI
 
 stop_requested = False
 
+# Определяем абсолютный путь к папке data_generator
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
 def handle_shutdown(signum, frame):
     global stop_requested
-    print(f"\n Получен сигнал остановки ({signum}). Завершаем текущий шаг и сохраняем состояние...")
+    print(f"\n⚠️ Получен сигнал остановки ({signum}). Завершаем текущий шаг и сохраняем состояние...")
     stop_requested = True
 
 signal.signal(signal.SIGTERM, handle_shutdown)
 signal.signal(signal.SIGINT, handle_shutdown)
 
-def load_csv_safe(filepath):
+def load_csv_safe(relative_path):
+    """Загружает CSV относительно папки data_generator"""
+    filepath = os.path.join(BASE_DIR, relative_path)
     df = pd.read_csv(filepath)
     df.columns = df.columns.str.strip()
     return df
@@ -51,7 +58,8 @@ def main(mode="pandas", duration_seconds=60):
         return
 
     # 2. Инициализация ядра
-    sim_state = SimulationState(state_file="generator_state.json")
+    state_file_path = os.path.join(BASE_DIR, "generator_state.json")
+    sim_state = SimulationState(state_file=state_file_path)
     publisher = EventPublisher(mode=mode)
     
     # 3. Инициализация модулей (Обрати внимание: EMPLOYEES больше не передаются)
@@ -111,4 +119,4 @@ def main(mode="pandas", duration_seconds=60):
     print("✅ Оркестратор успешно остановлен.")
 
 if __name__ == "__main__":
-    main(mode="pandas", duration_seconds=15)
+    main(mode="kafka")
