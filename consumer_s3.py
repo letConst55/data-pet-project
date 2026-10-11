@@ -4,6 +4,7 @@ import json
 from datetime import datetime
 import time
 
+# 1. Настройки S3
 s3_client = boto3.client('s3',
     endpoint_url='http://localhost:9000',
     aws_access_key_id='minioadmin',
@@ -14,13 +15,20 @@ bucket_name = 'raw-events'
 
 try:
     s3_client.create_bucket(Bucket=bucket_name)
-except:
+except Exception:
     pass
 
-# Подписываемся сразу на два топика
-consumer = KafkaConsumer(
+# 2. Подписка на все 5 топиков новой архитектуры
+TARGET_TOPICS = [
+    'hr_app_events',
     'client_app_events', 
     'mechanic_app_events',
+    'shop_app_events',
+    'inventory_events'
+]
+
+consumer = KafkaConsumer(
+    *TARGET_TOPICS,
     bootstrap_servers=['localhost:9092'],
     value_deserializer=lambda m: json.loads(m.decode('utf-8')),
     auto_offset_reset='earliest',
@@ -28,10 +36,11 @@ consumer = KafkaConsumer(
     group_id='s3_data_lake_writer'
 )
 
-print("🎧 Консьюмер запущен. Слушаем топики client_app_events и mechanic_app_events...")
+print(f"🎧 Консьюмер запущен. Слушаем топики: {', '.join(TARGET_TOPICS)}...")
 
 batch = []
-BATCH_SIZE = 10 # Сохраняем в S3 каждые 10 сообщений
+# Увеличиваем батч, так как событий стало больше (сохраняем каждые 50 сообщений)
+BATCH_SIZE = 50 
 
 for message in consumer:
     # Сохраняем само сообщение и имя топика, из которого оно пришло
@@ -40,11 +49,11 @@ for message in consumer:
         "data": message.value
     })
     
-    print(f"Получено событие из {message.topic}: {message.value.get('event_type')}")
+    print(f"[{message.topic}] Получено: {message.value.get('event_type')}")
     
     if len(batch) >= BATCH_SIZE:
         target_date = datetime.now().strftime('%Y-%m-%d')
-        timestamp_file = int(time.time())
+        timestamp_file = int(time.time() * 1000) # Миллисекунды для защиты от коллизий имен файлов
         
         # Группируем накопившийся батч по топикам
         events_by_topic = {}

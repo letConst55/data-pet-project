@@ -59,4 +59,6 @@ docker exec -i "$MINIO_CONTAINER" sh -c "rm -rf /data/*/* 2>/dev/null"
 echo "📦 Остановка контейнеров Docker..."
 docker compose down
 
+rm -f data_generator/generator_state.json
+
 echo "✅ Пайплайн успешно остановлен, ODS и S3 очищены, модели dbt сброшены!"

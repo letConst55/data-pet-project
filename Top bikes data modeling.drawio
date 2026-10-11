@@ -1,6 +1,6 @@
 <mxfile host="Electron">
   <diagram name="Страница-1" id="LhK1C6_s6LosG4QgtCxC">
-    <mxGraphModel dx="1864" dy="1723" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+    <mxGraphModel dx="2012" dy="1802" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -829,6 +829,68 @@
         </mxCell>
         <mxCell id="U3WKaxpkCpBsvSxdCH5s-408" parent="U3WKaxpkCpBsvSxdCH5s-407" style="align=left;strokeColor=none;fillColor=none;spacingLeft=4;spacingRight=4;fontSize=12;verticalAlign=top;resizable=0;rotatable=0;part=1;html=1;whiteSpace=wrap;" value="&lt;div&gt;&lt;div&gt;&lt;span style=&quot;color: rgb(179, 179, 179);&quot;&gt;dataflow_id&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&lt;span style=&quot;color: rgb(173, 173, 173);&quot;&gt;dataflow_dttm&lt;/span&gt;&lt;/div&gt;&lt;/div&gt;week_year&lt;div&gt;product_id (FK)&lt;br&gt;location_id (FK)&lt;br&gt;&lt;div&gt;product_quantity&lt;/div&gt;&lt;/div&gt;&lt;div&gt;available_flag&lt;/div&gt;&lt;div&gt;isin_shipment_flag&lt;/div&gt;&lt;div&gt;planned_delivery_date&lt;/div&gt;" vertex="1">
           <mxGeometry height="150" width="200" y="50" as="geometry" />
+        </mxCell>
+        <mxCell id="U3WKaxpkCpBsvSxdCH5s-409" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;" value="" vertex="1">
+          <mxGeometry height="24" width="717.88" x="1702" y="886.5" as="geometry" />
+        </mxCell>
+        <mxCell id="U3WKaxpkCpBsvSxdCH5s-410" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="&lt;span style=&quot;font-size: 14px;&quot;&gt;&lt;b&gt;HR procceses&lt;/b&gt;&lt;/span&gt;" vertex="1">
+          <mxGeometry height="35" width="115" x="1696" y="881" as="geometry" />
+        </mxCell>
+        <mxCell id="U3WKaxpkCpBsvSxdCH5s-411" parent="1" style="childLayout=tableLayout;recursiveResize=0;shadow=0;fillColor=none;" value="" vertex="1">
+          <mxGeometry height="47" width="718.0588235294117" x="1702" y="911" as="geometry" />
+        </mxCell>
+        <mxCell id="U3WKaxpkCpBsvSxdCH5s-412" parent="U3WKaxpkCpBsvSxdCH5s-411" style="shape=tableRow;horizontal=0;startSize=0;swimlaneHead=0;swimlaneBody=0;top=0;left=0;bottom=0;right=0;dropTarget=0;collapsible=0;recursiveResize=0;expand=0;fontStyle=0;fillColor=none;strokeColor=inherit;" value="" vertex="1">
+          <mxGeometry height="47" width="718.0588235294117" as="geometry" />
+        </mxCell>
+        <mxCell id="U3WKaxpkCpBsvSxdCH5s-413" parent="U3WKaxpkCpBsvSxdCH5s-412" style="connectable=0;recursiveResize=0;strokeColor=inherit;fillColor=none;align=center;whiteSpace=wrap;html=1;" value="&lt;font style=&quot;font-size: 11px;&quot;&gt;HR процессы, найм, увольнение, изменение должности&lt;/font&gt;" vertex="1">
+          <mxGeometry height="47" width="200" as="geometry">
+            <mxRectangle height="47" width="200" as="alternateBounds" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="U3WKaxpkCpBsvSxdCH5s-414" parent="U3WKaxpkCpBsvSxdCH5s-412" style="connectable=0;recursiveResize=0;strokeColor=inherit;fillColor=none;align=center;whiteSpace=wrap;html=1;" value="&lt;span style=&quot;font-size: 14px;&quot;&gt;X&lt;/span&gt;" vertex="1">
+          <mxGeometry height="47" width="60" x="200" as="geometry">
+            <mxRectangle height="47" width="60" as="alternateBounds" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="U3WKaxpkCpBsvSxdCH5s-415" parent="U3WKaxpkCpBsvSxdCH5s-412" style="connectable=0;recursiveResize=0;strokeColor=inherit;fillColor=none;align=center;whiteSpace=wrap;html=1;" value="" vertex="1">
+          <mxGeometry height="47" width="59" x="260" as="geometry">
+            <mxRectangle height="47" width="59" as="alternateBounds" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="U3WKaxpkCpBsvSxdCH5s-416" parent="U3WKaxpkCpBsvSxdCH5s-412" style="connectable=0;recursiveResize=0;strokeColor=inherit;fillColor=none;align=center;whiteSpace=wrap;html=1;" value="&lt;span style=&quot;font-size: 14px;&quot;&gt;X&lt;/span&gt;" vertex="1">
+          <mxGeometry height="47" width="57" x="319" as="geometry">
+            <mxRectangle height="47" width="57" as="alternateBounds" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="U3WKaxpkCpBsvSxdCH5s-417" parent="U3WKaxpkCpBsvSxdCH5s-412" style="connectable=0;recursiveResize=0;strokeColor=inherit;fillColor=none;align=center;whiteSpace=wrap;html=1;" value="" vertex="1">
+          <mxGeometry height="47" width="57" x="376" as="geometry">
+            <mxRectangle height="47" width="57" as="alternateBounds" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="U3WKaxpkCpBsvSxdCH5s-418" parent="U3WKaxpkCpBsvSxdCH5s-412" style="connectable=0;recursiveResize=0;strokeColor=inherit;fillColor=none;align=center;whiteSpace=wrap;html=1;" vertex="1">
+          <mxGeometry height="47" width="57" x="433" as="geometry">
+            <mxRectangle height="47" width="57" as="alternateBounds" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="U3WKaxpkCpBsvSxdCH5s-419" parent="U3WKaxpkCpBsvSxdCH5s-412" style="connectable=0;recursiveResize=0;strokeColor=inherit;fillColor=none;align=center;whiteSpace=wrap;html=1;" vertex="1">
+          <mxGeometry height="47" width="57" x="490" as="geometry">
+            <mxRectangle height="47" width="57" as="alternateBounds" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="U3WKaxpkCpBsvSxdCH5s-420" parent="U3WKaxpkCpBsvSxdCH5s-412" style="connectable=0;recursiveResize=0;strokeColor=inherit;fillColor=none;align=center;whiteSpace=wrap;html=1;" vertex="1">
+          <mxGeometry height="47" width="57" x="547" as="geometry">
+            <mxRectangle height="47" width="57" as="alternateBounds" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="U3WKaxpkCpBsvSxdCH5s-421" parent="U3WKaxpkCpBsvSxdCH5s-412" style="connectable=0;recursiveResize=0;strokeColor=inherit;fillColor=none;align=center;whiteSpace=wrap;html=1;" vertex="1">
+          <mxGeometry height="47" width="57" x="604" as="geometry">
+            <mxRectangle height="47" width="57" as="alternateBounds" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="U3WKaxpkCpBsvSxdCH5s-422" parent="U3WKaxpkCpBsvSxdCH5s-412" style="connectable=0;recursiveResize=0;strokeColor=inherit;fillColor=none;align=center;whiteSpace=wrap;html=1;" vertex="1">
+          <mxGeometry height="47" width="57" x="661" as="geometry">
+            <mxRectangle height="47" width="57" as="alternateBounds" />
+          </mxGeometry>
         </mxCell>
       </root>
     </mxGraphModel>
