@@ -1,0 +1,11 @@
+rental_condition_score,engine_condition,plastic_condition,suspension_condition,mileage_band
+10,Factory New / Smooth,Flawless / No Scratches,Stiff / Factory Tuned,0 - 3000 km
+9,Excellent / Quiet,Near Mint / Micro Swirls,Firm / Responsive,3000 - 7000 km
+8,Very Good / Stable Idle,Minor Rub Marks,Good / Normal Travel,7000 - 12000 km
+7,Good / Standard Wear,Light Surface Scratches,Serviceable / Softened,12000 - 18000 km
+6,Fair / Slight Vibration,Visible Scratches,Moderate Wear / Creaks,18000 - 25000 km
+5,Noisy Valves / Needs Tune-up,Deep Scratches / Scuffs,Worn / Bouncy Damping,25000 - 32000 km
+4,Rough Idle / PowerLoss,Small Cracks / Loose Clips,Leaking Fork Seals,32000 - 40000 km
+3,Smoking / Overheating Risk,Cracked Fairing / Broken Mirror,Bottoming Out / Unsafe,40000 - 50000 km
+2,Misfiring / Hard Starting,Major Body Damage / Missing Parts,Severely Damaged / Jammed,50000 - 65000 km
+1,Non-Runner / Seized Engine,Totaled / Smashed Plastic,Collapsed / Non-Functional,65000+ km

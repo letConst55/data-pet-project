@@ -1,0 +1,86 @@
+product_id,product_natural_key,title,level1_category,level2_category,manufactory,vendor,is_spare_flag,is_tuning_flag
+PRD-0001,NK-GA-001,Shoei RF-1400 Helmet Matte Black,Gear & Apparel,Helmets & Visors,Shoei,VND-001,False,False
+PRD-0002,NK-GA-002,Arai Corsair-X Helmet Solid White,Gear & Apparel,Helmets & Visors,Arai,VND-002,False,False
+PRD-0003,NK-GA-003,HJC CS-15 Full Face Helmet,Gear & Apparel,Helmets & Visors,HJC,VND-003,False,False
+PRD-0004,NK-GA-004,LS2 Valiant II Modular Helmet,Gear & Apparel,Helmets & Visors,LS2,VND-003,False,False
+PRD-0005,NK-GA-005,Shoei CWR-1 Pinlock Visor Clear,Gear & Apparel,Helmets & Visors,Shoei,VND-001,False,False
+PRD-0006,NK-GA-006,Alpinestars SMX-1 Air V2 Gloves,Gear & Apparel,Gloves,Alpinestars,VND-004,False,False
+PRD-0007,NK-GA-007,Dainese D-Brake Gloves Black,Gear & Apparel,Gloves,Dainese,VND-005,False,False
+PRD-0008,NK-GA-008,REV'IT! Sand 4 Gloves,Gear & Apparel,Gloves,REV'IT!,VND-006,False,False
+PRD-0009,NK-GA-009,Five RS3 Evo Gloves Urban,Gear & Apparel,Gloves,Five,VND-004,False,False
+PRD-0010,NK-GA-010,Givi Rider Tech Rain Suit,Gear & Apparel,Raincoats & Covers,Givi,VND-007,False,False
+PRD-0011,NK-GA-011,Oxford Rainseal Over Jacket,Gear & Apparel,Raincoats & Covers,Oxford,VND-008,False,False
+PRD-0012,NK-GA-012,Nelson Rigg Defender Extreme Motorcycle Cover,Gear & Apparel,Raincoats & Covers,Nelson Rigg,VND-009,False,False
+PRD-0013,NK-GA-013,Alpinestars Bionic Action Knee Protector,Gear & Apparel,Protection & Accessories,Alpinestars,VND-004,False,False
+PRD-0014,NK-GA-014,Dainese Pro-Armor Back Protector,Gear & Apparel,Protection & Accessories,Dainese,VND-005,False,False
+PRD-0015,NK-GA-015,Kriega R20 Backpack,Gear & Apparel,Protection & Accessories,Kriega,VND-010,False,False
+PRD-0016,NK-BA-001,Givi V47 Monokey Top Case,Bike Accessories,Top boxes & Luggage,Givi,VND-007,False,False
+PRD-0017,NK-BA-002,SHAD SH48 Top Case Titanium,Bike Accessories,Top boxes & Luggage,SHAD,VND-011,False,False
+PRD-0018,NK-BA-003,Kappa K35 Top Box Black,Bike Accessories,Top boxes & Luggage,Kappa,VND-012,False,False
+PRD-0019,NK-BA-004,Quad Lock Motorcycle Handlebar Mount,Bike Accessories,Phone mounts & Chargers,Quad Lock,VND-013,False,False
+PRD-0020,NK-BA-005,SP Connect Moto Mount Pro,Bike Accessories,Phone mounts & Chargers,SP Connect,VND-014,False,False
+PRD-0021,NK-BA-006,RAM Mounts X-Grip Phone Holder,Bike Accessories,Phone mounts & Chargers,RAM Mounts,VND-015,False,False
+PRD-0022,NK-BA-007,Daytona 2-Port USB Charger 5V/2.1A,Bike Accessories,Phone mounts & Chargers,Daytona,VND-016,False,False
+PRD-0023,NK-BA-008,Givi D1188ST Windscreen Clear,Bike Accessories,Windshields,Givi,VND-007,False,False
+PRD-0024,NK-BA-009,Puig Touring Screen Light Smoke,Bike Accessories,Windshields,Puig,VND-017,False,False
+PRD-0025,NK-BA-010,National Cycle VStream Windscreen,Bike Accessories,Windshields,National Cycle,VND-018,False,False
+PRD-0026,NK-BA-011,Rizoma Tomok Mirrors Black,Bike Accessories,Mirrors & Styling,Rizoma,VND-019,False,False
+PRD-0027,NK-BA-012,Koso TT-Style Mirrors,Bike Accessories,Mirrors & Styling,Koso,VND-020,False,False
+PRD-0028,NK-BA-013,Yoshimura Fender Eliminator Kit,Bike Accessories,Mirrors & Styling,Yoshimura,VND-021,False,False
+PRD-0029,NK-BA-014,R&G Racing Aero Crash Protectors,Bike Accessories,Mirrors & Styling,R&G Racing,VND-022,False,False
+PRD-0030,NK-BA-015,H2C Aluminum Floor Panels,Bike Accessories,Mirrors & Styling,H2C,VND-023,False,False
+PRD-0031,NK-SP-001,Honda Genuine Air Filter ADV160,Spare Parts,Consumables,Honda,VND-024,True,False
+PRD-0032,NK-SP-002,Yamaha Genuine Oil Filter NMAX,Spare Parts,Consumables,Yamaha,VND-025,True,False
+PRD-0033,NK-SP-003,NGK CPR8EA-9 Spark Plug,Spare Parts,Consumables,NGK,VND-026,True,False
+PRD-0034,NK-SP-004,Mitsuboshi Drive Belt PCX160,Spare Parts,Consumables,Mitsuboshi,VND-027,True,False
+PRD-0035,NK-SP-005,Brembo Sintered Front Brake Pads,Spare Parts,Braking system,Brembo,VND-028,True,False
+PRD-0036,NK-SP-006,Nissin Rear Brake Pads,Spare Parts,Braking system,Nissin,VND-029,True,False
+PRD-0037,NK-SP-007,Honda Genuine Front Brake Disc,Spare Parts,Braking system,Honda,VND-024,True,False
+PRD-0038,NK-SP-008,Galfer Braided Brake Line Kit,Spare Parts,Braking system,Galfer,VND-030,True,False
+PRD-0039,NK-SP-009,Michelin City Grip 2 110/70-13 Front,Spare Parts,Tires & Tubes,Michelin,VND-031,True,False
+PRD-0040,NK-SP-010,Michelin City Grip 2 130/70-13 Rear,Spare Parts,Tires & Tubes,Michelin,VND-031,True,False
+PRD-0041,NK-SP-011,Pirelli Angel Scooter 120/70-14 Front,Spare Parts,Tires & Tubes,Pirelli,VND-032,True,False
+PRD-0042,NK-SP-012,IRC SS-560 140/70-14 Rear,Spare Parts,Tires & Tubes,IRC,VND-033,True,False
+PRD-0043,NK-SP-013,Honda Genuine CVT Roller Set 15g,Spare Parts,Engine & Transmission,Honda,VND-024,True,False
+PRD-0044,NK-SP-014,Malossi Multivar 2000 Variator,Spare Parts,Engine & Transmission,Malossi,VND-034,True,False
+PRD-0045,NK-SP-015,Yamaha Genuine Water Pump Assembly,Spare Parts,Engine & Transmission,Yamaha,VND-025,True,False
+PRD-0046,NK-SP-016,Honda Genuine Piston Ring Set,Spare Parts,Engine & Transmission,Honda,VND-024,True,False
+PRD-0047,NK-SP-017,YSS G-Sport Rear Shock Absorbers,Spare Parts,Suspension & Steering,YSS,VND-035,True,False
+PRD-0048,NK-SP-018,Ohlins YA 740 Rear Shock,Spare Parts,Suspension & Steering,Ohlins,VND-036,True,False
+PRD-0049,NK-SP-019,SKF Fork Seal Kit 31mm,Spare Parts,Suspension & Steering,SKF,VND-037,True,False
+PRD-0050,NK-SP-020,Honda Genuine Steering Stem Bearing,Spare Parts,Suspension & Steering,Honda,VND-024,True,False
+PRD-0051,NK-SP-021,Yuasa YTZ8V AGM Battery,Spare Parts,Electrics & Batteries,Yuasa,VND-038,True,False
+PRD-0052,NK-SP-022,Bosch Motorcycle Horn 12V,Spare Parts,Electrics & Batteries,Bosch,VND-039,True,False
+PRD-0053,NK-SP-023,Honda Genuine Stator Coil,Spare Parts,Electrics & Batteries,Honda,VND-024,True,False
+PRD-0054,NK-SP-024,Yamaha Genuine Front Fender Black,Spare Parts,Plastics & Body parts,Yamaha,VND-025,True,False
+PRD-0055,NK-SP-025,Honda Genuine Right Side Fairing Red,Spare Parts,Plastics & Body parts,Honda,VND-024,True,False
+PRD-0056,NK-FL-001,Motul 7100 4T 10W-40 1L,Fluids,Motor oils,Motul,VND-040,True,False
+PRD-0057,NK-FL-002,Motul 300V Factory Line 10W-40 1L,Fluids,Motor oils,Motul,VND-040,True,False
+PRD-0058,NK-FL-003,Castrol Power1 4T 10W-40 1L,Fluids,Motor oils,Castrol,VND-041,True,False
+PRD-0059,NK-FL-004,Liqui Moly Motorbike 4T 10W-40 Street 1L,Fluids,Motor oils,Liqui Moly,VND-042,True,False
+PRD-0060,NK-FL-005,Honda Pro Honda GN4 10W-30 1qt,Fluids,Motor oils,Honda,VND-024,True,False
+PRD-0061,NK-FL-006,Motul Scooter Gear 80W-90 150ml,Fluids,Transmission oils,Motul,VND-040,True,False
+PRD-0062,NK-FL-007,Castrol MTX 10W-40 1L,Fluids,Transmission oils,Castrol,VND-041,True,False
+PRD-0063,NK-FL-008,Liqui Moly Motorbike Gear Oil 80W-90 150ml,Fluids,Transmission oils,Liqui Moly,VND-042,True,False
+PRD-0064,NK-FL-009,Honda Genuine Scooter Gear Oil 120ml,Fluids,Transmission oils,Honda,VND-024,True,False
+PRD-0065,NK-FL-010,Brembo DOT 4 Brake Fluid 500ml,Fluids,Brake fluids,Brembo,VND-028,True,False
+PRD-0066,NK-FL-011,Motul DOT 5.1 Brake Fluid 500ml,Fluids,Brake fluids,Motul,VND-040,True,False
+PRD-0067,NK-FL-012,Castrol React Performance DOT 4 1L,Fluids,Brake fluids,Castrol,VND-041,True,False
+PRD-0068,NK-FL-013,Motul Motocool Expert 1L,Fluids,Coolants,Motul,VND-040,True,False
+PRD-0069,NK-FL-014,Engine Ice High Performance Coolant 1.89L,Fluids,Coolants,Engine Ice,VND-043,True,False
+PRD-0070,NK-FL-015,Honda Genuine Coolant Type 2 1L,Fluids,Coolants,Honda,VND-024,True,False
+PRD-0071,NK-ST-001,Standard Oil Change Service,Services & Tuning,Scheduled Maintenance,In-house,VND-000,False,False
+PRD-0072,NK-ST-002,Full Premium Service 10000km,Services & Tuning,Scheduled Maintenance,In-house,VND-000,False,False
+PRD-0073,NK-ST-003,CVT Cleaning and Inspection,Services & Tuning,Scheduled Maintenance,In-house,VND-000,False,False
+PRD-0074,NK-ST-004,Top Box Rack Installation,Services & Tuning,Tuning & Installation,In-house,VND-000,False,True
+PRD-0075,NK-ST-005,Windshield Installation,Services & Tuning,Tuning & Installation,In-house,VND-000,False,True
+PRD-0076,NK-ST-006,Exhaust System Upgrade,Services & Tuning,Tuning & Installation,In-house,VND-000,False,True
+PRD-0077,NK-ST-007,Auxiliary LED Lights Installation,Services & Tuning,Tuning & Installation,In-house,VND-000,False,True
+PRD-0078,NK-ST-008,Front Fork Overhaul,Services & Tuning,Repair Services,In-house,VND-000,False,False
+PRD-0079,NK-ST-009,Engine Rebuild Service,Services & Tuning,Repair Services,In-house,VND-000,False,False
+PRD-0080,NK-ST-010,Brake System Bleeding,Services & Tuning,Repair Services,In-house,VND-000,False,False
+PRD-0081,NK-ST-011,Battery Replacement and Electrical Check,Services & Tuning,Repair Services,In-house,VND-000,False,False
+PRD-0082,NK-ST-012,Plastic Fairing Replacement,Services & Tuning,Repair Services,In-house,VND-000,False,False
+PRD-0083,NK-ST-013,Front Tire Replacement and Balancing,Services & Tuning,Tire fitting,In-house,VND-000,False,False
+PRD-0084,NK-ST-014,Rear Tire Replacement and Balancing,Services & Tuning,Tire fitting,In-house,VND-000,False,False
+PRD-0085,NK-ST-015,Puncture Repair (Plug),Services & Tuning,Tire fitting,In-house,VND-000,False,False

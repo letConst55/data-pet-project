@@ -1,0 +1,11 @@
+carrier_id,carrier_natural_key,carrier_name,is_external_carrier_flag,carrier_type,carrier_score,carrier_status
+CAR-001,NK-CAR-001,In-House Pickup Truck 1,False,Internal Truck,10,Active
+CAR-002,NK-CAR-002,In-House Pickup Truck 2,False,Internal Truck,9,Active
+CAR-003,NK-CAR-003,In-House Van 1,False,Internal Van,10,Maintenance
+CAR-004,NK-CAR-004,DHL Thailand,True,International Courier,9,Active
+CAR-005,NK-CAR-005,Kerry Express,True,Domestic Courier,8,Active
+CAR-006,NK-CAR-006,Flash Express,True,Domestic Courier,7,Active
+CAR-007,NK-CAR-007,FedEx Express,True,International Courier,10,Active
+CAR-008,NK-CAR-008,J&T Express,True,Domestic Courier,6,Active
+CAR-009,NK-CAR-009,Global Auto Logistics,True,Freight Forwarder,9,Active
+CAR-010,NK-CAR-010,Thai Cargo Movers,True,Freight Forwarder,8,Inactive
