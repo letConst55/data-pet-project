@@ -244,6 +244,8 @@
 | can_sell_retail_flg       | boolean   | Флаг, показывающий допуск сотрудника для работы в отделе Магазина                     |
 | row_effective_date        | date      | Дата начала действия записи                                                           |
 | row_expiration_date       | date      | Дата завершения действия записи                                                       |
+| manager_employee_id | text   | Идентификатор менеджера (руководителя) |
+| is_active_flag | boolean   | Флаг, показывающий, что сотрудник работает |
 | current_row_indicator     | boolean   | Флаг текущей актуальной записи                                                        |
  
 

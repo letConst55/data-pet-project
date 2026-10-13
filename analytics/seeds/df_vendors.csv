@@ -1,0 +1,51 @@
+vendor_id,vendor_natural_key,vendor_name,is_foreign_flag,vendor_score,vendor_zip_postal_code,vendor_address,vendor_mobile
+VND-001,NK-VND-001,Shoei Distributor,True,6,52945,"53 Business Park, Suite 65",+4 397 5286
+VND-002,NK-VND-002,Arai Distributor,True,6,41488,"718 Business Park, Suite 39",+87 293 9035
+VND-003,NK-VND-003,HJC Distributor,False,10,71051,"500 Business Park, Suite 85",+69 114 1441
+VND-004,NK-VND-004,Alpinestars Distributor,True,10,57306,"777 Business Park, Suite 7",+75 996 5908
+VND-005,NK-VND-005,Dainese Distributor,True,9,30123,"181 Business Park, Suite 13",+93 664 4723
+VND-006,NK-VND-006,REV'IT! Distributor,False,8,15644,"405 Business Park, Suite 12",+50 159 8132
+VND-007,NK-VND-007,Givi Distributor,True,7,24341,"590 Business Park, Suite 99",+97 665 2567
+VND-008,NK-VND-008,Oxford Distributor,True,7,48475,"692 Business Park, Suite 40",+22 445 4147
+VND-009,NK-VND-009,Nelson Rigg Distributor,True,8,21302,"969 Business Park, Suite 65",+96 363 1177
+VND-010,NK-VND-010,Kriega Distributor,False,10,44738,"585 Business Park, Suite 79",+84 723 9890
+VND-011,NK-VND-011,SHAD Distributor,True,8,15098,"986 Business Park, Suite 52",+58 298 4212
+VND-012,NK-VND-012,Kappa Distributor,True,7,76746,"526 Business Park, Suite 58",+35 667 3955
+VND-013,NK-VND-013,Quad Lock Distributor,False,6,32695,"300 Business Park, Suite 96",+10 464 2199
+VND-014,NK-VND-014,SP Connect Distributor,False,8,91955,"715 Business Park, Suite 76",+40 497 5809
+VND-015,NK-VND-015,RAM Mounts Distributor,True,10,54371,"53 Business Park, Suite 33",+20 107 4074
+VND-016,NK-VND-016,Daytona Distributor,True,10,83105,"391 Business Park, Suite 65",+35 263 3524
+VND-017,NK-VND-017,Puig Distributor,False,6,18011,"845 Business Park, Suite 60",+34 534 4624
+VND-018,NK-VND-018,National Cycle Distributor,True,7,51945,"314 Business Park, Suite 4",+10 266 1250
+VND-019,NK-VND-019,Rizoma Distributor,True,7,37527,"985 Business Park, Suite 56",+60 444 2610
+VND-020,NK-VND-020,Koso Distributor,True,7,65272,"291 Business Park, Suite 38",+57 523 9130
+VND-021,NK-VND-021,Yoshimura Distributor,True,9,64819,"828 Business Park, Suite 42",+14 501 6768
+VND-022,NK-VND-022,R&G Racing Distributor,True,8,89148,"414 Business Park, Suite 98",+9 945 4557
+VND-023,NK-VND-023,H2C Distributor,True,9,58123,"649 Business Park, Suite 32",+2 284 5688
+VND-024,NK-VND-024,Honda Distributor,False,10,30902,"245 Business Park, Suite 20",+82 633 1041
+VND-025,NK-VND-025,Yamaha Distributor,True,9,35736,"407 Business Park, Suite 68",+88 668 5877
+VND-026,NK-VND-026,NGK Distributor,True,6,25657,"504 Business Park, Suite 17",+3 615 9037
+VND-027,NK-VND-027,Mitsuboshi Distributor,True,8,26626,"448 Business Park, Suite 58",+83 244 8221
+VND-028,NK-VND-028,Brembo Distributor,True,10,88277,"416 Business Park, Suite 58",+96 633 1755
+VND-029,NK-VND-029,Nissin Distributor,False,10,53644,"987 Business Park, Suite 25",+22 600 6484
+VND-030,NK-VND-030,Galfer Distributor,True,9,91151,"775 Business Park, Suite 19",+43 182 4876
+VND-031,NK-VND-031,Michelin Distributor,False,7,51166,"206 Business Park, Suite 80",+63 359 4724
+VND-032,NK-VND-032,Pirelli Distributor,True,10,70104,"711 Business Park, Suite 92",+33 463 9702
+VND-033,NK-VND-033,IRC Distributor,True,9,19768,"410 Business Park, Suite 22",+51 288 3152
+VND-034,NK-VND-034,Malossi Distributor,True,6,90229,"15 Business Park, Suite 62",+92 606 6455
+VND-035,NK-VND-035,YSS Distributor,True,7,96381,"617 Business Park, Suite 31",+43 502 3543
+VND-036,NK-VND-036,Ohlins Distributor,True,10,90813,"314 Business Park, Suite 2",+57 624 4473
+VND-037,NK-VND-037,SKF Distributor,False,10,30703,"37 Business Park, Suite 32",+37 616 1537
+VND-038,NK-VND-038,Yuasa Distributor,False,10,70213,"397 Business Park, Suite 58",+42 151 8428
+VND-039,NK-VND-039,Bosch Distributor,True,10,32628,"978 Business Park, Suite 65",+80 720 7264
+VND-040,NK-VND-040,Motul Distributor,True,7,26974,"630 Business Park, Suite 42",+10 282 1532
+VND-041,NK-VND-041,Castrol Distributor,True,10,27927,"628 Business Park, Suite 66",+80 864 7652
+VND-042,NK-VND-042,Liqui Moly Distributor,True,7,97343,"247 Business Park, Suite 53",+28 468 6594
+VND-043,NK-VND-043,Engine Ice Distributor,False,10,90995,"188 Business Park, Suite 62",+96 661 1534
+VND-044,NK-VND-044,Global Parts 44 LLC,False,7,13219,"552 Business Park, Suite 70",+80 830 3218
+VND-045,NK-VND-045,Global Parts 45 LLC,False,7,52727,"529 Business Park, Suite 94",+29 310 6722
+VND-046,NK-VND-046,Global Parts 46 LLC,True,10,41373,"382 Business Park, Suite 88",+37 697 6631
+VND-047,NK-VND-047,Global Parts 47 LLC,False,7,78521,"645 Business Park, Suite 97",+26 901 1476
+VND-048,NK-VND-048,Global Parts 48 LLC,True,10,39646,"419 Business Park, Suite 35",+90 904 1212
+VND-049,NK-VND-049,Global Parts 49 LLC,True,9,51263,"863 Business Park, Suite 3",+97 224 8978
+VND-050,NK-VND-050,Global Parts 50 LLC,True,6,23382,"137 Business Park, Suite 35",+77 785 5259

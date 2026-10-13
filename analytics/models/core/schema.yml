@@ -146,3 +146,127 @@ models:
       - name: is_warehouse_flag
         tests:
           - not_null
+  - name: dim_product
+    description: "Измерение товаров, запчастей и услуг (SCD Type 1)"
+    columns:
+      - name: product_id
+        description: "Суррогатный первичный ключ товара (PK)"
+        tests:
+          - unique
+          - not_null
+      - name: product_natural_key
+        description: "Натуральный бизнес-ключ товара (NK)"
+        tests:
+          - unique
+          - not_null
+      - name: title
+        tests:
+          - not_null
+      - name: is_spare_flag
+        tests:
+          - not_null
+      - name: is_tuning_flag
+        tests:
+          - not_null
+  - name: dim_vendor
+    description: "Измерение поставщиков товаров и запчастей (SCD Type 1)"
+    columns:
+      - name: vendor_id
+        description: "Суррогатный первичный ключ поставщика (PK)"
+        tests:
+          - unique
+          - not_null
+      - name: vendor_natural_key
+        description: "Натуральный бизнес-ключ поставщика (NK)"
+        tests:
+          - unique
+          - not_null
+      - name: vendor_name
+        tests:
+          - not_null
+      - name: is_foreign_flag
+        tests:
+          - not_null
+  - name: dim_carrier
+    description: "Измерение транспортных компаний и внутренних перевозчиков (SCD Type 1)"
+    columns:
+      - name: carrier_id
+        description: "Суррогатный первичный ключ перевозчика (PK)"
+        tests:
+          - unique
+          - not_null
+      - name: carrier_natural_key
+        description: "Натуральный бизнес-ключ перевозчика (NK)"
+        tests:
+          - unique
+          - not_null
+      - name: carrier_name
+        tests:
+          - not_null
+      - name: is_external_carrier_flag
+        tests:
+          - not_null
+  - name: dim_employee
+    description: "Измерение сотрудников компании со стратегией SCD Type 2"
+    columns:
+      - name: employee_id
+        description: "Суррогатный первичный ключ версии сотрудника (PK)"
+        tests:
+          - unique
+          - not_null
+      
+      - name: employee_natural_key
+        description: "Натуральный бизнес-ключ сотрудника (NK)"
+        tests:
+          - not_null
+          # Проверка уникальности активной записи (current_row_indicator = true)
+          - unique:
+              name: unique_active_employee_natural_key
+              config:
+                where: "current_row_indicator = true"
+
+      - name: department
+        tests:
+          - not_null
+
+      - name: row_effective_date
+        tests:
+          - not_null
+
+      - name: row_expiration_date
+        tests:
+          - not_null
+
+      - name: current_row_indicator
+        tests:
+          - not_null
+  - name: brg_emp_hierarchy
+    description: "Таблица-мост (Closure Table) для разворачивания иерархии подчинения сотрудников"
+    tests:
+      # Проверка уникальности комбинации руководитель-подчиненный
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - manager_employee_id
+            - subordinate_employee_id
+    columns:
+      - name: manager_employee_id
+        description: "Натуральный бизнес-ключ руководителя (NK)"
+        tests:
+          - not_null
+          
+      - name: subordinate_employee_id
+        description: "Натуральный бизнес-ключ подчиненного (NK)"
+        tests:
+          - not_null
+          
+      - name: hierarchy_depth
+        tests:
+          - not_null
+
+      - name: is_top_level_flg
+        tests:
+          - not_null
+
+      - name: is_bottom_level_flg
+        tests:
+          - not_null
