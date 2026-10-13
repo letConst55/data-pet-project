@@ -318,3 +318,116 @@ models:
         description: "Итоговая стоимость позиции"
         tests:
           - not_null
+  - name: fct_service_events
+    description: "Транзакционная таблица фактов по выездам механиков к клиентам"
+    columns:
+      - name: service_event_sk
+        description: "Первичный ключ факта (Суррогатный)"
+        tests:
+          - unique
+          - not_null
+      - name: service_event_id
+        description: "Идентификатор события выезда (Degenerate Dimension)"
+        tests:
+          - unique
+          - not_null
+      - name: rental_id
+        description: "FK на идентификатор аренды (Degenerate Dimension)"
+        tests:
+          - not_null
+      - name: client_sk
+        description: "FK на dim_client (Суррогатный ключ)"
+        tests:
+          - not_null
+      - name: employee_sk
+        description: "FK на dim_employee (Суррогатный ключ механика)"
+        tests:
+          - not_null
+      - name: bike_sk
+        description: "FK на dim_bike (Суррогатный ключ)"
+        tests:
+          - not_null
+  - name: fct_procurement
+    description: "Накопительный снимок пайплайна поставок товаров и запчастей"
+    columns:
+      - name: procurement_sk
+        description: "Первичный ключ позиции в поставке (Суррогатный)"
+        tests:
+          - unique
+          - not_null
+      - name: shipment_id
+        description: "Идентификатор поставки (Degenerate Dimension)"
+        tests:
+          - not_null
+      - name: product_sk
+        description: "FK на dim_product"
+        tests:
+          - not_null
+      - name: vendor_sk
+        description: "FK на dim_vendor"
+        tests:
+          - not_null
+      - name: carrier_sk
+        description: "FK на dim_carrier"
+        tests:
+          - not_null
+      - name: arrival_location_sk
+        description: "FK на dim_location (Склад прибытия)"
+        tests:
+          - not_null
+  - name: fct_repair
+    description: "Накопительный снимок пайплайна внешних ремонтов байков клиентов"
+    columns:
+      - name: repair_sk
+        description: "Суррогатный первичный ключ факта"
+        tests:
+          - unique
+          - not_null
+      - name: repair_id
+        description: "Идентификатор ремонта (Degenerate Dimension)"
+        tests:
+          - not_null
+      - name: client_sk
+        description: "FK на dim_client (Суррогатный ключ)"
+        tests:
+          - not_null
+      - name: employee_sk
+        description: "FK на dim_employee (Суррогатный ключ)"
+        tests:
+          - not_null
+      - name: carrier_sk
+        description: "FK на dim_carrier"
+        tests:
+          - not_null
+      - name: location_shop_sk
+        description: "FK на dim_location (Локация магазина)"
+        tests:
+          - not_null
+      - name: location_garage_sk
+        description: "FK на dim_location (Локация мастерской)"
+        tests:
+          - not_null
+  - name: fct_inventory_snapshot
+    description: "Периодический снимок (Periodic Snapshot) складских остатков"
+    columns:
+      - name: inventory_snapshot_sk
+        description: "Первичный ключ снимка остатков"
+        tests:
+          - unique
+          - not_null
+      - name: product_sk
+        description: "FK на dim_product"
+        tests:
+          - not_null
+      - name: location_sk
+        description: "FK на dim_location"
+        tests:
+          - not_null
+      - name: week_year
+        description: "Календарная неделя снимка (Degenerate Dimension)"
+        tests:
+          - not_null
+      - name: product_quantity
+        description: "Количество товара на остатке"
+        tests:
+          - not_null
