@@ -17,7 +17,7 @@ final as (
         current_timestamp as dataflow_dttm,
 
         -- Суррогатный первичный ключ (PK) 
-        {{ dbt_utils.generate_surrogate_key(['product_id']) }} as product_id,
+        {{ dbt_utils.generate_surrogate_key(['product_id']) }} as product_sk,
         
         -- Натуральный бизнес-ключ (NK)
         product_id as product_natural_key,

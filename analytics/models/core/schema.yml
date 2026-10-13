@@ -4,7 +4,7 @@ models:
   - name: dim_client
     description: "Измерение клиентов со стратегией обновления SCD Type 2"
     columns:
-      - name: client_id
+      - name: client_sk
         description: "Суррогатный первичный ключ версии клиента (PK)"
         tests:
           # Уникальность и отсутствие NULL для суррогатного ключа по всей витрине
@@ -53,7 +53,7 @@ models:
   - name: dim_bike
     description: "Измерение парка байков (SCD Type 1)"
     columns:
-      - name: bike_id
+      - name: bike_sk
         description: "Суррогатный первичный ключ байка (PK)"
         tests:
           - unique
@@ -110,7 +110,7 @@ models:
   - name: dim_location
     description: "Согласованное ролевое измерение локаций бизнеса (SCD Type 1)"
     columns:
-      - name: location_id
+      - name: location_sk
         description: "Суррогатный первичный ключ локации (PK)"
         tests:
           - unique
@@ -149,7 +149,7 @@ models:
   - name: dim_product
     description: "Измерение товаров, запчастей и услуг (SCD Type 1)"
     columns:
-      - name: product_id
+      - name: product_sk
         description: "Суррогатный первичный ключ товара (PK)"
         tests:
           - unique
@@ -171,7 +171,7 @@ models:
   - name: dim_vendor
     description: "Измерение поставщиков товаров и запчастей (SCD Type 1)"
     columns:
-      - name: vendor_id
+      - name: vendor_sk
         description: "Суррогатный первичный ключ поставщика (PK)"
         tests:
           - unique
@@ -190,7 +190,7 @@ models:
   - name: dim_carrier
     description: "Измерение транспортных компаний и внутренних перевозчиков (SCD Type 1)"
     columns:
-      - name: carrier_id
+      - name: carrier_sk
         description: "Суррогатный первичный ключ перевозчика (PK)"
         tests:
           - unique
@@ -209,7 +209,7 @@ models:
   - name: dim_employee
     description: "Измерение сотрудников компании со стратегией SCD Type 2"
     columns:
-      - name: employee_id
+      - name: employee_sk
         description: "Суррогатный первичный ключ версии сотрудника (PK)"
         tests:
           - unique
@@ -268,5 +268,21 @@ models:
           - not_null
 
       - name: is_bottom_level_flg
+        tests:
+          - not_null
+  - name: fct_client_bike_rent
+    description: "Таблица фактов аренды байков (Accumulating Snapshot)"
+    columns:
+      - name: rental_id
+        description: "Первичный ключ факта (DD)"
+        tests:
+          - unique
+          - not_null
+      - name: client_sk
+        description: "FK на dim_client (Суррогатный ключ)"
+        tests:
+          - not_null
+      - name: bike_sk
+        description: "FK на dim_bike (Суррогатный ключ)"
         tests:
           - not_null

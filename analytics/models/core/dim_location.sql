@@ -16,7 +16,7 @@ final as (
         current_timestamp as dataflow_dttm,
 
         -- Суррогатный первичный ключ локации (PK)
-        {{ dbt_utils.generate_surrogate_key(['location_id']) }} as location_id,
+        {{ dbt_utils.generate_surrogate_key(['location_id']) }} as location_sk,
 
         -- Натуральный бизнес-ключ локации (NK)
         location_id::varchar as location_natural_key,

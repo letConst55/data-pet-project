@@ -6,7 +6,7 @@
 
 with version_chains as (
     select
-        client_id,
+        client_sk,
         client_natural_key,
         row_effective_date,
         row_expiration_date,

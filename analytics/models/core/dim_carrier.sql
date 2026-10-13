@@ -17,7 +17,7 @@ final as (
         current_timestamp as dataflow_dttm,
 
         -- Суррогатный первичный ключ (PK) по схеме
-        {{ dbt_utils.generate_surrogate_key(['carrier_id']) }} as carrier_id,
+        {{ dbt_utils.generate_surrogate_key(['carrier_id']) }} as carrier_sk,
         
         -- Натуральный бизнес-ключ (NK)
         carrier_id as carrier_natural_key,

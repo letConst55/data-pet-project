@@ -1,6 +1,6 @@
 -- Проверка адекватности технических характеристик и цен в справочнике байков
 select
-    bike_id,
+    bike_sk,
     bike_natural_key,
     model_year,
     hourse_power,

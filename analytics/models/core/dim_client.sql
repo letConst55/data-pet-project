@@ -3,7 +3,7 @@
 {{
     config(
         materialized='incremental',
-        unique_key='client_id',
+        unique_key='client_sk',
         schema='core'
     )
 }}
@@ -86,7 +86,7 @@ final_ as (
         current_timestamp as dataflow_dttm,
         -- У старой записи этот хэш совпадет с тем, что уже в таблице -> сработает UPDATE
         -- У новой записи хэш будет новым -> сработает INSERT
-        md5(client_natural_key || '_' || row_effective_date::varchar) as client_id,
+        md5(client_natural_key || '_' || row_effective_date::varchar) as client_sk,
         client_natural_key,
         full_name,
         gender,

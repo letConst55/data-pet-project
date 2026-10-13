@@ -9,9 +9,9 @@ renamed as (
         event_id,
         event_timestamp,
         
-        -- Идентификаторы
+        -- Идентификатор
         (payload->>'employee_id')::varchar as employee_id,
-        (payload->>'employee_natural_key')::varchar as employee_natural_key,
+        --(payload->>'employee_natural_key')::varchar as employee_natural_key,
         
         -- Персональные данные
         (payload->>'full_name')::varchar as full_name,

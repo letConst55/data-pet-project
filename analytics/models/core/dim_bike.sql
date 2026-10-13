@@ -17,10 +17,10 @@ final as (
         current_timestamp as dataflow_dttm,
 
         -- Суррогатный первичный ключ (PK) по схеме
-        {{ dbt_utils.generate_surrogate_key(['bike_id']) }} as bike_id,
+        {{ dbt_utils.generate_surrogate_key(['bike_id']) }} as bike_sk,
         
         -- Натуральный бизнес-ключ (NK)
-        bike_id as bike_natural_key,
+        bike_id::text as bike_natural_key,
 
         -- Атрибуты байка
         "WIN_number" as win_number,

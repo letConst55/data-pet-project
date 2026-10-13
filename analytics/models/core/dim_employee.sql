@@ -1,7 +1,7 @@
 {{
     config(
         materialized='incremental',
-        unique_key='employee_id',
+        unique_key='employee_sk',
         schema='core'
     )
 }}
@@ -16,8 +16,8 @@ with new_events as (
 
 -- Дедуплицируем новую пачку событий
 deduped_new_events as (
-    select distinct on (employee_natural_key, event_timestamp)
-        employee_natural_key,
+    select distinct on (employee_id, event_timestamp)
+        employee_id as employee_natural_key,
         full_name,
         phone,
         email,
@@ -88,7 +88,7 @@ final as (
         current_timestamp as dataflow_dttm,
 
         -- Суррогатный ключ (PK) - хэш от натурального ключа и даты начала версии
-        md5(employee_natural_key || '_' || row_effective_date::varchar) as employee_id,
+        md5(employee_natural_key || '_' || row_effective_date::varchar) as employee_sk,
         
         -- Натуральный ключ (NK)
         employee_natural_key,
