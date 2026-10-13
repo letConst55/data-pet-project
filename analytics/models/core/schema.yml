@@ -286,3 +286,35 @@ models:
         description: "FK на dim_bike (Суррогатный ключ)"
         tests:
           - not_null
+  - name: fct_shop_order
+    description: "Транзакционная таблица фактов по событиям покупок в магазине"
+    columns:
+      - name: shop_order_sk
+        description: "Первичный ключ позиции чека (PK)"
+        tests:
+          - unique
+          - not_null
+      - name: order_id
+        description: "Идентификатор чека (Degenerate Dimension)"
+        tests:
+          - not_null
+      - name: client_sk
+        description: "FK на dim_client"
+        tests:
+          - not_null
+      - name: employee_sk
+        description: "FK на dim_employee"
+        tests:
+          - not_null
+      - name: location_sk
+        description: "FK на dim_location"
+        tests:
+          - not_null
+      - name: product_sk
+        description: "FK на dim_product"
+        tests:
+          - not_null
+      - name: total_amount
+        description: "Итоговая стоимость позиции"
+        tests:
+          - not_null
