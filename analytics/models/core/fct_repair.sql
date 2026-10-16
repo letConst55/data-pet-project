@@ -63,13 +63,13 @@ final as (
     left join {{ ref('dim_client') }} c
       on r.client_id = c.client_natural_key
      and r.event_datetime >= c.row_effective_date
-     and r.event_datetime <= coalesce(c.row_expiration_date, '9999-12-31 23:59:59'::timestamp)
+     and r.event_datetime < coalesce(c.row_expiration_date, '9999-12-31 23:59:59'::timestamp)
 
     -- 2. SCD2 Lookup: Сотрудник (принимавший байк) на момент события
     left join {{ ref('dim_employee') }} e
       on r.employee_id = e.employee_natural_key
      and r.event_datetime >= e.row_effective_date
-     and r.event_datetime <= coalesce(e.row_expiration_date, '9999-12-31 23:59:59'::timestamp)
+     and r.event_datetime < coalesce(e.row_expiration_date, '9999-12-31 23:59:59'::timestamp)
 
     -- 3. SCD1 Lookup: Перевозчик
     left join {{ ref('dim_carrier') }} cr
@@ -86,5 +86,5 @@ final as (
 
 -- Отсекаем Unknown Members (если таковые проскочили)
 select * from final
-where client_sk is not null 
-  and employee_sk is not null
+--where client_sk is not null 
+  --and employee_sk is not null

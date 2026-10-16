@@ -66,5 +66,5 @@ final as (
 
 -- Фильтруем битые джойны
 select * from final
-where product_sk is not null 
-  and location_sk is not null
+--where product_sk is not null 
+  --and location_sk is not null

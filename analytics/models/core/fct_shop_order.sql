@@ -64,13 +64,13 @@ final as (
     left join {{ ref('dim_client') }} c
       on o.client_id = c.client_natural_key
      and o.event_timestamp >= c.row_effective_date
-     and o.event_timestamp <= coalesce(c.row_expiration_date, '9999-12-31 23:59:59'::timestamp)
+     and o.event_timestamp < coalesce(c.row_expiration_date, '9999-12-31 23:59:59'::timestamp)
 
     -- 2. SCD2 Lookup: Сотрудник на момент покупки
     left join {{ ref('dim_employee') }} e
       on o.employee_id = e.employee_natural_key
      and o.event_timestamp >= e.row_effective_date
-     and o.event_timestamp <= coalesce(e.row_expiration_date, '9999-12-31 23:59:59'::timestamp)
+     and o.event_timestamp < coalesce(e.row_expiration_date, '9999-12-31 23:59:59'::timestamp)
 
     -- 3. SCD1 Lookup: Локация магазина
     left join {{ ref('dim_location') }} l
@@ -82,4 +82,4 @@ final as (
 )
 
 select * from final
-where client_sk is not null
+--where client_sk is not null

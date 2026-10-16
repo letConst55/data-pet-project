@@ -61,13 +61,13 @@ final as (
     left join {{ ref('dim_client') }} c
       on s.client_id = c.client_natural_key
      and s.event_datetime >= c.row_effective_date
-     and s.event_datetime <= coalesce(c.row_expiration_date, '9999-12-31 23:59:59'::timestamp)
+     and s.event_datetime < coalesce(c.row_expiration_date, '9999-12-31 23:59:59'::timestamp)
 
     -- 2. SCD2 Lookup: Механик на момент выезда
     left join {{ ref('dim_employee') }} e
       on s.employee_id = e.employee_natural_key
      and s.event_datetime >= e.row_effective_date
-     and s.event_datetime <= coalesce(e.row_expiration_date, '9999-12-31 23:59:59'::timestamp)
+     and s.event_datetime < coalesce(e.row_expiration_date, '9999-12-31 23:59:59'::timestamp)
 
     -- 3. SCD1 Lookup: Байк
     left join {{ ref('dim_bike') }} b
@@ -77,5 +77,5 @@ final as (
 -- Временно фильтруем битые джойны из-за багов генератора
 select * 
 from final
-where client_sk is not null 
-  and employee_sk is not null
+--where client_sk is not null 
+  --and employee_sk is not null

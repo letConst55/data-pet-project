@@ -34,10 +34,16 @@ pkill -f "consumer_s3.py" 2>/dev/null
 pkill -f "airflow" 2>/dev/null
 sleep 2
 
-# 2. Очистка сырых таблиц ods_client_events и ods_mechanic_events (пока контейнер БД еще запущен)
-echo "🗄 Очистка таблиц ods_client_events и ods_mechanic_events в PostgreSQL..."
+# 2. Очистка сырых таблиц в PostgreSQL
+echo "🗄 Очистка всех ODS таблиц в PostgreSQL..."
 docker exec -i "$PG_CONTAINER" psql -U "$PG_USER" -d "$PG_DB" -c \
-    "TRUNCATE TABLE ${ODS_SCHEMA}.ods_client_events, ${ODS_SCHEMA}.ods_mechanic_events RESTART IDENTITY CASCADE;"
+    "TRUNCATE TABLE 
+        ${ODS_SCHEMA}.ods_client_events, 
+        ${ODS_SCHEMA}.ods_mechanic_events,
+        ${ODS_SCHEMA}.ods_hr_events,
+        ${ODS_SCHEMA}.ods_shop_events,
+        ${ODS_SCHEMA}.ods_inventory_events 
+    RESTART IDENTITY CASCADE;"
 
 # 3. Полный пересчет dbt моделей (поверх пустых ODS таблиц витрины очистятся)
 echo "🧱 Запуск dbt run --full-refresh..."

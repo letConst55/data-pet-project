@@ -73,5 +73,5 @@ final as (
 
 -- Временно отсекаем возможные битые ссылки (Unknown Members)
 select * from final
-where product_sk is not null 
-  and vendor_sk is not null
+--where product_sk is not null 
+  --and vendor_sk is not null
