@@ -45,30 +45,29 @@ class InventoryAPI:
         event_dt = self.state_mgr.state["current_sim_time"]
         inv = self.state_mgr.state["inventory"]
         
-        # Ищем товары и локации, где остатки упали ниже 10 штук
         needs_restock = []
         for prod_id, loc_data in inv.items():
             for loc_id, qty in loc_data.items():
                 if qty < 10:
-                    needs_restock.append((prod_id, loc_id))
+                    needs_restock.append((prod_id, loc_id, qty))
                     
         if not needs_restock:
-            return # На складах всего хватает
+            return
 
         shipment_id = f"shp_{self.state_mgr.get_counter('procurement')}"
         vendor_id = random.choice(self.VENDORS)
         carrier_id = random.choice(self.CARRIERS)
         
-        # Даты пайплайна поставки
         departure_dt = event_dt + timedelta(days=random.randint(1, 3))
         arrival_dt = departure_dt + timedelta(days=random.randint(2, 7))
         
-        for prod_id, loc_id in needs_restock[:5]: # Заказываем до 5 позиций за раз
-            order_qty = random.randint(20, 50)
+        for prod_id, loc_id, current_qty in needs_restock[:5]:
+            # ИСПРАВЛЕНИЕ: Динамический расчет закупки. 
+            # Компенсируем минус (если он есть) и добавляем резерв.
+            target_stock = random.randint(30, 60)
+            order_qty = target_stock + abs(current_qty) if current_qty < 0 else random.randint(20, 50)
             
-            # Пополняем виртуальный склад (в реальности склад пополнится по прибытии, 
-            # но для симуляции мы начисляем сразу, чтобы не усложнять отложенными событиями)
-            inv[prod_id][loc_id] = inv[prod_id].get(loc_id, 0) + order_qty
+            inv[prod_id][loc_id] = current_qty + order_qty
             
             payload = {
                 "shipment_id": shipment_id,

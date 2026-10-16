@@ -23,15 +23,16 @@ class SimulationState:
             },
             "clients": {},
             "bikes": {
-                "busy": [],           # bike_id, находящиеся в аренде
-                "in_repair": [],      # bike_id, находящиеся в мастерской
-                "mileage": {}         # bike_id -> текущий пробег
+                "busy": [],           
+                "in_repair": [],      
+                "mileage": {}         
             },
             "rentals": {
-                "pending": [],        # Забронированы, ожидают выдачи
-                "active": []          # На руках у клиентов
+                "pending": [],        
+                "active": []          
             },
-            "inventory": {}           # product_id -> {location_id: qty}
+            "inventory": {},
+            "active_repairs": []      # НОВОЕ: Инициализируем хранилище ремонтов
         }
 
     def advance_time(self, is_pandas_mode=False):
@@ -67,11 +68,12 @@ class SimulationState:
             "employees": self.state.get("employees", {}),
             "bikes": self.state["bikes"],
             "inventory": self.state["inventory"],
-            # Даты внутри rentals нужно перевести в ISO формат
             "rentals": {
                 "pending": [self._serialize_dates(r) for r in self.state["rentals"]["pending"]],
                 "active": [self._serialize_dates(r) for r in self.state["rentals"]["active"]]
-            }
+            },
+            # НОВОЕ: Сохраняем активные ремонты
+            "active_repairs": [self._serialize_dates(r) for r in self.state.get("active_repairs", [])]
         }
         temp_file = self.state_file + ".tmp"
         with open(temp_file, "w", encoding="utf-8") as f:
@@ -99,6 +101,8 @@ class SimulationState:
             "pending": [self._deserialize_dates(r) for r in data["rentals"]["pending"]],
             "active": [self._deserialize_dates(r) for r in data["rentals"]["active"]]
         }
+        # НОВОЕ: Восстанавливаем активные ремонты
+        self.state["active_repairs"] = [self._deserialize_dates(r) for r in data.get("active_repairs", [])]
 
     def _serialize_dates(self, obj):
         res = obj.copy()
@@ -109,14 +113,19 @@ class SimulationState:
 
     def _deserialize_dates(self, obj):
         res = obj.copy()
-        # Восстанавливаем конкретные поля с датами, если они есть
-        date_fields = ['planned_start_date', 'planned_end_date', 'fact_start_date']
-        dt_fields = ['booking_dt', 'dispense_dt']
+        # НОВОЕ: Добавлены поля дат из garage_api
+        date_fields = [
+            'planned_start_date', 'planned_end_date', 'fact_start_date',
+            'transportation_start_date', 'repair_start_date', 'repair_end_date', 'transportation_end_date'
+        ]
+        dt_fields = ['booking_dt', 'dispense_dt', 'planned_finish_dt']
+        
         for k in date_fields:
             if k in res and res[k]: res[k] = date.fromisoformat(res[k])
         for k in dt_fields:
             if k in res and res[k]: res[k] = datetime.fromisoformat(res[k])
         return res
+    
     def get_counter(self, entity_type):
         """Безопасная генерация инкрементальных ID (автосоздание ключа, если его нет)"""
         if entity_type not in self.state["counters"]:
@@ -125,16 +134,34 @@ class SimulationState:
         return self.state["counters"][entity_type]
 
     def get_employee(self, req_flag, location_id=None):
-        """Возвращает случайного активного сотрудника с нужным допуском (и опционально на нужной локации)"""
-        eligible = []
+        """Возвращает случайного активного сотрудника с нужным допуском"""
+        eligible_local = []
+        eligible_anywhere = []
+        
         for eid, data in self.state.get("employees", {}).items():
             if not data.get("is_active"): continue
-            if not data.get(req_flag): continue
-            if location_id and data.get("assigned_location_id") != location_id: continue
-            eligible.append(eid)
             
-        # Если на локации никого нет (например, все перевелись), берем любого подходящего из компании
-        if not eligible and location_id:
-            return self.get_employee(req_flag, location_id=None)
+            # Если допуск есть, добавляем в глобальный список
+            if data.get(req_flag):
+                eligible_anywhere.append(eid)
+                # Если локация совпадает, добавляем в локальный
+                if location_id and data.get("assigned_location_id") == location_id:
+                    eligible_local.append(eid)
+                    
+        # Приоритет 1: Сотрудник на нужной локации
+        if eligible_local:
+            return random.choice(eligible_local)
             
-        return random.choice(eligible) if eligible else "emp_sys_fallback"
+        # Приоритет 2: Сотрудник с нужным допуском на любой другой локации (командировка)
+        if eligible_anywhere:
+            return random.choice(eligible_anywhere)
+            
+        # Приоритет 3: Фолбэк на CEO (он всегда инициализируется первым)
+        ceo_list = [eid for eid, data in self.state.get("employees", {}).items() 
+                    if data.get("is_active") and data.get("manager_employee_id") is None]
+        
+        if ceo_list:
+            return ceo_list[0]
+            
+        # Если вообще никого нет (баг инициализации)
+        return "emp_sys_fallback"

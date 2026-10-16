@@ -28,6 +28,12 @@ class HrAPI:
     def _create_employee(self, dept, role, grade, loc, manager_id, flags):
         emp_id = f"emp_{self.state_mgr.get_counter('employee')}"
         gender = random.choice(["Male", "Female"])
+        
+        # ИСПРАВЛЕНИЕ: Сдвигаем время на 1 секунду для каждого события HR.
+        # Это гарантирует 100% уникальность event_timestamp для SCD2 окон.
+        from datetime import timedelta
+        self.state_mgr.state["current_sim_time"] += timedelta(seconds=1)
+        
         payload = {
             "employee_id": emp_id,
             "employee_natural_key": f"NK-{emp_id.upper()}",
@@ -43,7 +49,7 @@ class HrAPI:
             "can_field_service_flg": flags.get("field", False),
             "can_workshop_repair_flg": flags.get("repair", False),
             "can_sell_retail_flg": flags.get("sell", False),
-            "is_active": True # Техническое поле для симуляции, чтобы не назначать задачи уволенным
+            "is_active": True 
         }
         self.state_mgr.state["employees"][emp_id] = payload
         self._send(payload)

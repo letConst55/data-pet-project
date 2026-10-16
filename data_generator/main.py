@@ -35,7 +35,7 @@ def load_csv_safe(relative_path):
 def main(mode="pandas", duration_seconds=60):
     print(f"Запуск оркестратора симуляции (Режим: {mode.upper()})")
     
-    # 1. Загрузка справочников (Сотрудники больше не грузятся из хардкода)
+    # 1. Загрузка справочников
     try:
         df_bikes = load_csv_safe('data/df_bikes.csv')
         BIKES = df_bikes['bike_id'].tolist()
@@ -43,6 +43,11 @@ def main(mode="pandas", duration_seconds=60):
 
         df_locations = load_csv_safe('data/df_locations.csv')
         LOCATIONS = df_locations['location_id'].tolist()
+        
+        # ИСПРАВЛЕНИЕ: Разделяем локации по их бизнес-смыслу, приводя флаги к строке для безопасности
+        RENT_LOCATIONS = df_locations[df_locations['is_warehouse_flag'].astype(str).str.lower().isin(['true', '1'])]['location_id'].tolist()
+        GARAGE_LOCATIONS = df_locations[df_locations['is_garage_flag'].astype(str).str.lower().isin(['true', '1'])]['location_id'].tolist()
+        SHOP_LOCATIONS = df_locations[df_locations['is_shop_flag'].astype(str).str.lower().isin(['true', '1'])]['location_id'].tolist()
 
         df_carriers = load_csv_safe('data/dim_carrier.csv')
         CARRIERS = df_carriers['carrier_id'].tolist()
@@ -62,12 +67,13 @@ def main(mode="pandas", duration_seconds=60):
     sim_state = SimulationState(state_file=state_file_path)
     publisher = EventPublisher(mode=mode)
     
-    # 3. Инициализация модулей (Обрати внимание: EMPLOYEES больше не передаются)
-    hr_api = HrAPI(sim_state, publisher, LOCATIONS)
-    rent_api = RentAPI(sim_state, publisher, BIKES, LOCATIONS)
-    garage_api = GarageAPI(sim_state, publisher, LOCATIONS, CARRIERS, BIKE_MODELS)
-    shop_api = ShopAPI(sim_state, publisher, LOCATIONS, PRODUCTS)
-    inventory_api = InventoryAPI(sim_state, publisher, LOCATIONS, PRODUCTS, VENDORS, CARRIERS)
+    # 3. Инициализация модулей 
+    # ИСПРАВЛЕНИЕ: Передаем отфильтрованные списки в классы
+    hr_api = HrAPI(sim_state, publisher, LOCATIONS) # HR работает по всем локациям
+    rent_api = RentAPI(sim_state, publisher, BIKES, RENT_LOCATIONS) # Только точки выдачи
+    garage_api = GarageAPI(sim_state, publisher, GARAGE_LOCATIONS, CARRIERS, BIKE_MODELS) # Только мастерские
+    shop_api = ShopAPI(sim_state, publisher, SHOP_LOCATIONS, PRODUCTS) # Только магазины
+    inventory_api = InventoryAPI(sim_state, publisher, LOCATIONS, PRODUCTS, VENDORS, CARRIERS) # Снапшоты бьют по всем
     
     start_time = time.time()
     events_counter = 0

@@ -35,6 +35,9 @@ class GarageAPI:
 
         event_dt = self.state_mgr.state["current_sim_time"]
         
+        # ИСПРАВЛЕНИЕ: Выбираем локацию (мастерскую) выезда
+        location_id = random.choice(self.LOCATIONS)
+        
         payload = {
             "service_event_id": f"se_{self.state_mgr.get_counter('repair')}",
             "rental_id": rental_ctx["rental_id"],
@@ -42,7 +45,9 @@ class GarageAPI:
             "bike_id": rental_ctx["bike_id"],
             "event_date": event_dt.date().isoformat(),
             "event_datetime": event_dt.isoformat(),
-            "employee_id": self.state_mgr.get_employee("can_field_service_flg"),
+            # ИСПРАВЛЕНИЕ: Добавили локацию и ищем механика именно на ней
+            "location_id": location_id, 
+            "employee_id": self.state_mgr.get_employee("can_field_service_flg", location_id),
             "issue_category": random.choice(["dead_battery", "flat_tire", "engine_check", "lost_key"]),
             "resolution_action": random.choice(["fixed_on_site", "bike_replaced", "towed_to_shop"]),
             "service_cost_usd": round(random.uniform(20.0, 100.0), 2),

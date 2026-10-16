@@ -12,6 +12,7 @@ renamed as (
         (payload->>'rental_id')::varchar as rental_id,
         (payload->>'client_id')::varchar as client_id,
         (payload->>'bike_id')::varchar as bike_id,
+        (payload->>'location_id')::varchar as location_id,
         (payload->>'event_date')::date as event_date,
         (payload->>'event_datetime')::timestamp as event_datetime, -- Новое
         (payload->>'employee_id')::varchar as employee_id,         -- Изменено
