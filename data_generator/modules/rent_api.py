@@ -25,6 +25,29 @@ class RentAPI:
         mode_tag = "LIVE" if self.state_mgr.state["is_realtime"] else "HIST"
         print(f"[{mode_tag} | {event_dt.isoformat()[:16]}] [{topic}] {event_type} -> {entity_key}", flush=True)
 
+    def _get_max_score_by_mileage(self, mileage):
+        """Возвращает максимально возможную оценку состояния байка на основе его пробега"""
+        if mileage >= 65000:
+            return 1
+        elif mileage >= 50000:
+            return 2
+        elif mileage >= 40000:
+            return 3
+        elif mileage >= 32000:
+            return 4
+        elif mileage >= 25000:
+            return 5
+        elif mileage >= 18000:
+            return 6
+        elif mileage >= 12000:
+            return 7
+        elif mileage >= 7000:
+            return 8
+        elif mileage >= 3000:
+            return 9
+        else:
+            return 10
+
     def generate_client(self):
         clients_dict = self.state_mgr.state["clients"]
         
@@ -75,7 +98,8 @@ class RentAPI:
         self.state_mgr.state["bikes"]["busy"].append(bike_id)
 
         planned_start_date = (booking_dt + timedelta(days=random.randint(0, 5))).date()
-        rental_days = random.randint(1, 14)
+        # Ограничение максимального срока аренды 28 днями
+        rental_days = random.randint(1, 28)
         planned_end_date = planned_start_date + timedelta(days=rental_days)
 
         rental_price_daily = random.choice([15.00, 20.00, 25.00])
@@ -116,7 +140,10 @@ class RentAPI:
 
         bike_id = rental_ctx["bike_id"]
         start_mileage = self.state_mgr.state["bikes"]["mileage"][bike_id]
-        pre_score = random.randint(7, 10)
+        
+        # Оценка ограничена пробегом
+        max_score = self._get_max_score_by_mileage(start_mileage)
+        pre_score = random.randint(max(1, max_score - 3), max_score)
 
         # Сначала генерируем локацию выдачи
         location_dis_id = random.choice(self.LOCATIONS)
@@ -165,7 +192,10 @@ class RentAPI:
 
         pre_score = rental_ctx["pre_rental_condition_score"]
         wear_drop = random.choices([1, 2, 3], weights=[70, 20, 10], k=1)[0]
-        post_score = max(1, pre_score - wear_drop)
+        
+        # Итоговая оценка ограничена новым пробегом
+        max_post_score = self._get_max_score_by_mileage(end_mileage)
+        post_score = min(max(1, pre_score - wear_drop), max_post_score)
 
         helmet_damage_flag = random.choices([False, True], weights=[95, 5], k=1)[0]
 
@@ -177,7 +207,34 @@ class RentAPI:
 
         total_amount = round(max(0.0, (actual_days * rental_ctx["rental_price_daily"]) - rental_ctx["discount_amount"] + deposit_deducted), 2)
 
-        self.state_mgr.state["bikes"]["busy"].remove(bike_id)
+        location_return_id = random.choice(self.LOCATIONS)
+
+        # Логика непрерывного продления (чтобы не падал dbt тест)
+        if rent_extend_flag:
+            new_rental_id = f"rnt_{self.state_mgr.get_counter('rental')}"
+            new_rental_days = random.randint(1, 28)
+            new_planned_end = fact_end_date + timedelta(days=new_rental_days)
+            
+            new_rental_ctx = {
+                "rental_id": new_rental_id,
+                "client_id": rental_ctx["client_id"],
+                "bike_id": bike_id,
+                "booking_dt": return_dt,
+                "planned_start_date": fact_end_date,
+                "planned_end_date": new_planned_end,
+                "rental_price_daily": rental_ctx["rental_price_daily"],
+                "deposit_amount": 200.00,
+                "discount_amount": random.choice([0.00, 0.00, 5.00, 10.00])
+            }
+            self.state_mgr.state["rentals"]["pending"].append(new_rental_ctx)
+            
+            payload_booking = new_rental_ctx.copy()
+            payload_booking["location_id"] = location_return_id
+            payload_booking["planned_start_date"] = fact_end_date.isoformat()
+            payload_booking["planned_end_date"] = new_planned_end.isoformat()
+            self._send('client_app_events', 'rental_booked', payload_booking)
+        else:
+            self.state_mgr.state["bikes"]["busy"].remove(bike_id)
 
         location_return_id = random.choice(self.LOCATIONS)
 
