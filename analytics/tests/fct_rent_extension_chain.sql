@@ -1,31 +1,36 @@
 with max_date as (
-    -- Находим самую свежую дату в витрине, чтобы отступить от нее назад
     select max(fact_end_date) as current_max_date
     from {{ ref('fct_client_bike_rent') }}
 ),
-extended as (
+-- Подтягиваем натуральный ключ клиента из dim_client
+fct_with_nk as (
     select 
-        rental_id,
-        client_sk,
-        bike_sk,
-        fact_end_date
-    from {{ ref('fct_client_bike_rent') }}
+        f.rental_id,
+        f.client_sk,
+        c.client_natural_key, -- Натуральный ключ
+        f.bike_sk,
+        f.fact_end_date,
+        f.rent_extend_flag,
+        coalesce(f.fact_start_date, f.planned_start_date) as start_date
+    from {{ ref('fct_client_bike_rent') }} f
+    left join {{ ref('dim_client') }} c on f.client_sk = c.client_sk
+),
+extended as (
+    select *
+    from fct_with_nk
     where rent_extend_flag = true
-      -- Проверяем только "устоявшиеся" данные (откидываем последний день симуляции)
-      and fact_end_date < (select current_max_date from max_date) 
+      and fact_end_date < (select current_max_date from max_date)
 ),
 subsequent as (
-    select 
-        client_sk,
-        bike_sk,
-        coalesce(fact_start_date, planned_start_date) as start_date
-    from {{ ref('fct_client_bike_rent') }}
+    select *
+    from fct_with_nk
 )
 
 select e.rental_id
 from extended e
 left join subsequent s
-  on e.client_sk = s.client_sk
+  -- ИСПРАВЛЕНИЕ: Ищем следующую аренду по неизменному натуральному ключу
+  on e.client_natural_key = s.client_natural_key 
  and e.bike_sk = s.bike_sk
  and s.start_date >= e.fact_end_date
-where s.client_sk is null
+where s.rental_id is null
