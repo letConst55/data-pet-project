@@ -229,6 +229,9 @@ class RentAPI:
             self.state_mgr.state["rentals"]["pending"].append(new_rental_ctx)
             
             payload_booking = new_rental_ctx.copy()
+
+            del payload_booking["booking_dt"]
+            
             payload_booking["location_id"] = location_return_id
             payload_booking["planned_start_date"] = fact_end_date.isoformat()
             payload_booking["planned_end_date"] = new_planned_end.isoformat()

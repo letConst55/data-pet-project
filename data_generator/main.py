@@ -68,12 +68,14 @@ def main(mode="pandas", duration_seconds=60):
     publisher = EventPublisher(mode=mode)
     
     # 3. Инициализация модулей 
-    # ИСПРАВЛЕНИЕ: Передаем отфильтрованные списки в классы
-    hr_api = HrAPI(sim_state, publisher, LOCATIONS) # HR работает по всем локациям
-    rent_api = RentAPI(sim_state, publisher, BIKES, RENT_LOCATIONS) # Только точки выдачи
-    garage_api = GarageAPI(sim_state, publisher, GARAGE_LOCATIONS, CARRIERS, BIKE_MODELS) # Только мастерские
-    shop_api = ShopAPI(sim_state, publisher, SHOP_LOCATIONS, PRODUCTS) # Только магазины
-    inventory_api = InventoryAPI(sim_state, publisher, LOCATIONS, PRODUCTS, VENDORS, CARRIERS) # Снапшоты бьют по всем
+    hr_api = HrAPI(sim_state, publisher, LOCATIONS) 
+    rent_api = RentAPI(sim_state, publisher, BIKES, RENT_LOCATIONS) 
+    
+    # ИСПРАВЛЕНИЕ: Передаем SHOP_LOCATIONS последним аргументом
+    garage_api = GarageAPI(sim_state, publisher, GARAGE_LOCATIONS, CARRIERS, BIKE_MODELS, SHOP_LOCATIONS) 
+    
+    shop_api = ShopAPI(sim_state, publisher, SHOP_LOCATIONS, PRODUCTS) 
+    inventory_api = InventoryAPI(sim_state, publisher, LOCATIONS, PRODUCTS, VENDORS, CARRIERS)
     
     start_time = time.time()
     events_counter = 0

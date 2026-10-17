@@ -5,10 +5,11 @@ from faker import Faker
 fake = Faker()
 
 class GarageAPI:
-    def __init__(self, sim_state, publisher, locations_list, carriers_list, bike_models_list):
+    def __init__(self, sim_state, publisher, locations_list, carriers_list, bike_models_list, shop_locations_list):
         self.state_mgr = sim_state
         self.publisher = publisher
-        self.LOCATIONS = locations_list
+        self.LOCATIONS = locations_list # Здесь лежат гаражи (для ремонта и выездов)
+        self.SHOP_LOCATIONS = shop_locations_list # Здесь лежат магазины (для приемки)
         self.CARRIERS = carriers_list
         self.BIKE_MODELS = bike_models_list
         
@@ -71,7 +72,7 @@ class GarageAPI:
         transport_end = repair_end + timedelta(hours=random.randint(2, 24))
 
         # Сначала выбираем локацию магазина
-        location_shop_id = random.choice(self.LOCATIONS)
+        location_shop_id = random.choice(self.SHOP_LOCATIONS)
 
         repair_ctx = {
             "repair_id": repair_id,
