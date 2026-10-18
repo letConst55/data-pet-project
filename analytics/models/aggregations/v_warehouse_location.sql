@@ -1,0 +1,18 @@
+{{
+    config(
+        materialized='view',
+        schema='aggregations'
+    )
+}}
+
+select
+    location_sk as warehouse_location_sk, -- Ролевой ключ
+    location_natural_key,
+    title,
+    full_address,
+    post_index,
+    is_garage_flag,
+    is_shop_flag,
+    is_warehouse_flag
+from {{ ref('dim_location') }}
+where is_warehouse_flag = true

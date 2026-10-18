@@ -16,6 +16,11 @@ Airflow http://localhost:8080/
  - логин: admin
  - пароль: YuxUPBsY9FGeSSPd
 
+Grafana http://localhost:3000/
+
+ - логин: admin
+ - пароль: 1234
+
 
 Полностью пересчитать все dbt модели и тесты проекта (находясь в папке analytics)
 
