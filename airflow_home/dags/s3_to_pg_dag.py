@@ -33,6 +33,8 @@ def truncate_audit_results():
     conn = psycopg2.connect(dbname="pet_dwh", user="pet_user", password="pet_password", host="localhost", port="5432")
     cur = conn.cursor()
     cur.execute("CREATE SCHEMA IF NOT EXISTS audit;")
+    
+    # Таблица для тестов
     cur.execute("""
         CREATE TABLE IF NOT EXISTS audit.dbt_test_results (
             run_id VARCHAR(255),
@@ -44,7 +46,21 @@ def truncate_audit_results():
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
     """)
+    
+    # НОВОЕ: Таблица для моделей
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS audit.dbt_model_results (
+            run_id VARCHAR(255),
+            model_name VARCHAR(255),
+            status VARCHAR(50),
+            execution_time_sec NUMERIC(10, 2),
+            run_started_at TIMESTAMP,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+    """)
+    
     cur.execute("TRUNCATE TABLE audit.dbt_test_results;")
+    cur.execute("TRUNCATE TABLE audit.dbt_model_results;") # Очищаем и модели тоже
     conn.commit()
     cur.close()
     conn.close()
