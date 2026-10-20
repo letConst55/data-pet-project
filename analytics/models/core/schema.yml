@@ -278,6 +278,10 @@ models:
         tests:
           - unique
           - not_null
+      - name: rental_junk_sk
+        description: "FK на dim_rental_junk"
+        tests:
+          - not_null
       - name: client_sk
         description: "FK на dim_client (Суррогатный ключ)"
         tests:
@@ -430,4 +434,12 @@ models:
       - name: product_quantity
         description: "Количество товара на остатке"
         tests:
+          - not_null
+  - name: dim_rental_junk
+    description: "Мусорное измерение (Junk Dimension) для комбинаций флагов аренды"
+    columns:
+      - name: rental_junk_sk
+        description: "Первичный ключ комбинации флагов (PK)"
+        tests:
+          - unique
           - not_null

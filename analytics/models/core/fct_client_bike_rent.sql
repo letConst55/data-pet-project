@@ -100,10 +100,17 @@ pipeline as (
         
         -- Детали аренды
         d.helmets_issued_qty,
-        r.helmet_damage_flag,
-        r.field_service_flag,
-        r.rent_extend_flag,
-        r.bike_exchange_flag,
+
+
+        -- FK: Мусорное измерение флагов возврата (Junk Dimension)
+        -- Используем coalesce(..., false), так как для еще не возвращенных байков (NULL) 
+        -- мы логически предполагаем отсутствие флагов проблем
+        {{ dbt_utils.generate_surrogate_key([
+            'coalesce(r.helmet_damage_flag, false)',
+            'coalesce(r.field_service_flag, false)',
+            'coalesce(r.rent_extend_flag, false)',
+            'coalesce(r.bike_exchange_flag, false)'
+        ]) }} as rental_junk_sk,
         
         -- Техническое поле для инкрементальной загрузки: 
         -- запоминаем максимальный timestamp из всех трех событий пайплайна
