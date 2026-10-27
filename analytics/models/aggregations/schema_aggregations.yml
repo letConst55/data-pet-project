@@ -1,0 +1,21 @@
+version: 2
+
+models:
+  - name: stats_by_clients
+    description: "Широкая плоская витрина (OBT) профиля клиента, объединяющая метрики аренды, покупок и ремонтов. Используется для сегментации и Customer 360 аналитики."
+    columns:
+      - name: client_natural_key
+        description: "Натуральный бизнес-ключ клиента"
+        tests:
+          - unique
+          - not_null
+      - name: amount_across_service
+        description: "Общая выручка со всех доменов сервиса"
+        tests:
+          - not_null
+      - name: trouble_free_days_ratio
+        description: "North Star Metric: Доля аренд без повреждений и поломок"
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 1

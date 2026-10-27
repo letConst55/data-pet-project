@@ -1,0 +1,30 @@
+# Changelog
+
+## 13.0.6
+
+- Chore: Pin golangci-lint to 2.15.0 in development dependencies and CI/CD pipelines
+
+## 13.0.5
+
+- Fix security vulnerabilities (CVE-2026-102276, CVE-2026-102278, CVE-2026-102990)
+
+## 13.0.4
+
+- Fix security vulnerabilities (CVE-2026-84445)
+
+## 13.0.3
+
+- ⚙️ Chore: Update dependencies
+
+## 13.0.2
+
+- Bump go v1.26.7 and grafana-plugin-sdk-go v0.296.4 ([#70](https://github.com/grafana/grafana-jaeger-datasource/pull/70))
+- Dependency updates ([#72](https://github.com/grafana/grafana-jaeger-datasource/pull/72))
+
+## 13.0.1
+
+- Sync PRs from grafana/grafana and bump frontend dependencies ([#49](https://github.com/grafana/grafana-jaeger-datasource/pull/49))
+
+## 13.0.0
+
+- Initial release.

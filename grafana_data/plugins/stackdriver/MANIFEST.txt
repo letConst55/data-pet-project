@@ -7,11 +7,11 @@ Hash: SHA512
   "signedByOrg": "grafana",
   "signedByOrgName": "Grafana Labs",
   "plugin": "stackdriver",
-  "version": "12.6.3",
-  "time": 1791998461008,
+  "version": "12.6.4",
+  "time": 1792583050569,
   "keyId": "7e4d0c6a708866e7",
   "files": {
-    "module.js": "6ac8f15dcf3ecec4f0fc944de0e5ec9370f06e44d0d23aee0e37088e0574ad76",
+    "module.js": "c6a6b72aa2ad91ef074b98097269d5556f6c40dcffff66c37a864d8c86b3ef64",
     "dashboards/dataprocessing-monitoring.json": "cecf73e9162ae2ff2630afb24949188e44b479da669a4d8402de3e6a414f2d89",
     "dashboards/cloudsql-mysql-monitoring.json": "e9d36d97aa8aa5c50d7b74f92b206fb3b595a1e835da8641230a2e699e9e70b8",
     "dashboards/cloudsql-postgre-monitoring.json": "3602c16fe834a6d60d95e1ae00b36837b1cfd833d9420f6d3b75c7d0847ef2c2",
@@ -27,13 +27,13 @@ Hash: SHA512
     "dashboards/cloudsql-monitoring.json": "9006352db2885cdfd2d05af663aa301c921a838667bd172a24b453d7fdfa6496",
     "dashboards/network-tcp-loadbalancer-monitoring.json": "621b7bed1b096142b683d6aea835505e8a5f65c051f1adbfc07f5cd12442effc",
     "dashboards/https-loadbalancer-monitoring.json": "80911f4775c5a06d61038305531ed016eaf9e1334525a5b87dcf5a84287ae1a1",
-    "gpx_grafana_cloudmonitoring_datasource_linux_arm64": "999d646cec51f0e8381c06e45e7e64d9607c34ee4ccaa3741d057674aa8c39ee",
+    "gpx_grafana_cloudmonitoring_datasource_linux_arm64": "553aa30e170c27f97445ba286acc47adc05284eaa13f292a5bd97dfce420845c",
     "go_plugin_build_manifest": "49d152cf4a88b373117f27fbcedead557a2f7353bb8b18b0a3870690b9d95cfd",
     "LICENSE": "8486a10c4393cee1c25392769ddd3b2d6c242d6ec7928e1414efff7dfb2f07ef",
     "README.md": "04e86be55517e6c171e9cb98fbd884e82bd488d060ef42e8ab15cebcc9eb8cc1",
-    "CHANGELOG.md": "704380ba91d8669c22a03a2f1dc87d6856d6541ad7bb9e8eab458a464a9d7e33",
+    "CHANGELOG.md": "ac085dd17b4764614aaa1f37ab160fd7b95cbdd60a5a1bf1ccc2afa7798072b3",
     "module.js.map": "4d776f46f2a20f1eecb63bb0ef45e6e18c176dfe33f8ba97de1a8131673a3a14",
-    "plugin.json": "7e16bd2d49414e14e88297a20cb6af416a864f523608fc0c0f282fc1d1bd2e40",
+    "plugin.json": "266d6b35cc8796a8a1d2abcb3e966a4ee9fd1f78efe6d1d8efaa4ce70ef6aaa2",
     "img/cloud_monitoring_logo.svg": "99e2d222ca4e0a49ab5266e279bee86546fa6c50b97d4730c24d8bb015909642",
     "schema/v0alpha1.json": "263a21f61d81dd89f65b545559ae35ed40b8d6ae1b185bafa55c52b5037aa00a",
     "schema/dsconfig.json": "e7c6b02d1235272a84c4fc7bc452c715f1be7309305794061b20c2d173424eb9",
@@ -43,11 +43,11 @@ Hash: SHA512
 }
 -----BEGIN PGP SIGNATURE-----
 
-wsA9BAETCgBtBYJqz7n9CRB+TQxqcIhm50UUAAAAAAAcACBzYWx0QG5vdGF0
-aW9ucy5vcGVucGdwanMub3JnFVD7W81x68KmSoLy6hezFjn5nkue18BARtpa
-6NIZRNMWIQTzOyW2kQdOhGNlcPN+TQxqcIhm5wAANQsCCKdLywWfzuc92uLN
-XAR9vgXB1ru31xgMbdKAclQIkQmBaMUFp3CWO6ez1DrUXgcIVnMTlx/x/qUG
-Si1Fs5FDxpkDAgiobDMKh/i9KNnZzkD7Zg87EXn/CaRQB1SEpoAs+48vyXp3
-n1bVRKqnNg6hAuBuhKtnD+fnWFORqhOUCGaLcHyr4w==
-=gifS
+wsA+BAETCgBtBYJq2KWKCRB+TQxqcIhm50UUAAAAAAAcACBzYWx0QG5vdGF0
+aW9ucy5vcGVucGdwanMub3JnWXCd3Osqgr4JvdhD9jFc5cVvIhl5zyDI2Cla
+bN0PML0WIQTzOyW2kQdOhGNlcPN+TQxqcIhm5wAAltYCCQH5TWuNFgh30Cxd
+SLi7PG58qVOelrwzoA2T3TaZ1xV/x5cKsZolzn4IbIyU1RxmoEhVraJGMzhx
+MRFiJkfRbYgf/QIInHEOwtuG5l7uXuWdQEis98wEJcEcUxZzhKAjrSFyubEu
+trqTohqoQtvsMSm29sI16SLGITzurxIzTqFjknpofp4=
+=RUR4
 -----END PGP SIGNATURE-----

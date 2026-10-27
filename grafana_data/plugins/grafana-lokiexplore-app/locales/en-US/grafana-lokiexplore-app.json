@@ -21,7 +21,8 @@
         },
         "config": {
           "default-columns-description": "Configure the fields to show by default. These can replace the full log line or be displayed next to it.",
-          "text-beta": "Beta"
+          "text-beta": "Beta",
+          "text-loading": "Loading..."
         },
         "default-columns": {
           "text-loading": "Loading..."
@@ -91,7 +92,8 @@
       "service-selection": {
         "config": {
           "service-selection-description": "Configure which labels and label values appear by default on the Logs Drilldown landing page.",
-          "text-beta": "Beta"
+          "text-beta": "Beta",
+          "text-loading": "Loading..."
         },
         "context": {
           "text-loading": "Loading..."
@@ -293,6 +295,7 @@
         },
         "text": {
           "add-to-dashboard": "Add to Dashboard",
+          "add-to-notebook": "Add to Notebook",
           "ai": "AI",
           "ai-divider": "ai_divider",
           "create-alert": "Create alert",
@@ -340,6 +343,9 @@
     "service-scene": {
       "add-to-dashboard-modal": {
         "title": "Add to Dashboard"
+      },
+      "add-to-notebook-modal": {
+        "title": "Add to Notebook"
       },
       "alert": {
         "invalid-labels-selected": "Invalid labels selected",
@@ -724,6 +730,19 @@
           "copy-link-to-log-line": "Copy link to log line"
         },
         "text-loading": "Loading..."
+      },
+      "logs-query-footer": {
+        "details-title": "Query details",
+        "error": "Error",
+        "loading": "Loading",
+        "no-data": "No data",
+        "notice-link": "Learn more",
+        "notices": "Notices",
+        "stats": "Stats",
+        "streaming": "Streaming",
+        "total-bytes-processed": "Total bytes processed",
+        "total-bytes-processed-tooltip": "Bytes processed by the logs query.",
+        "view-details": "View details"
       },
       "logs-volume": {
         "logs-volume-actions": {
