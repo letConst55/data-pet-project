@@ -7,29 +7,29 @@ Hash: SHA512
   "signedByOrg": "grafana",
   "signedByOrgName": "Grafana Labs",
   "plugin": "zipkin",
-  "version": "12.4.11",
-  "time": 1792596179056,
+  "version": "12.4.12",
+  "time": 1793191805498,
   "keyId": "7e4d0c6a708866e7",
   "files": {
-    "module.js": "a824567bf1944013d26b5b1af0ece8f1506233e21050771d5acbc7659fe07ca5",
-    "go_plugin_build_manifest": "76a950e593c572795b2064436320037dcff70d4c3eb6cb356a5920f8b9a30178",
-    "LICENSE": "8486a10c4393cee1c25392769ddd3b2d6c242d6ec7928e1414efff7dfb2f07ef",
-    "mocks/mockJsonResponse.json": "3e137e1f0ce16b4d70619c9859ab6b289f76df8813c82f3fa5ab6b6e0dcb2329",
     "README.md": "56bc2bf2841ff1ade347627ffa676e759d2c2c479b1018aa888b2848d4f70423",
-    "CHANGELOG.md": "f3e544061004498289b7694c20582849c1fdc120e2708807dbe5b0ee188405a5",
-    "module.js.map": "5c03ee40231951c9a780e2b1a6454cf67fcd13186d72139f53d2446c0d67ca0f",
-    "plugin.json": "bb087dad5b5ea954357dc664200538941e8eec7a954cbb2aacc77b7d2746963c",
+    "CHANGELOG.md": "01816d01fa80b8a51a51768efbf7e9a9a8a9428477af893dbbb665e48d54acc5",
+    "plugin.json": "07ce8dea02307339c8d509fde61a90c63eedc0ae952e6c4d8fc34d561dfd9386",
+    "module.js": "a59840ae36a0df0731a6b043a4651a6c58163b621ed65cc459b6cc1d376a284e",
     "img/zipkin-logo.svg": "c3b9961675ddcf9e3359298a0192da8e4030ddb7654da6fb203ffec361b1d717",
-    "gpx_grafana-zipkin-datasource_linux_arm64": "df3b0d2c76f0eb22f98e1e72a7f8e9a77c27bbbcd3dbc934e8dec7fc4a0405ed"
+    "mocks/mockJsonResponse.json": "3e137e1f0ce16b4d70619c9859ab6b289f76df8813c82f3fa5ab6b6e0dcb2329",
+    "gpx_grafana-zipkin-datasource_linux_arm64": "d845c54e0e60b1034b47052d609bd28f8ad7af70819f2fb87508bc8fd909f115",
+    "LICENSE": "8486a10c4393cee1c25392769ddd3b2d6c242d6ec7928e1414efff7dfb2f07ef",
+    "go_plugin_build_manifest": "76a950e593c572795b2064436320037dcff70d4c3eb6cb356a5920f8b9a30178",
+    "module.js.map": "5c03ee40231951c9a780e2b1a6454cf67fcd13186d72139f53d2446c0d67ca0f"
   }
 }
 -----BEGIN PGP SIGNATURE-----
 
-wsA+BAETCgBtBYJq2NjTCRB+TQxqcIhm50UUAAAAAAAcACBzYWx0QG5vdGF0
-aW9ucy5vcGVucGdwanMub3JnlNcSUeNTYRz0ar1UO4aQopNa0M696pnpkqzB
-yZfnVdIWIQTzOyW2kQdOhGNlcPN+TQxqcIhm5wAAfwsCBAriqML3RAxLXzYB
-ZTW5Dq4gutg7TeGgk24uj2p0mlAKaw7K5gJ0x1j9JcQ8knoMJpXtgu/RNI6t
-1Xv94BA1mIoxAgkBh3+bflW7PSNzP2xnzJjuo54pnnimP7+hKgM639NW9W6L
-AUBoeq2BkiBB5le9+BgeDRkAp8dhUsYOu6LWdc5NHk4=
-=QdDz
+wsA9BAETCgBtBYJq4e99CRB+TQxqcIhm50UUAAAAAAAcACBzYWx0QG5vdGF0
+aW9ucy5vcGVucGdwanMub3JnFpEAVidGRWdUgesIehJwE67saCUWDGI2SQXR
+RBGQVZMWIQTzOyW2kQdOhGNlcPN+TQxqcIhm5wAA+WUCB0F9vJcXWa8N9iyw
+sUj+rK8yy+b1cEt01pnhbWbPXbjJWhf5AMAXEAvcU3gmKoQCml8tfd0MuTO9
+0RR7olmjMEf8Agi9sIkE54V9WLSStnupClZs1xa407QK0zVpiAMjv+ek4uWX
+5z1QkqTL5RYKotLEbkpr/wv7PmpHV5J2a+6zX7rhbw==
+=e1gI
 -----END PGP SIGNATURE-----

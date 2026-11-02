@@ -2,20 +2,42 @@ version: 2
 
 models:
   - name: stats_by_clients
-    description: "Широкая плоская витрина (OBT) профиля клиента, объединяющая метрики аренды, покупок и ремонтов. Используется для сегментации и Customer 360 аналитики."
     columns:
       - name: client_natural_key
         description: "Натуральный бизнес-ключ клиента"
         tests:
-          - unique
           - not_null
-      - name: amount_across_service
-        description: "Общая выручка со всех доменов сервиса"
+      - name: report_month
         tests:
           - not_null
-      - name: trouble_free_days_ratio
-        description: "North Star Metric: Доля аренд без повреждений и поломок"
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - client_natural_key
+            - report_month
+  - name: agg_monthly_client_kpis
+    description: "Витрина-отчетность: ежемесячные макро-показатели бизнеса (KPI) для дашборда Tableau."
+    columns:
+      - name: report_month
+        tests:
+          - unique
+          - not_null
+      - name: monthly_trouble_free_ratio
         tests:
           - dbt_utils.accepted_range:
               min_value: 0
               max_value: 1
+
+  - name: agg_monthly_client_segments
+    description: "Витрина-отчетность: срезы выручки и качества по сегментам клиентов и национальностям."
+    columns:
+      - name: report_month
+        tests:
+          - not_null
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - report_month
+            - rider_profile_segment_at_month
+            - loyalty_segment_at_month
+            - nationality

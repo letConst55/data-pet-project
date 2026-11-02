@@ -5,14 +5,42 @@
     )
 }}
 
-with client_bike_rent_ext as (
+-- 1. Создаем "хребет" (Spine): Каждому клиенту генерируем сетку месяцев
+-- начиная с даты его первой активности до текущего месяца
+with client_first_touch as (
+    select 
+        c.client_natural_key,
+        least(
+            min(fbr.fact_start_date),
+            min(fso.order_date),
+            min(fr.transportation_start_date)
+        ) as first_touch_date
+    from {{ ref('dim_client') }} c
+    left join {{ ref('fct_client_bike_rent') }} fbr on c.client_sk = fbr.client_sk
+    left join {{ ref('fct_shop_order') }} fso on c.client_sk = fso.client_sk
+    left join {{ ref('fct_repair') }} fr on c.client_sk = fr.client_sk
+    group by 1
+),
+calendar_spine as (
+    select distinct 
+        c.client_natural_key,
+        date_trunc('month', cal.date)::date as report_month
+    from client_first_touch c
+    -- Предполагается, что в dim_calendar есть поле date. 
+    -- Если у тебя ролевое измерение, используй его.
+    inner join {{ ref('dim_calendar') }} cal 
+        on cal.date >= date_trunc('month', c.first_touch_date)
+        and cal.date <= current_date
+),
+-- 2. Подготавливаем базовые факты
+client_bike_rent_ext as (
     select 
         fbr.bike_sk,
         fbr.client_sk,
         fbr.deposit_deducted_amount,
         fbr.fact_end_date,
         fbr.fact_start_date,
-        fbr.fact_start_datetime,
+        date_trunc('month', fbr.fact_start_date)::date as event_month,
         fbr.total_amount,
         (fbr.actual_end_mileage - fbr.actual_start_mileage) as trip_mileage,
         dc.client_natural_key,
@@ -30,102 +58,147 @@ with client_bike_rent_ext as (
     left join {{ ref('fct_service_events') }} se on se.rental_id = fbr.rental_id 
     where fbr.fact_end_date is not null
 ),
+-- 3. Агрегируем метрики по месяцам
 rental_metrics as (
     select 
         client_natural_key,
-        min(fact_start_date) as first_rent_date,
-        count(fbr.bike_sk) as cnt_rentals,
-        count(distinct fbr.bike_sk) as unique_bike_models_rented,
-        avg(trip_mileage) as avg_rental_mileage,
+        event_month,
+        count(bike_sk) as mtd_rentals,
+        count(distinct bike_sk) as mtd_unique_bike_models_rented,
+        avg(trip_mileage) as mtd_avg_rental_mileage,
+        sum(trip_mileage) as mtd_sum_rental_mileage,
         sum(
             case 
                 when deposit_deducted_amount = 0 and helmet_damage_flag = false and issue_category is null then 1
                 else 0
             end
-        ) as cnt_successful_rentals,
-        sum(fact_end_date - fact_start_date) as total_day_rental_duration,
-        sum(total_amount) as total_amount,
-        sum(total_amount) / count(fbr.bike_sk) as avg_rental_amount,
-        avg(fact_end_date - fact_start_date) as avg_day_rental_duration,
-        max(first_bike) as first_rent_bike,
-        max(first_bike_cc) as first_rent_bike_cc,
-        max(first_dis_location) as first_rent_dis_location,
-        max(first_rental_result) as first_rental_result
-    from client_bike_rent_ext fbr
-    group by 1
+        ) as mtd_successful_rentals,
+        sum(fact_end_date - fact_start_date) as mtd_rental_duration_days,
+        sum(total_amount) as mtd_rental_amount
+    from client_bike_rent_ext 
+    group by 1, 2
 ),
 shop_metrics as (
     select 
         dc.client_natural_key,
-        min(o.order_date) as first_shop_date,
-        round(sum(o.total_amount), 0) as shop_total_amount,
-        round(sum(o.total_amount) / count(distinct o.order_id), 1) as shop_aov
+        date_trunc('month', o.order_date)::date as event_month,
+        round(sum(o.total_amount), 0) as mtd_shop_amount,
+        count(distinct o.order_id) as mtd_shop_orders
     from {{ ref('fct_shop_order') }} o
     inner join {{ ref('dim_client') }} dc on dc.client_sk = o.client_sk 
-    group by 1
+    group by 1, 2
 ),
 repair_metrics as (
     select 
         dc.client_natural_key,
-        min(r.transportation_start_date) as first_repair_date,
-        sum(r.invoice_total_amount) as repair_total_amount
+        date_trunc('month', r.transportation_start_date)::date as event_month,
+        sum(r.invoice_total_amount) as mtd_repair_amount
     from {{ ref('fct_repair') }} r
     inner join {{ ref('dim_client') }} dc on dc.client_sk = r.client_sk 
     where r.transportation_end_date is not null
+    group by 1, 2
+),
+first_client_experience as (
+    select 
+        cb.client_natural_key,
+        max(cb.first_bike) as first_rent_bike,
+        max(cb.first_bike_cc) as first_rent_bike_cc,
+        max(cb.first_dis_location) as first_rent_dis_location,
+        max(cb.first_rental_result) as first_rental_result
+    from client_bike_rent_ext cb
     group by 1
 ),
 client_attributes as (
+    -- Берем актуальный профиль клиента
     select 
-        client_natural_key,
-        drive_license_verified,
-        driving_experience_years,
-        gender,
-        nationality,
-        rating_score 
-    from {{ ref('dim_client') }} 
+        dc.client_natural_key,
+        dc.drive_license_verified,
+        dc.driving_experience_years,
+        dc.gender,
+        dc.nationality,
+        dc.rating_score,
+        coalesce(fce.first_rent_bike::text, 'never rent') as first_rent_bike,
+        fce.first_rent_bike_cc as first_rent_bike_cc,
+        coalesce(fce.first_rent_dis_location::text, 'never rent') as first_rent_dis_location,
+        coalesce(fce.first_rental_result::text, 'never rent') as first_rental_result
+    from {{ ref('dim_client') }} dc 
+    left join first_client_experience fce on fce.client_natural_key = dc.client_natural_key
     where current_row_indicator = true
+),
+-- 4. Джойним агрегаты на календарный хребет и считаем кумулятивные (накопительные) итоги
+monthly_rollup as (
+    select 
+        spine.report_month,
+        spine.client_natural_key,
+        cl.drive_license_verified,
+        cl.driving_experience_years,
+        cl.gender,
+        cl.nationality,
+        cl.rating_score,
+        cl.first_rent_bike,
+        cl.first_rent_bike_cc,
+        cl.first_rent_dis_location,
+        cl.first_rental_result,
+        -- Метрики за текущий месяц (MTD - Month to Date)
+        coalesce(rm.mtd_rentals, 0) as mtd_rentals,
+        coalesce(rm.mtd_successful_rentals, 0) as mtd_successful_rentals,
+        coalesce(rm.mtd_unique_bike_models_rented, 0) as mtd_unique_bike_models_rented,
+        coalesce(rm.mtd_rental_amount, 0) as mtd_rental_amount,
+        coalesce(sm.mtd_shop_amount, 0) as mtd_shop_amount,
+        coalesce(rpm.mtd_repair_amount, 0) as mtd_repair_amount,
+        coalesce(rm.mtd_avg_rental_mileage, 0) as mtd_avg_rental_mileage,
+        coalesce(rm.mtd_sum_rental_mileage, 0) as mtd_sum_rental_mileage,
+        -- Кумулятивные метрики (YTD / Lifetime) на конец отчетного месяца
+        sum(coalesce(rm.mtd_rentals, 0)) over (partition by spine.client_natural_key order by spine.report_month) as lifetime_rentals,
+        sum(coalesce(rm.mtd_successful_rentals, 0)) over (partition by spine.client_natural_key order by spine.report_month) as lifetime_successful_rentals,
+        sum(coalesce(rm.mtd_unique_bike_models_rented, 0)) over (partition by spine.client_natural_key order by spine.report_month) as lifetime_unique_bikes,
+        -- Кумулятивная выручка (LTV)
+        sum(coalesce(rm.mtd_rental_amount, 0) + coalesce(sm.mtd_shop_amount, 0) + coalesce(rpm.mtd_repair_amount, 0)) 
+            over (partition by spine.client_natural_key order by spine.report_month) as lifetime_total_amount
+    from calendar_spine spine
+    left join client_attributes cl on spine.client_natural_key = cl.client_natural_key
+    left join rental_metrics rm on spine.client_natural_key = rm.client_natural_key and spine.report_month = rm.event_month
+    left join shop_metrics sm on spine.client_natural_key = sm.client_natural_key and spine.report_month = sm.event_month
+    left join repair_metrics rpm on spine.client_natural_key = rpm.client_natural_key and spine.report_month = rpm.event_month
 )
+-- 5. Финальный расчет сегментов на основе кумулятивных (исторических) данных на тот момент времени
 select 
-    cl.client_natural_key,
-    cl.drive_license_verified,
-    cl.driving_experience_years,
-    cl.gender,
-    cl.nationality,
-    cl.rating_score,
-    rm.first_rent_date,
-    rm.cnt_rentals,
-    rm.cnt_successful_rentals,
-    round(rm.cnt_successful_rentals::decimal / nullif(rm.cnt_rentals, 0), 2) as trouble_free_days_ratio, -- North Star Metric
-    rm.unique_bike_models_rented,
-    rm.avg_rental_mileage,
-    rm.total_day_rental_duration,
-    rm.total_amount as rental_total_amount,
-    rm.avg_rental_amount,
-    rm.first_rent_bike,
-    rm.first_rent_bike_cc,
-    sm.first_shop_date,
-    sm.shop_total_amount,
-    sm.shop_aov,
-    rpm.first_repair_date,
-    rpm.repair_total_amount, 
-    least(rm.first_rent_date, sm.first_shop_date, rpm.first_repair_date) as first_touch_date,
-    coalesce(rm.total_amount, 0) + coalesce(sm.shop_total_amount, 0) + coalesce(rpm.repair_total_amount, 0) as amount_across_service,
+    mr.report_month::date as report_month,
+    mr.client_natural_key::text as client_natural_key,
+    mr.drive_license_verified::boolean as drive_license_verified,
+    mr.driving_experience_years::int as driving_experience_years,
+    mr.gender::text as gender,
+    mr.nationality::text as nationality,
+    mr.rating_score::int as rating_score,
+    mr.first_rent_bike::text as first_rent_bike,
+    --mr.first_rent_bike_cc::text as first_rent_bike_cc,
+    mr.first_rent_dis_location::text as first_rent_dis_location,
+    mr.first_rental_result::text as first_rental_result,
+    mr.mtd_rentals::int as mtd_rentals,
+    mr.mtd_successful_rentals::int as mtd_successful_rentals,
+    mr.mtd_unique_bike_models_rented::int as mtd_unique_bike_models_rented,
+    mr.mtd_rental_amount::numeric as mtd_rental_amount,
+    mr.mtd_shop_amount::numeric as mtd_shop_amount,
+    mr.mtd_repair_amount::numeric as mtd_repair_amount,
+    mr.mtd_avg_rental_mileage::numeric as mtd_avg_rental_mileage,
+    mr.mtd_sum_rental_mileage::int as mtd_sum_rental_mileage,
+    mr.lifetime_rentals::int as lifetime_rentals,
+    mr.lifetime_successful_rentals::int as lifetime_successful_rentals,
+    mr.lifetime_unique_bikes::int as lifetime_unique_bikes,
+    mr.lifetime_total_amount::numeric as lifetime_total_amount,
+    round(mr.lifetime_successful_rentals::decimal / nullif(mr.lifetime_rentals, 0), 2)::numeric as trouble_free_days_ratio,  
     case
-        when rm.cnt_rentals = 1 then 'new_customer' 
-        when rm.cnt_rentals > 1 and rm.cnt_rentals <= 5 and (rm.cnt_successful_rentals::decimal / rm.cnt_rentals) >= 0.5 then 'loyal_customer'
-        when rm.cnt_rentals > 5 and (rm.cnt_successful_rentals::decimal / rm.cnt_rentals) >= 0.5 then 'vip_customer'
-        when rm.cnt_rentals > 1 and (rm.cnt_successful_rentals::decimal / rm.cnt_rentals) < 0.5 then 'danger_customer'
+        when mr.lifetime_rentals = 1 then 'new_customer' 
+        when mr.lifetime_rentals > 1 and mr.lifetime_rentals <= 5 and (mr.lifetime_successful_rentals::decimal / nullif(mr.lifetime_rentals, 0)) >= 0.5 then 'loyal_customer'
+        when mr.lifetime_rentals > 5 and (mr.lifetime_successful_rentals::decimal / nullif(mr.lifetime_rentals, 0)) >= 0.5 then 'vip_customer'
+        when mr.lifetime_rentals > 1 and (mr.lifetime_successful_rentals::decimal / nullif(mr.lifetime_rentals, 0)) < 0.5 then 'danger_customer'
         else 'unclassified'
-    end as loyalty_segment,
+    end::text as loyalty_segment_at_month,
     case
-        when cl.driving_experience_years = 0 and coalesce(rm.first_rent_bike_cc, 0) <= 160 then 'Beginer'
-        when cl.driving_experience_years > 0 and coalesce(rm.first_rent_bike_cc, 0) <= 160 and coalesce(rm.avg_rental_mileage, 0) < 100 then 'City_rider'
-        when coalesce(rm.first_rent_bike_cc, 0) > 160 and coalesce(rm.avg_rental_mileage, 0) between 100 and 500 then 'Traveller_rider'
-        when (cl.driving_experience_years >= 3 or rm.unique_bike_models_rented > 2) and coalesce(rm.avg_rental_mileage, 0) > 500 then 'Pro_rider'
+        when mr.driving_experience_years = 0 and coalesce(mr.first_rent_bike_cc, 0) <= 160 then 'Beginner'
+        when mr.driving_experience_years > 0 and coalesce(mr.first_rent_bike_cc, 0) <= 160 and coalesce(mr.mtd_avg_rental_mileage, 0) < 100 then 'City_rider'
+        when coalesce(mr.first_rent_bike_cc, 0) > 160 and coalesce(mr.mtd_avg_rental_mileage, 0) between 100 and 500 then 'Traveller_rider'
+        when (mr.driving_experience_years >= 3 or mr.lifetime_unique_bikes > 2) and coalesce(mr.mtd_avg_rental_mileage, 0) > 500 then 'Pro_rider'
         else 'unknown'
-    end as rider_profile_segment
-from client_attributes cl
-left join rental_metrics rm on rm.client_natural_key = cl.client_natural_key
-left join shop_metrics sm on sm.client_natural_key = cl.client_natural_key 
-left join repair_metrics rpm on rpm.client_natural_key = cl.client_natural_key 
-where rm.first_rent_date is not null
+    end::text as rider_profile_segment_at_month
+from monthly_rollup mr

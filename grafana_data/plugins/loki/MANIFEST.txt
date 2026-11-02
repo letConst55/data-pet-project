@@ -1,0 +1,38 @@
+-----BEGIN PGP SIGNED MESSAGE-----
+Hash: SHA512
+
+{
+  "manifestVersion": "2.0.0",
+  "signatureType": "grafana",
+  "signedByOrg": "grafana",
+  "signedByOrgName": "Grafana Labs",
+  "plugin": "loki",
+  "version": "13.2.5",
+  "time": 1793300518897,
+  "keyId": "7e4d0c6a708866e7",
+  "files": {
+    "README.md": "dcafd0e1e4182be9edd5a7c37951f0aea5a04f8d009115530f84fd9bcc60ce0a",
+    "loki-query-field.js": "d5439e1e9dba2e6782bcb1d4ac5244d16ced2dbc1d472a52ac7b3d0427f1fa52",
+    "CHANGELOG.md": "2e92e70f71af5d7b76821e0fa1235b0c65abac8c468d68bd203ec1b099c8dd4f",
+    "loki-query-field.js.map": "b3856128a482d1903c00bab829794ef49591b2b762872e1b9e0e3dff1e566cf9",
+    "plugin.json": "e63e419bb5993500d4c66f3504c5141393be78160e7b21697ee53c68e95ef4c8",
+    "module.js": "84b61b60810d1a7425a316e69c4105d2113b74928c74dce337f98d7bcfbb1ecb",
+    "img/loki_icon.svg": "1d3087c3acefcd556eeb11f8de85f289913d87338fe8dae04cc844fb0785f4e9",
+    "gpx_grafana-loki-datasource_linux_arm64": "7013c0f3ab7879e7f037eab8aaf7709104d142ee9c2169a1a84de00712d45381",
+    "LICENSE": "8486a10c4393cee1c25392769ddd3b2d6c242d6ec7928e1414efff7dfb2f07ef",
+    "go_plugin_build_manifest": "8c832e6350dc67f595824ae11e900728e37687e2f6d4115e006d20951f2ac3ca",
+    "156.js.map": "42fa4b4708b2799f4833a88c7aaac34620d129222e36e2fee2ffaa47a7c84543",
+    "156.js": "54fdeb2ef2d158ef60de1bf241e62822ac31ffe0e600aecd8620d12f30e349e8",
+    "module.js.map": "f8af43633adc182cc62f7bed72ccda0f80e64b4feefb134383a8e1b069e18445"
+  }
+}
+-----BEGIN PGP SIGNATURE-----
+
+wsA+BAETCgBtBYJq45gnCRB+TQxqcIhm50UUAAAAAAAcACBzYWx0QG5vdGF0
+aW9ucy5vcGVucGdwanMub3JnrTrv3PDJwkYRHvqctdTv5h7x+hKxVD7/PSwI
+kjfVLxcWIQTzOyW2kQdOhGNlcPN+TQxqcIhm5wAA2JICCNsQqqUFHqjXSgRB
+Cnp6OuMYw29mBPXo4EGHYzv5vrvEuDMorVKvra1R/7AsBpLOwbABupCNr14+
+D0ff8I1eyy4pAgkBAq8jIGIoi7l8w4Y3RNMWFBFUgZnFel/zDb1XqMdP02pU
+eGkp2sJ/9EciOh3zlZRuxcUIcscTjviIo65QSgBbAV0=
+=+7Wq
+-----END PGP SIGNATURE-----

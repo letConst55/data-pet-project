@@ -32,3 +32,4 @@ analytics/logs/
 sample_*.csv
 .DS_Store
 .env
+notes.md

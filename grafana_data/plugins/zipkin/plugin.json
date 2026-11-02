@@ -43,8 +43,8 @@
                 "url": "https://grafana.com/docs/grafana/latest/datasources/zipkin/"
             }
         ],
-        "version": "12.4.11",
-        "updated": "2026-10-21"
+        "version": "12.4.12",
+        "updated": "2026-10-28"
     },
     "dependencies": {
         "grafanaDependency": ">=12.3.0-0",

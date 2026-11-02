@@ -1,0 +1,40 @@
+-----BEGIN PGP SIGNED MESSAGE-----
+Hash: SHA512
+
+{
+  "manifestVersion": "2.0.0",
+  "signatureType": "grafana",
+  "signedByOrg": "grafana",
+  "signedByOrgName": "Grafana Labs",
+  "plugin": "influxdb",
+  "version": "13.1.10",
+  "time": 1793300277522,
+  "keyId": "7e4d0c6a708866e7",
+  "files": {
+    "README.md": "b09743842a186a9d3d4170a3b60afa607492eb6491936763ffcc3ca6e8177a3b",
+    "sql-query-editor.js.map": "79837b6d1eaccb21c627f24f4b7b9d5400cf781194fb8170fb0b5e5acfd676ba",
+    "CHANGELOG.md": "25d2895f61f9ef5650099d9c69edee008dbed2440538024ef5a6b263ef0e3f43",
+    "sql-query-editor.js": "84baf7f25ca0b7d31384c79c4d6472bd2bd7e484cd182f8c990da41e063e397f",
+    "plugin.json": "8cc5d04435c5cea2f77ef62c896d7876ed2eabf08de4365967e6fad4863c05e5",
+    "module.js": "1607d85aac213af60e9bab268eba2a1c87420b1be38e2df79d5c5d0ebbf6cd7f",
+    "img/influxdb_logo.svg": "1398a1b949f402d17b11547710f2a9886f833a17cc64bf1a1536c0c463b4e489",
+    "query_help.md": "9e1901b0e59b0bee6b09d1956e54cfd3ebd49ed5794f52868cfc84d9eff177a2",
+    "LICENSE": "8486a10c4393cee1c25392769ddd3b2d6c242d6ec7928e1414efff7dfb2f07ef",
+    "go_plugin_build_manifest": "283c460db42a0dfd138fb23c620a83efca49593915644932926aa5647935d83a",
+    "module.js.LICENSE.txt": "ceb170eaa80002312bc3298e0d068917b8249823f83efd809135cd8c94672d6a",
+    "156.js.map": "0222ddac91cc85b6778b0c26868f3ed53b02bbade9d5904fda25af06c83c66af",
+    "156.js": "99d2e4693ebafc54079987726c9c18909d847f6194f3ecc878d80b2c44049e6b",
+    "gpx_grafana_influxdb_datasource_linux_arm64": "65de170a20afbd36d203983de34cb61daa4d31e80ceb25b82907ef9440050eea",
+    "module.js.map": "b562b7e24d5efb40fdf5538a2eaefe5bc490c67fc7f0a46d9b584a999ea0d122"
+  }
+}
+-----BEGIN PGP SIGNATURE-----
+
+wsA+BAETCgBtBYJq45c1CRB+TQxqcIhm50UUAAAAAAAcACBzYWx0QG5vdGF0
+aW9ucy5vcGVucGdwanMub3Jnv0LKry9VWrz06XwlMkIrC9R3+W+Q5j+aqJnj
+KBCLGscWIQTzOyW2kQdOhGNlcPN+TQxqcIhm5wAA6sACB1GVeGdB5z5wnW9L
+ASfuKxRz9AuOYLaAC/nNAIY/DKwZI26d1jMzhwPDWy2YgbkcZAc9dhcLaART
+0yle8A6xkf4hAgkBRtyVeKel7//vgCSV0uEnC03T9+ymHm7XY4ucLbVBA+1z
+N/FtIJksIw+eOCuV1x7q14ctnYyL0NOzIBYO1dqqtVU=
+=i0+v
+-----END PGP SIGNATURE-----
