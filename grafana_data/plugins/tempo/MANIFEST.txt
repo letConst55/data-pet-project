@@ -7,8 +7,8 @@ Hash: SHA512
   "signedByOrg": "grafana",
   "signedByOrgName": "Grafana Labs",
   "plugin": "tempo",
-  "version": "13.4.1",
-  "time": 1793135651373,
+  "version": "13.4.2",
+  "time": 1793632836673,
   "keyId": "7e4d0c6a708866e7",
   "files": {
     "4872.js": "695286c5e6b3f7351b66d776e2badb288cc99c7aef5b40f932bf467442455462",
@@ -61,7 +61,7 @@ Hash: SHA512
     "7354.js.LICENSE.txt": "ce3489335ed872bc237885f09daa93256c6862151dcb9960ffabd61507623e32",
     "2278.js.map": "6148fc1d1ea7ebfc6218214b023b3242ff9cbde7be708683cea54a32b6fbb2ae",
     "4872.js.LICENSE.txt": "ce3489335ed872bc237885f09daa93256c6862151dcb9960ffabd61507623e32",
-    "CHANGELOG.md": "a35f15fb09265cf95bbd4fa23fd4a66c9288f6581a396007db795f4222f94584",
+    "CHANGELOG.md": "2d45e989a12c0af83409d5066f9bddf20b717a8a56a6b91caf3300190ae6a118",
     "8298.js.LICENSE.txt": "ce3489335ed872bc237885f09daa93256c6862151dcb9960ffabd61507623e32",
     "5704.js": "20a71cfae5acef4ebcdaff48e03bbeb62c45435d24871c9b8a3eb165b419a57a",
     "2362.js.map": "86d275352a60ebf3cdb18999f8730ded055cb85fa297e2a43e52ea6d24625af9",
@@ -78,7 +78,7 @@ Hash: SHA512
     "4872.js.map": "1781ee7f76284a15192b6281d0255147b051da2730ea0cc23fe10667fe641a8a",
     "6562.js.LICENSE.txt": "ce3489335ed872bc237885f09daa93256c6862151dcb9960ffabd61507623e32",
     "3530.js.LICENSE.txt": "ce3489335ed872bc237885f09daa93256c6862151dcb9960ffabd61507623e32",
-    "plugin.json": "c4f3ee791cd46098761cc825efed4dfc50ab721ad5b9d321cdd563eef110f4d0",
+    "plugin.json": "6db3215151a324ecbcfccc822a595c5b08d1127fd797082eb5047fe28d07d4cc",
     "1957.js.LICENSE.txt": "ce3489335ed872bc237885f09daa93256c6862151dcb9960ffabd61507623e32",
     "2532.js": "c309c253f4e5f046859e79381b2c294f7960afc8f03a7b67677e95b44bdf822d",
     "7736.js": "6d5d9c6dd0aaa5d51ed62f4ddc42b172ab04a739481ec9cd0105ec9aedde644d",
@@ -99,7 +99,7 @@ Hash: SHA512
     "7354.js.map": "4290a3a32d842df0ab2aa31e04bb70da9e6e43d64e8c0e364300d0429291aba7",
     "2066.js.map": "62329c2bb3dccf29624b01af1a603fa07b58c22d1a98ff4304e6afeda09bffff",
     "3652.js.map": "cf233134e75382d1deaf25fd31eeb6c3d32b9c1c34cc399bd6d6cb021934b609",
-    "module.js": "0d97f4407e28c2d4f7e9a6a35062364263841b1a8b57b5e4109df106ce7e2e89",
+    "module.js": "3b5a5dd46ca27d56137ae2c34413d4732ef39bad5163048bb6b7c4acea09cc6b",
     "img/tempo_logo.svg": "bf2aa0089c2e8693400b76c22f745a92bb5d35de7fb63180ecdab05e03a758df",
     "5434.js": "6e648c89cf7e946b762f5c5ae2ce3b3f8fc60f380a261660d0f3cf758d917ded",
     "8586.js.LICENSE.txt": "ce3489335ed872bc237885f09daa93256c6862151dcb9960ffabd61507623e32",
@@ -146,7 +146,7 @@ Hash: SHA512
     "94.js.map": "3be0829afb69d594e96bea9e359472889bc54e1a89a392754eb7fdcf346ec69e",
     "8058.js.LICENSE.txt": "ce3489335ed872bc237885f09daa93256c6862151dcb9960ffabd61507623e32",
     "594.js.map": "eeda295bbd2aa41611b3866689fe215222d9a55de651f205912352a03916923d",
-    "gpx_grafana-tempo-datasource_linux_arm64": "5ea8529fe7b2d34fda2ef207f9e369c8a1db8b19d850dc89e88f1bbaf2d27320",
+    "gpx_grafana-tempo-datasource_linux_arm64": "7cf9386c529c187912f964ea6f902e83712338ce423fc3e25168d61599218372",
     "3608.js": "1eba6380c723d3c5d851c0fb465bad7f734aeecb6b3c5c068ff10f803944ecbd",
     "9858.js.map": "49085d137c870b685bfb8e6f50d20f1d66bbfef0286fcce1befc977e7c9a42f1",
     "8498.js.map": "201826884bf4c3e53b0ad76e89b2e48fedc141963813c1d6a0c6a0538fd7fd86",
@@ -174,7 +174,7 @@ Hash: SHA512
     "2426.js.map": "b0e0c1783e445c2f63a41d18f842fe4b10ef55cefe9c36714a749940f238ad9e",
     "6922.js": "e859fddf8bc2d452a55b6a19ac306e91912c7d662b64db089375fe2ced341f34",
     "826.js": "7f26c33e7ac4bf0331db0cde3ed5d3b1437a9d1cf77b5c9ab5476408ebeff4d9",
-    "go_plugin_build_manifest": "12036a69ecce497c8fe68d62e33fc238b3ad47495ec68aa880f1f17b00176680",
+    "go_plugin_build_manifest": "229f4e988ce3ab1869fdb6a55b1c9bfc3347422ec8cc26ffd6713fac6b7b36b2",
     "6656.js.map": "63f228db5812a80a47b921d265e3924562a2e682305b144ac426ed4238c68149",
     "2278.js": "5ff06a20fbfbc64d54d1f0c1288533508bd16d622bc3d424ec5fcfeca1de46dd",
     "2934.js.map": "57ae40c0e0f9bea43415c883f7525f1b93444af1817ecee7382b634af91be4d4",
@@ -284,11 +284,11 @@ Hash: SHA512
 }
 -----BEGIN PGP SIGNATURE-----
 
-wsA9BAETCgBtBYJq4RQjCRB+TQxqcIhm50UUAAAAAAAcACBzYWx0QG5vdGF0
-aW9ucy5vcGVucGdwanMub3Jn0G3/p1eFDmsMwj/KRcKtWQ8rURpyZrG/gDFo
-9ilB0QsWIQTzOyW2kQdOhGNlcPN+TQxqcIhm5wAAJlgCCKlnZUJGYWpBk4VE
-baphP6SZSY1t9bCcGI3sTyLGjTE2Sxbn4BGCgDhE0iiBSrziZDKztoe5Jw4v
-xF5nYWsBeMpAAgdTUfXXroIedNNFIpAq+VYWSA/HmjpYUXg6RTFHcAO80qSG
-Er9aESL9vyuTQmNjU/ymGJeLCtHyjPfmjK0TpikxjQ==
-=uHNs
+wsA9BAETCgBtBYJq6KpECRB+TQxqcIhm50UUAAAAAAAcACBzYWx0QG5vdGF0
+aW9ucy5vcGVucGdwanMub3Jn2GwoTRRRO1vRA0uLpCnGM1I143+rBBbK2Nus
++Ue3DvMWIQTzOyW2kQdOhGNlcPN+TQxqcIhm5wAAGQsCB2CIRKuimb79nfr7
+MwEtssombCWWGJiSGICMbd+sor9GOUsv2LQrYf9Zs9hAEQ8H5Oo0aknkzoeS
+NKByXsfQFd3vAgdk+Y8GE9APk9lwLFUedbOQ/sAIglq+1fB3Fn/RtiplU+cX
+AcF9PTrF043JJ/3Dh9fdNS2nEtaMvdMDokSLLfX9ng==
+=hT5X
 -----END PGP SIGNATURE-----

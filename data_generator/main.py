@@ -71,11 +71,10 @@ def main(mode="pandas", duration_seconds=60):
     hr_api = HrAPI(sim_state, publisher, LOCATIONS) 
     rent_api = RentAPI(sim_state, publisher, BIKES, RENT_LOCATIONS) 
     
-    # ИСПРАВЛЕНИЕ: Передаем SHOP_LOCATIONS последним аргументом
     garage_api = GarageAPI(sim_state, publisher, GARAGE_LOCATIONS, CARRIERS, BIKE_MODELS, SHOP_LOCATIONS) 
     
     shop_api = ShopAPI(sim_state, publisher, SHOP_LOCATIONS, PRODUCTS) 
-    inventory_api = InventoryAPI(sim_state, publisher, LOCATIONS, PRODUCTS, VENDORS, CARRIERS)
+    inventory_api = InventoryAPI(sim_state, publisher, SHOP_LOCATIONS, PRODUCTS, VENDORS, CARRIERS)
     
     start_time = time.time()
     events_counter = 0
@@ -86,7 +85,10 @@ def main(mode="pandas", duration_seconds=60):
 
         sim_state.advance_time(is_pandas_mode=(mode=="pandas"))
         
-        # Добавляем кадровые перестановки в пул событий (вероятность 3%)
+        # Детерминированная проверка еженедельного снапшота (срабатывает 1 раз каждое воскресенье)
+        inventory_api.take_weekly_snapshot()
+        
+        # Вероятностный пул транзакционных событий (сумма весов = 100)
         action = random.choices(
             [
                 hr_api.manage_hr_events,
@@ -98,10 +100,9 @@ def main(mode="pandas", duration_seconds=60):
                 garage_api.accept_external_repair,
                 garage_api.finish_external_repair,
                 shop_api.make_purchase,
-                inventory_api.perform_procurement,   # НОВОЕ
-                inventory_api.take_weekly_snapshot   # НОВОЕ
+                inventory_api.perform_procurement
             ],
-            weights=[3, 15, 20, 15, 15, 6, 4, 4, 13, 3, 2], # Сумма весов 100
+            weights=[3, 15, 20, 16, 16, 6, 4, 4, 13, 3], # Сумма весов 100
             k=1
         )[0]
         action()
@@ -110,7 +111,8 @@ def main(mode="pandas", duration_seconds=60):
             publisher.flush()
 
         events_counter += 1
-        if events_counter % 50 == 0:
+        if events_counter % 50 == 0 or sim_state.state["is_realtime"]:
+            publisher.flush()
             sim_state.save()
 
         # Контроль скорости

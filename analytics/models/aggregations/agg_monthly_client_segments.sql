@@ -29,10 +29,10 @@ select
     sum(mtd_repair_amount) as sum_repair_amount,
     
     -- Показатели качества в разрезе
-    coalesce(round(
+    round(
         sum(mtd_successful_rentals)::decimal / nullif(sum(mtd_rentals), 0), 
         4
-    ), -1) as segment_trouble_free_ratio,
+    ) as segment_trouble_free_ratio,
     
     -- Физические метрики (износ техники)
     coalesce(round(

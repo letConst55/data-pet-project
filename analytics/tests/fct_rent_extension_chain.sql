@@ -20,7 +20,7 @@ extended as (
     select *
     from fct_with_nk
     where rent_extend_flag = true
-      and fact_end_date < (select current_max_date from max_date)
+      and fact_end_date < (select current_max_date - interval '3 days' from max_date)
 ),
 subsequent as (
     select *

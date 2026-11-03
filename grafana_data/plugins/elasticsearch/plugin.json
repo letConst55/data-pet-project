@@ -36,8 +36,8 @@
                 "url": "https://grafana.com/docs/grafana/latest/datasources/elasticsearch/"
             }
         ],
-        "version": "12.9.4",
-        "updated": "2026-10-29"
+        "version": "12.9.5",
+        "updated": "2026-11-02"
     },
     "alerting": true,
     "annotations": true,

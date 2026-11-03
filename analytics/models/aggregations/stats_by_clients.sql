@@ -44,8 +44,10 @@ client_bike_rent_ext as (
         fbr.total_amount,
         (fbr.actual_end_mileage - fbr.actual_start_mileage) as trip_mileage,
         dc.client_natural_key,
-        jd.helmet_damage_flag,
-        se.issue_category,
+        jd.helmet_damage_flag,	
+        jd.field_service_flag,	
+        jd.rent_extend_flag,
+        jd.bike_exchange_flag,
         first_value(db.title) over(partition by dc.client_natural_key order by fbr.fact_start_datetime asc) as first_bike,
         first_value(db.engine_volume_cc) over(partition by dc.client_natural_key order by fbr.fact_start_datetime asc) as first_bike_cc,
         first_value(ll.title) over(partition by dc.client_natural_key order by fbr.fact_start_datetime asc) as first_dis_location,
@@ -55,7 +57,8 @@ client_bike_rent_ext as (
     inner join {{ ref('dim_rental_junk') }} jd on jd.rental_junk_sk = fbr.rental_junk_sk 
     inner join {{ ref('dim_bike') }} db on db.bike_sk = fbr.bike_sk
     inner join {{ ref('dim_location') }} ll on ll.location_sk = fbr.location_dis_id 
-    left join {{ ref('fct_service_events') }} se on se.rental_id = fbr.rental_id 
+    -- Здесь получается связь многие-ко-многим поэтому убираем джойн
+    --left join {{ ref('fct_service_events') }} se on se.rental_id = fbr.rental_id 
     where fbr.fact_end_date is not null
 ),
 -- 3. Агрегируем метрики по месяцам
@@ -69,7 +72,7 @@ rental_metrics as (
         sum(trip_mileage) as mtd_sum_rental_mileage,
         sum(
             case 
-                when deposit_deducted_amount = 0 and helmet_damage_flag = false and issue_category is null then 1
+                when deposit_deducted_amount = 0 and helmet_damage_flag = false and field_service_flag = false then 1
                 else 0
             end
         ) as mtd_successful_rentals,

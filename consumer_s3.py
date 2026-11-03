@@ -41,15 +41,18 @@ consumer = KafkaConsumer(
 print(f"🎧 Консьюмер запущен. Слушаем топики: {', '.join(TARGET_TOPICS)}...")
 
 batch = []
-BATCH_SIZE = 50 
+BATCH_SIZE = 50
+batch_counter = 0
 
 def flush_batch(batch_to_flush, is_emergency=False):
-    """Отправляет батч в S3. Флаг is_emergency добавляет пометку в имя файла."""
+    """Отправляет батч в S3 с гарантированно уникальным именем файла."""
+    global batch_counter
     if not batch_to_flush:
         return
         
+    batch_counter += 1
     target_date = datetime.now().strftime('%Y-%m-%d')
-    timestamp_file = int(time.time() * 1000) 
+    timestamp_file = int(time.time() * 1000)
     
     events_by_topic = {}
     for item in batch_to_flush:
@@ -60,32 +63,41 @@ def flush_batch(batch_to_flush, is_emergency=False):
         
     for t_name, t_events in events_by_topic.items():
         tag = "_emergency" if is_emergency else ""
-        file_key = f"events/{t_name}/date={target_date}/batch_{timestamp_file}{tag}.json"
+        file_key = f"events/{t_name}/date={target_date}/batch_{timestamp_file}_{batch_counter}{tag}.json"
         ndjson_data = "\n".join([json.dumps(record) for record in t_events])
         
         s3_client.put_object(Bucket=bucket_name, Key=file_key, Body=ndjson_data)
-        print(f"{'🚨 Экстренно' if is_emergency else '✅'} сохранен файл {file_key} (Событий: {len(t_events)})")
+        print(f"{'🚨 Экстренно' if is_emergency else '✅'} сохранен файл {file_key} (Событий: {len(t_events)})", flush=True)
 
 def handle_shutdown(signum, frame):
     """Перехватчик сигналов (SIGTERM/SIGINT) для безопасного завершения."""
-    print(f"\n🛑 Сигнал остановки ({signum}). Сохранение последних {len(batch)} событий из буфера...")
+    print(f"\n🛑 Сигнал остановки ({signum}). Сохранение последних {len(batch)} событий из буфера...", flush=True)
     flush_batch(batch, is_emergency=True)
     consumer.close()
     sys.exit(0)
 
-# Регистрируем перехватчики сигналов от ОС (например, при pkill)
 signal.signal(signal.SIGTERM, handle_shutdown)
 signal.signal(signal.SIGINT, handle_shutdown)
 
-# 3. Основной цикл
-for message in consumer:
-    batch.append({
-        "topic": message.topic,
-        "data": message.value
-    })
+# 3. Основной цикл с автосбросом при паузах потока (> 1 сек)
+while True:
+    msg_pack = consumer.poll(timeout_ms=1000)
     
-    print(f"[{message.topic}] Получено: {message.value.get('event_type')}")
-    
-    if len(batch) >= BATCH_SIZE:
-        flush_batch(batch)
-        batch.clear()
+    if not msg_pack:
+        # Если генератор перешел в LIVE режим или взял паузу, сразу сбрасываем хвост в S3
+        if batch:
+            flush_batch(batch)
+            batch.clear()
+        continue
+
+    for tp, messages in msg_pack.items():
+        for message in messages:
+            batch.append({
+                "topic": message.topic,
+                "data": message.value
+            })
+            print(f"[{message.topic}] Получено: {message.value.get('event_type')}", flush=True)
+            
+            if len(batch) >= BATCH_SIZE:
+                flush_batch(batch)
+                batch.clear()

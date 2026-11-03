@@ -7,15 +7,15 @@ Hash: SHA512
   "signedByOrg": "grafana",
   "signedByOrgName": "Grafana Labs",
   "plugin": "elasticsearch",
-  "version": "12.9.4",
-  "time": 1793242606458,
+  "version": "12.9.5",
+  "time": 1793638738140,
   "keyId": "7e4d0c6a708866e7",
   "files": {
     "README.md": "1879fc1ceda6be2ec8e81261ba926a7c868560905253e570febca41e8143d7f8",
-    "CHANGELOG.md": "edf611221a0f1e1bdd441b7b54aeb7511ea712ee1ac1fa8346e0f022c0ea0849",
-    "gpx_grafana_elasticsearch_datasource_linux_arm64": "57b887a89e3f49d40494d2245def29b58ba31a0fb8824f5e2e2da44b1947a01e",
-    "plugin.json": "b001b9b7dd896e26dd2bdb4ad0c4e6e381bd5237d923284b82e702b273db7530",
-    "module.js": "a0b2c6c10794d08e46cbbb48345b0de4e3a1e80fb98ae97566332190e3f71ab6",
+    "CHANGELOG.md": "061a8ca922399805049bcd5ac406ffdadd0fc98d0245db3d39ee96a335c52c31",
+    "gpx_grafana_elasticsearch_datasource_linux_arm64": "adacab4c4a06ee39db722ef371fd873f3e69e54e18f96f0ac382b6c1941ba18f",
+    "plugin.json": "88e2fdb39b85cc1fb10f330f6cc3374545506cf6e94cf09e1e30b5fa05f5e018",
+    "module.js": "6944fa67898025539a4308063bfe771f4023390cabcfa891d0cdd0a121c38a01",
     "img/elasticsearch.svg": "79e9c13448cdf9257d634af416277893aea5fd48376776c26470b902cf42206f",
     "query_help.md": "5a854fcc0a588ef1b502000a2dd03430d6d485998922e8f117d223466dc77254",
     "LICENSE": "8486a10c4393cee1c25392769ddd3b2d6c242d6ec7928e1414efff7dfb2f07ef",
@@ -25,11 +25,11 @@ Hash: SHA512
 }
 -----BEGIN PGP SIGNATURE-----
 
-wsA+BAETCgBtBYJq4rXuCRB+TQxqcIhm50UUAAAAAAAcACBzYWx0QG5vdGF0
-aW9ucy5vcGVucGdwanMub3Jnx1jrG/pSYTk5SKoM9z0d6+ns668ymL+oLpxD
-S6ckE1MWIQTzOyW2kQdOhGNlcPN+TQxqcIhm5wAAabkCCQH+8fZwSLkFnTDI
-3e2TwJS7lP8FTWRRhHvxuGe2GhOsCInFc+IIPrI+ayKMmwvJ01SAarID2Wb7
-Su1B9W8Y4iXhLQIFEaMloy9KRCDfmNgLwa0YDChreo+tU5Qpq/SbUlGT+wCO
-xopAvu3/C3KdWEdrzrCjBraJYStePOpg1h6cqvpG46I=
-=5iZp
+wsA+BAETCgBtBYJq6MFSCRB+TQxqcIhm50UUAAAAAAAcACBzYWx0QG5vdGF0
+aW9ucy5vcGVucGdwanMub3JncfS7bbnurkvmhEkZXNgmrOioS37oYOvd2GrV
+PHKw2Q0WIQTzOyW2kQdOhGNlcPN+TQxqcIhm5wAA5moCCQERaQFS7oOuBk+J
+lBoByLCy7rWpH9W7wWjZTUKGuKgbcFksFQfv9X5nwZ3aIoTLUB0svs/ATcm7
+jOlBtWWs0UI7cwIBAa0DgUr+ICTTiXVoqqZP+zyjGOVpk2lBjTQnylVooR07
+Jz/IKOtRdE+fUW5xkkTEA9tBbeLeW7qeW2iyOgh9h0g=
+=dwfK
 -----END PGP SIGNATURE-----

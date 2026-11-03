@@ -1,4 +1,5 @@
 import random
+from datetime import timedelta
 from faker import Faker
 
 fake = Faker()
@@ -29,9 +30,8 @@ class HrAPI:
         emp_id = f"emp_{self.state_mgr.get_counter('employee')}"
         gender = random.choice(["Male", "Female"])
         
-        # ИСПРАВЛЕНИЕ: Сдвигаем время на 1 секунду для каждого события HR.
-        # Это гарантирует 100% уникальность event_timestamp для SCD2 окон.
-        from datetime import timedelta
+        # Сдвигаем время на 1 секунду для каждого события HR,
+        # чтобы гарантировать 100% уникальность event_timestamp для SCD2 окон.
         self.state_mgr.state["current_sim_time"] += timedelta(seconds=1)
         
         payload = {
@@ -71,37 +71,78 @@ class HrAPI:
             for _ in range(random.randint(2, 3)):
                 self._create_employee("Shop", "Sales Assistant", random.choice(["Junior", "Middle"]), loc, mgr_id, 
                                       {"dispense": True, "sell": True})
+        self.publisher.flush()
+
+    def _get_location_manager(self, loc):
+        """Находит активного Location Manager для указанной локации (с фолбэком на CEO)"""
+        employees = self.state_mgr.state["employees"]
+        for eid, data in employees.items():
+            if (data.get("is_active") 
+                and data.get("position_title") == "Location Manager" 
+                and data.get("assigned_location_id") == loc):
+                return eid
+                
+        # Фолбэк на CEO, если менеджер локации не найден
+        for eid, data in employees.items():
+            if data.get("is_active") and data.get("manager_employee_id") is None:
+                return eid
+        return None
 
     def manage_hr_events(self):
-        """Динамические события SCD2: найм, перевод, увольнение"""
-        active_emps = [e for e, data in self.state_mgr.state["employees"].items() if data.get("is_active")]
-        if not active_emps:
+        """Динамические события SCD2: найм, перевод, увольнение (только для линейного персонала)"""
+        employees = self.state_mgr.state["employees"]
+        
+        # Выбираем только активных линейных сотрудников, чтобы не разрушить каркас иерархии (CEO -> Location Manager)
+        active_line_emps = [
+            eid for eid, data in employees.items()
+            if data.get("is_active") and data.get("position_title") in ("Mechanic", "Sales Assistant")
+        ]
+        if not active_line_emps:
             return
 
         action = random.choices(["hire", "transfer", "fire"], weights=[40, 50, 10])[0]
 
+        # Защита от вымывания штата: если линейных сотрудников меньше 25, вместо увольнения делаем перевод
+        if action == "fire" and len(active_line_emps) <= 25:
+            action = "transfer"
+
         if action == "hire":
             loc = random.choice(self.LOCATIONS)
-            manager = random.choice(active_emps) # Упрощенно подчиняем случайному действующему сотруднику
+            manager_id = self._get_location_manager(loc)
             role_type = random.choice(["Mechanic", "Sales"])
             if role_type == "Mechanic":
-                self._create_employee("Garage", "Mechanic", "Junior", loc, manager, {"dispense": True, "field": True, "repair": True})
+                self._create_employee("Garage", "Mechanic", "Junior", loc, manager_id, 
+                                      {"dispense": True, "field": True, "repair": True})
             else:
-                self._create_employee("Shop", "Sales Assistant", "Junior", loc, manager, {"dispense": True, "sell": True})
+                self._create_employee("Shop", "Sales Assistant", "Junior", loc, manager_id, 
+                                      {"dispense": True, "sell": True})
                 
         elif action == "transfer":
-            emp_id = random.choice(active_emps)
-            emp = self.state_mgr.state["employees"][emp_id].copy()
-            # Перевод на новую локацию или повышение
-            emp["assigned_location_id"] = random.choice(self.LOCATIONS)
+            emp_id = random.choice(active_line_emps)
+            emp = employees[emp_id].copy()
+            
+            # Выбираем новую локацию (отличную от текущей, если локаций больше одной)
+            other_locs = [l for l in self.LOCATIONS if l != emp.get("assigned_location_id")]
+            new_loc = random.choice(other_locs) if other_locs else emp.get("assigned_location_id")
+            
+            emp["assigned_location_id"] = new_loc
+            emp["manager_employee_id"] = self._get_location_manager(new_loc)
+            
+            # Вероятность повышения грейда при переводе
             if emp["grade_level"] == "Junior" and random.random() < 0.4:
                 emp["grade_level"] = "Middle"
-            self.state_mgr.state["employees"][emp_id] = emp
+            elif emp["grade_level"] == "Middle" and random.random() < 0.2:
+                emp["grade_level"] = "Senior"
+                
+            self.state_mgr.state["current_sim_time"] += timedelta(seconds=1)
+            employees[emp_id] = emp
             self._send(emp)
             
         elif action == "fire":
-            emp_id = random.choice(active_emps)
-            emp = self.state_mgr.state["employees"][emp_id].copy()
+            emp_id = random.choice(active_line_emps)
+            emp = employees[emp_id].copy()
             emp["is_active"] = False
-            self.state_mgr.state["employees"][emp_id] = emp
+            
+            self.state_mgr.state["current_sim_time"] += timedelta(seconds=1)
+            employees[emp_id] = emp
             self._send(emp)

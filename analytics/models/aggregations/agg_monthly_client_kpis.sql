@@ -35,10 +35,10 @@ select
     coalesce(round(avg(lifetime_total_amount), 2), 0) as avg_active_client_ltv,
     
     -- North Star Metric (Считаем честную долю именно за этот месяц)
-    coalesce(round(
+    round(
         sum(mtd_successful_rentals)::decimal / nullif(sum(mtd_rentals), 0), 
         4
-    ), -1) as monthly_trouble_free_ratio
+    ) as monthly_trouble_free_ratio
 
 from active_clients
 group by 1

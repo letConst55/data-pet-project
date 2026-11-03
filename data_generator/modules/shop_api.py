@@ -44,7 +44,7 @@ class ShopAPI:
 
         for item in basket:
             cnt = random.randint(1, 2) if not item["is_tuning"] else 1
-            basic_amount = item["price"] * cnt
+            basic_amount = round(item["price"] * cnt, 2)
             discount = round(basic_amount * 0.1, 2) if random.random() < 0.15 else 0.0
             total_amount = round(basic_amount - discount, 2)
 

@@ -145,8 +145,9 @@ class RentAPI:
         max_score = self._get_max_score_by_mileage(start_mileage)
         pre_score = random.randint(max(1, max_score - 3), max_score)
 
-        # Сначала генерируем локацию выдачи
-        location_dis_id = random.choice(self.LOCATIONS)
+        # Если это продление аренды, выдача происходит на той же точке, где байк вернули.
+        # Для обычного бронирования точка выдачи выбирается независимо.
+        location_dis_id = rental_ctx.get("extension_location_id") or random.choice(self.LOCATIONS)
 
         rental_ctx["fact_start_date"] = fact_start_date
         rental_ctx["dispense_dt"] = dispense_dt
@@ -209,38 +210,6 @@ class RentAPI:
 
         location_return_id = random.choice(self.LOCATIONS)
 
-        # Логика непрерывного продления (чтобы не падал dbt тест)
-        if rent_extend_flag:
-            new_rental_id = f"rnt_{self.state_mgr.get_counter('rental')}"
-            new_rental_days = random.randint(1, 28)
-            new_planned_end = fact_end_date + timedelta(days=new_rental_days)
-            
-            new_rental_ctx = {
-                "rental_id": new_rental_id,
-                "client_id": rental_ctx["client_id"],
-                "bike_id": bike_id,
-                "booking_dt": return_dt,
-                "planned_start_date": fact_end_date,
-                "planned_end_date": new_planned_end,
-                "rental_price_daily": rental_ctx["rental_price_daily"],
-                "deposit_amount": 200.00,
-                "discount_amount": random.choice([0.00, 0.00, 5.00, 10.00])
-            }
-            self.state_mgr.state["rentals"]["pending"].append(new_rental_ctx)
-            
-            payload_booking = new_rental_ctx.copy()
-
-            del payload_booking["booking_dt"]
-            
-            payload_booking["location_id"] = location_return_id
-            payload_booking["planned_start_date"] = fact_end_date.isoformat()
-            payload_booking["planned_end_date"] = new_planned_end.isoformat()
-            self._send('client_app_events', 'rental_booked', payload_booking)
-        else:
-            self.state_mgr.state["bikes"]["busy"].remove(bike_id)
-
-        location_return_id = random.choice(self.LOCATIONS)
-
         payload = {
             "rental_id": rental_ctx["rental_id"],
             "employee_return_id": self.state_mgr.get_employee("can_dispense_return_flg", location_return_id),
@@ -259,3 +228,39 @@ class RentAPI:
             "total_amount": total_amount
         }
         self._send('mechanic_app_events', 'bike_returned', payload)
+
+        # Логика непрерывного продления на той же локации
+        if rent_extend_flag:
+            new_rental_id = f"rnt_{self.state_mgr.get_counter('rental')}"
+            new_rental_days = random.randint(1, 28)
+            new_planned_end = fact_end_date + timedelta(days=new_rental_days)
+            new_discount = random.choice([0.00, 0.00, 5.00, 10.00])
+            
+            new_rental_ctx = {
+                "rental_id": new_rental_id,
+                "client_id": rental_ctx["client_id"],
+                "bike_id": bike_id,
+                "booking_dt": return_dt,
+                "planned_start_date": fact_end_date,
+                "planned_end_date": new_planned_end,
+                "rental_price_daily": rental_ctx["rental_price_daily"],
+                "deposit_amount": 200.00,
+                "discount_amount": new_discount,
+                "extension_location_id": location_return_id
+            }
+            self.state_mgr.state["rentals"]["pending"].append(new_rental_ctx)
+            
+            payload_booking = {
+                "rental_id": new_rental_id,
+                "client_id": rental_ctx["client_id"],
+                "bike_id": bike_id,
+                "location_id": location_return_id,
+                "planned_start_date": fact_end_date.isoformat(),
+                "planned_end_date": new_planned_end.isoformat(),
+                "rental_price_daily": rental_ctx["rental_price_daily"],
+                "deposit_amount": 200.00,
+                "discount_amount": new_discount
+            }
+            self._send('client_app_events', 'rental_booked', payload_booking)
+        else:
+            self.state_mgr.state["bikes"]["busy"].remove(bike_id)

@@ -32,7 +32,8 @@ class SimulationState:
                 "active": []          
             },
             "inventory": {},
-            "active_repairs": []      # НОВОЕ: Инициализируем хранилище ремонтов
+            "active_repairs": [],
+            "last_snapshot_week": None
         }
 
     def advance_time(self, is_pandas_mode=False):
@@ -53,10 +54,6 @@ class SimulationState:
             
         return self.state["current_sim_time"]
 
-    def get_counter(self, entity_type):
-        """Безопасная генерация инкрементальных ID"""
-        self.state["counters"][entity_type] += 1
-        return self.state["counters"][entity_type]
 
     def save(self):
         """Сериализация состояния в JSON."""
@@ -72,8 +69,8 @@ class SimulationState:
                 "pending": [self._serialize_dates(r) for r in self.state["rentals"]["pending"]],
                 "active": [self._serialize_dates(r) for r in self.state["rentals"]["active"]]
             },
-            # НОВОЕ: Сохраняем активные ремонты
-            "active_repairs": [self._serialize_dates(r) for r in self.state.get("active_repairs", [])]
+            "active_repairs": [self._serialize_dates(r) for r in self.state.get("active_repairs", [])],
+            "last_snapshot_week": self.state.get("last_snapshot_week")
         }
         temp_file = self.state_file + ".tmp"
         with open(temp_file, "w", encoding="utf-8") as f:
@@ -101,8 +98,8 @@ class SimulationState:
             "pending": [self._deserialize_dates(r) for r in data["rentals"]["pending"]],
             "active": [self._deserialize_dates(r) for r in data["rentals"]["active"]]
         }
-        # НОВОЕ: Восстанавливаем активные ремонты
         self.state["active_repairs"] = [self._deserialize_dates(r) for r in data.get("active_repairs", [])]
+        self.state["last_snapshot_week"] = data.get("last_snapshot_week")
 
     def _serialize_dates(self, obj):
         res = obj.copy()
