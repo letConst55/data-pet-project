@@ -30,8 +30,12 @@ class GarageAPI:
         active_rentals = self.state_mgr.state["rentals"]["active"]
         if not active_rentals:
             return
-            
-        rental_ctx = random.choice(active_rentals)
+
+        weights_srv = []
+        for r in active_rentals:
+            exp = self.state_mgr.state["clients"].get(r["client_id"], {}).get("driving_experience_years", 1)
+            weights_srv.append(4.0 if exp == 0 else (2.0 if exp <= 3 else 0.6))
+        rental_ctx = random.choices(active_rentals, weights=weights_srv, k=1)[0]
         rental_ctx["field_service_flag"] = True
 
         event_dt = self.state_mgr.state["current_sim_time"]

@@ -54,7 +54,7 @@
 Airflow http://localhost:8080/
 
  - логин: admin
- - пароль: YuxUPBsY9FGeSSPd
+ - пароль: 1234
 
 Grafana http://localhost:3000/
 

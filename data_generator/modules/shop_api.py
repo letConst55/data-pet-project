@@ -35,7 +35,13 @@ class ShopAPI:
         season = ctx["season_code"]
         event = ctx["event_code"]
 
-        client_id = random.choice(list(clients_dict.keys()))
+        active_rentals = self.state_mgr.state["rentals"]["active"]
+        if active_rentals and random.random() < 0.45:
+            client_id = random.choice(active_rentals)["client_id"]
+        else:
+            client_id = random.choice(list(clients_dict.keys()))
+
+
         order_id = f"ord_{self.state_mgr.get_counter('order')}"
         event_dt = self.state_mgr.state["current_sim_time"]
         location_id = random.choice(self.LOCATIONS)

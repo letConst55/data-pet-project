@@ -155,6 +155,7 @@ monthly_rollup as (
         sum(coalesce(rm.mtd_rentals, 0)) over (partition by spine.client_natural_key order by spine.report_month) as lifetime_rentals,
         sum(coalesce(rm.mtd_successful_rentals, 0)) over (partition by spine.client_natural_key order by spine.report_month) as lifetime_successful_rentals,
         sum(coalesce(rm.mtd_unique_bike_models_rented, 0)) over (partition by spine.client_natural_key order by spine.report_month) as lifetime_unique_bikes,
+        sum(coalesce(rm.mtd_sum_rental_mileage, 0)) over (partition by spine.client_natural_key order by spine.report_month) as lifetime_sum_mileage,
         -- Кумулятивная выручка (LTV)
         sum(coalesce(rm.mtd_rental_amount, 0) + coalesce(sm.mtd_shop_amount, 0) + coalesce(rpm.mtd_repair_amount, 0)) 
             over (partition by spine.client_natural_key order by spine.report_month) as lifetime_total_amount
@@ -191,17 +192,19 @@ select
     mr.lifetime_total_amount::numeric as lifetime_total_amount,
     round(mr.lifetime_successful_rentals::decimal / nullif(mr.lifetime_rentals, 0), 2)::numeric as trouble_free_days_ratio,  
     case
+        when mr.lifetime_rentals = 0 then 'shop_only_customer'
         when mr.lifetime_rentals = 1 then 'new_customer' 
         when mr.lifetime_rentals > 1 and mr.lifetime_rentals <= 5 and (mr.lifetime_successful_rentals::decimal / nullif(mr.lifetime_rentals, 0)) >= 0.5 then 'loyal_customer'
         when mr.lifetime_rentals > 5 and (mr.lifetime_successful_rentals::decimal / nullif(mr.lifetime_rentals, 0)) >= 0.5 then 'vip_customer'
-        when mr.lifetime_rentals > 1 and (mr.lifetime_successful_rentals::decimal / nullif(mr.lifetime_rentals, 0)) < 0.5 then 'danger_customer'
-        else 'unclassified'
+        else 'danger_customer'
     end::text as loyalty_segment_at_month,
     case
-        when mr.driving_experience_years = 0 and coalesce(mr.first_rent_bike_cc, 0) <= 160 then 'Beginner'
-        when mr.driving_experience_years > 0 and coalesce(mr.first_rent_bike_cc, 0) <= 160 and coalesce(mr.mtd_avg_rental_mileage, 0) < 100 then 'City_rider'
-        when coalesce(mr.first_rent_bike_cc, 0) > 160 and coalesce(mr.mtd_avg_rental_mileage, 0) between 100 and 500 then 'Traveller_rider'
-        when (mr.driving_experience_years >= 3 or mr.lifetime_unique_bikes > 2) and coalesce(mr.mtd_avg_rental_mileage, 0) > 500 then 'Pro_rider'
-        else 'unknown'
+        when mr.lifetime_rentals = 0 then 'Shop_or_Garage_Only'
+        when mr.driving_experience_years = 0 then 'Beginner'
+        when (mr.lifetime_sum_mileage::decimal / nullif(mr.lifetime_rentals, 0)) < 180 
+             and mr.driving_experience_years <= 5 then 'City_rider'
+        when (mr.driving_experience_years >= 5 or mr.lifetime_unique_bikes >= 3) 
+             and (mr.lifetime_sum_mileage::decimal / nullif(mr.lifetime_rentals, 0)) >= 350 then 'Pro_rider'
+        else 'Traveller_rider'
     end::text as rider_profile_segment_at_month
 from monthly_rollup mr

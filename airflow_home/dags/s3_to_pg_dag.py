@@ -69,7 +69,7 @@ with DAG(
     dag_id='elt_pipeline_s3_to_dwh',
     default_args=default_args,
     description='ELT: Загрузка из MinIO и сборка витрин через dbt',
-    schedule='*/15 * * * *',
+    #schedule='*/15 * * * *',
     catchup=False,
     tags=['pet-project', 'dbt', 'data-quality']
 ) as dag:
