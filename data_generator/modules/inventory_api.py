@@ -56,14 +56,20 @@ class InventoryAPI:
                 self.state_mgr.state["inventory"][prod_id][loc] = random.randint(10, 50)
 
     def perform_procurement(self):
-        """Закупка товаров (fct_procurement) - восполняем запасы, которые упали"""
+        """Закупка товаров (fct_procurement) - восполняем запасы с учетом логистической обстановки"""
         event_dt = self.state_mgr.state["current_sim_time"]
+        ctx = self.state_mgr.get_world_context()
+        season = ctx["season_code"]
+        event = ctx["event_code"]
         inv = self.state_mgr.state["inventory"]
         
+        # В высокий сезон и промо закупаем проактивно при остатке < 15
+        restock_threshold = 15 if (season == "high_season" or event == "grand_promo") else 10
+
         needs_restock = []
         for prod_id, loc_data in inv.items():
             for loc_id, qty in loc_data.items():
-                if qty < 10:
+                if qty < restock_threshold:
                     needs_restock.append((prod_id, loc_id, qty))
                     
         if not needs_restock:
@@ -72,20 +78,36 @@ class InventoryAPI:
         shipment_id = f"shp_{self.state_mgr.get_counter('procurement')}"
         carrier_id = random.choice(self.CARRIERS)
         
-        departure_dt = event_dt + timedelta(days=random.randint(1, 3))
-        arrival_dt = departure_dt + timedelta(days=random.randint(2, 7))
-        
-        for prod_id, loc_id, current_qty in needs_restock[:5]:
-            # Динамический расчет закупки: компенсируем минус и добавляем резерв
-            target_stock = random.randint(30, 60)
-            order_qty = target_stock + abs(current_qty) if current_qty < 0 else random.randint(20, 50)
-            
+        # В период логистического кризиса увеличиваются сроки доставки и стоимость фрахта (+25%)
+        if event == "supply_chain_crisis":
+            departure_dt = event_dt + timedelta(days=random.randint(3, 7))
+            arrival_dt = departure_dt + timedelta(days=random.randint(10, 21))
+            max_lines = 3
+            cost_multiplier = 1.25
+        elif event == "monsoon_flood":
+            departure_dt = event_dt + timedelta(days=random.randint(2, 5))
+            arrival_dt = departure_dt + timedelta(days=random.randint(5, 12))
+            max_lines = 4
+            cost_multiplier = 1.15
+        else:
+            departure_dt = event_dt + timedelta(days=random.randint(1, 3))
+            arrival_dt = departure_dt + timedelta(days=random.randint(2, 7))
+            max_lines = 6
+            cost_multiplier = 1.0
+
+        for prod_id, loc_id, current_qty in needs_restock[:max_lines]:
+            if season == "high_season" or event == "grand_promo":
+                target_stock = random.randint(45, 75)
+            else:
+                target_stock = random.randint(30, 60)
+
+            order_qty = target_stock + abs(current_qty) if current_qty < 0 else random.randint(25, 55)
             inv[prod_id][loc_id] = current_qty + order_qty
             
             meta = self.PRODUCT_META.get(prod_id, {})
             vendor_id = meta.get("vendor_id") or random.choice(self.VENDORS)
             unit_cost = meta.get("unit_cost", 25.0)
-            payment_amount = round(order_qty * unit_cost, 2)
+            payment_amount = round(order_qty * unit_cost * cost_multiplier, 2)
             
             payload = {
                 "shipment_id": shipment_id,
@@ -119,6 +141,8 @@ class InventoryAPI:
             return
             
         self.state_mgr.state["last_snapshot_week"] = week_year
+        ctx = self.state_mgr.get_world_context()
+        lead_days = 14 if ctx["event_code"] == "supply_chain_crisis" else 5
         inv = self.state_mgr.state["inventory"]
 
         for prod_id, loc_data in inv.items():
@@ -130,6 +154,6 @@ class InventoryAPI:
                     "product_quantity": qty,
                     "available_flag": qty > 0,
                     "isin_shipment_flag": qty < 10,
-                    "planned_delivery_date": (event_dt + timedelta(days=5)).date().isoformat() if qty < 10 else None
+                    "planned_delivery_date": (event_dt + timedelta(days=lead_days)).date().isoformat() if qty < 10 else None
                 }
                 self._send('inventory_events', 'inventory_snapshot_taken', payload)

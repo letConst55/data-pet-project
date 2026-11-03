@@ -31,21 +31,52 @@ class ShopAPI:
         clients_dict = self.state_mgr.state["clients"]
         if not clients_dict: return
 
+        ctx = self.state_mgr.get_world_context()
+        season = ctx["season_code"]
+        event = ctx["event_code"]
+
         client_id = random.choice(list(clients_dict.keys()))
         order_id = f"ord_{self.state_mgr.get_counter('order')}"
         event_dt = self.state_mgr.state["current_sim_time"]
         location_id = random.choice(self.LOCATIONS)
         
-        # Динамический поиск сотрудника магазина на этой локации
         employee_id = self.state_mgr.get_employee("can_sell_retail_flg", location_id)
 
-        num_items = random.choices([1, 2, 3], weights=[60, 30, 10], k=1)[0]
+        # Размер корзины и щедрость скидок реагируют на промо-кампании и сезонность
+        if event == "grand_promo":
+            basket_weights = [25, 45, 30]
+            discount_prob = 0.80
+            discount_rate = 0.15
+            max_item_qty = 3
+        elif season == "high_season" or event == "songkran_festival":
+            basket_weights = [40, 40, 20]
+            discount_prob = 0.10
+            discount_rate = 0.10
+            max_item_qty = 3
+        elif event == "monsoon_flood":
+            basket_weights = [80, 15, 5]
+            discount_prob = 0.30
+            discount_rate = 0.10
+            max_item_qty = 2
+        elif season == "low_season":
+            basket_weights = [65, 25, 10]
+            discount_prob = 0.25
+            discount_rate = 0.10
+            max_item_qty = 2
+        else:
+            basket_weights = [60, 30, 10]
+            discount_prob = 0.15
+            discount_rate = 0.10
+            max_item_qty = 2
+
+        num_items = random.choices([1, 2, 3], weights=basket_weights, k=1)[0]
         basket = random.sample(self.PRODUCTS, k=num_items)
 
         for item in basket:
-            cnt = random.randint(1, 2) if not item["is_tuning"] else 1
+            # Для услуг тюнинга количество строго равно 1 (контракт теста fct_shop_order_business_logic)
+            cnt = random.randint(1, max_item_qty) if not item["is_tuning"] else 1
             basic_amount = round(item["price"] * cnt, 2)
-            discount = round(basic_amount * 0.1, 2) if random.random() < 0.15 else 0.0
+            discount = round(basic_amount * discount_rate, 2) if random.random() < discount_prob else 0.0
             total_amount = round(basic_amount - discount, 2)
 
             if not item["is_tuning"]:
@@ -55,8 +86,6 @@ class ShopAPI:
                 
                 if prod_id not in inv:
                     inv[prod_id] = {}
-                # Если товара нет в словаре локации, допускаем уход в минус (как предзаказ), 
-                # а закупка потом перекроет этот минус
                 inv[prod_id][loc_id] = inv[prod_id].get(loc_id, 0) - cnt
 
             payload = {

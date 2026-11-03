@@ -32,6 +32,45 @@ def load_csv_safe(relative_path):
     df.columns = df.columns.str.strip()
     return df
 
+def get_dynamic_weights(ctx):
+    """
+    Возвращает динамические веса для 10 действий оркестратора в зависимости от сезона и катаклизмов.
+    Порядок действий:
+    [hr, gen_client, book, dispense, return, field_srv, accept_rep, finish_rep, shop_buy, procurement]
+    """
+    season = ctx["season_code"]
+    event = ctx["event_code"]
+
+    # 1. Базовый профиль по климатическому сезону
+    if season == "high_season":
+        # Высокий туристический сезон (Ноябрь - Февраль): бум аренд и покупок
+        weights = [3, 18, 24, 22, 22, 5, 4, 4, 16, 4]
+    elif season == "low_season":
+        # Сезон дождей (Июнь - Октябрь): спад аренд, рост поломок и ремонтов
+        weights = [3, 12, 14, 15, 16, 10, 6, 6, 11, 3]
+    else:
+        # Жаркий сезон (Март - Май): эталонный баланс
+        weights = [3, 15, 20, 18, 18, 6, 4, 4, 13, 3]
+
+    # 2. Переопределение весов во время катаклизмов и специальных событий
+    if event == "monsoon_flood":
+        # Наводнение: новые брони падают, массовые выезды механиков и возвраты
+        weights = [2, 5, 5, 8, 18, 24, 10, 10, 6, 3]
+    elif event == "songkran_festival":
+        # Сонгкран: максимальный спрос на прокат и экипировку
+        weights = [2, 22, 28, 25, 24, 8, 4, 4, 18, 4]
+    elif event == "grand_promo":
+        # Промо-кампания: всплеск новых регистраций и продаж в магазине
+        weights = [3, 25, 22, 20, 20, 5, 4, 4, 28, 6]
+    elif event == "supply_chain_crisis":
+        # Кризис поставок: закупки блокируются (вес = 1), склад пустеет
+        weights = [3, 15, 20, 18, 18, 6, 5, 5, 16, 1]
+    elif event == "extreme_heatwave":
+        # Аномальная жара: меньше поездок днем, чаще перегрев двигателей
+        weights = [3, 10, 12, 14, 16, 14, 7, 7, 11, 3]
+
+    return weights
+
 def main(mode="pandas", duration_seconds=60):
     print(f"Запуск оркестратора симуляции (Режим: {mode.upper()})")
     
@@ -44,7 +83,6 @@ def main(mode="pandas", duration_seconds=60):
         df_locations = load_csv_safe('data/df_locations.csv')
         LOCATIONS = df_locations['location_id'].tolist()
         
-        # ИСПРАВЛЕНИЕ: Разделяем локации по их бизнес-смыслу, приводя флаги к строке для безопасности
         RENT_LOCATIONS = df_locations[df_locations['is_warehouse_flag'].astype(str).str.lower().isin(['true', '1'])]['location_id'].tolist()
         GARAGE_LOCATIONS = df_locations[df_locations['is_garage_flag'].astype(str).str.lower().isin(['true', '1'])]['location_id'].tolist()
         SHOP_LOCATIONS = df_locations[df_locations['is_shop_flag'].astype(str).str.lower().isin(['true', '1'])]['location_id'].tolist()
@@ -70,12 +108,23 @@ def main(mode="pandas", duration_seconds=60):
     # 3. Инициализация модулей 
     hr_api = HrAPI(sim_state, publisher, LOCATIONS) 
     rent_api = RentAPI(sim_state, publisher, BIKES, RENT_LOCATIONS) 
-    
     garage_api = GarageAPI(sim_state, publisher, GARAGE_LOCATIONS, CARRIERS, BIKE_MODELS, SHOP_LOCATIONS) 
-    
     shop_api = ShopAPI(sim_state, publisher, SHOP_LOCATIONS, PRODUCTS) 
     inventory_api = InventoryAPI(sim_state, publisher, SHOP_LOCATIONS, PRODUCTS, VENDORS, CARRIERS)
     
+    actions = [
+        hr_api.manage_hr_events,
+        rent_api.generate_client, 
+        rent_api.book_bike, 
+        rent_api.dispense_bike, 
+        rent_api.return_bike,
+        garage_api.perform_field_service,
+        garage_api.accept_external_repair,
+        garage_api.finish_external_repair,
+        shop_api.make_purchase,
+        inventory_api.perform_procurement
+    ]
+
     start_time = time.time()
     events_counter = 0
 
@@ -88,27 +137,12 @@ def main(mode="pandas", duration_seconds=60):
         # Детерминированная проверка еженедельного снапшота (срабатывает 1 раз каждое воскресенье)
         inventory_api.take_weekly_snapshot()
         
-        # Вероятностный пул транзакционных событий (сумма весов = 100)
-        action = random.choices(
-            [
-                hr_api.manage_hr_events,
-                rent_api.generate_client, 
-                rent_api.book_bike, 
-                rent_api.dispense_bike, 
-                rent_api.return_bike,
-                garage_api.perform_field_service,
-                garage_api.accept_external_repair,
-                garage_api.finish_external_repair,
-                shop_api.make_purchase,
-                inventory_api.perform_procurement
-            ],
-            weights=[3, 15, 20, 16, 16, 6, 4, 4, 13, 3], # Сумма весов 100
-            k=1
-        )[0]
+        # Получаем динамические веса для текущего сезона и активного катаклизма/промо
+        world_ctx = sim_state.get_world_context()
+        current_weights = get_dynamic_weights(world_ctx)
+        
+        action = random.choices(actions, weights=current_weights, k=1)[0]
         action()
-
-        if sim_state.state["is_realtime"]:
-            publisher.flush()
 
         events_counter += 1
         if events_counter % 50 == 0 or sim_state.state["is_realtime"]:

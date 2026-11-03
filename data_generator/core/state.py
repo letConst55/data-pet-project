@@ -2,10 +2,13 @@ import os
 import json
 import random
 from datetime import datetime, timedelta, timezone, date
+from core.world_context import WorldContext
 
 class SimulationState:
     def __init__(self, state_file="generator_state.json"):
         self.state_file = state_file
+        self.world = WorldContext()
+        self.last_logged_event_code = "normal"
         self.state = self._default_state()
         self._load_state()
 
@@ -36,13 +39,32 @@ class SimulationState:
             "last_snapshot_week": None
         }
 
+    def get_world_context(self):
+        """Возвращает текущие модификаторы сезонности, роста и катаклизмов"""
+        return self.world.get_context(self.state["current_sim_time"])
+
     def advance_time(self, is_pandas_mode=False):
-        """Сдвигает виртуальные часы вперед."""
+        """Сдвигает виртуальные часы вперед с учетом сезонности и катаклизмов."""
         now_utc = datetime.now(timezone.utc)
         
         if not self.state["is_realtime"]:
-            # В историческом режиме шагаем от 1 до 6 часов вперед
-            step = timedelta(hours=random.randint(1, 6), minutes=random.randint(0, 59))
+            ctx = self.get_world_context()
+            traffic_mult = ctx["total_traffic_mult"]
+            
+            # Логируем в консоль начало и окончание катаклизмов / промо-акций
+            if ctx["event_code"] != self.last_logged_event_code:
+                self.last_logged_event_code = ctx["event_code"]
+                dt_str = self.state["current_sim_time"].date().isoformat()
+                print(f"\n🌍 [{dt_str}] СМЕНА РЕЖИМА СРЕДЫ: {ctx['event_title']} (Трафик: x{traffic_mult})\n", flush=True)
+
+            # Базовый шаг (90..330 минут) делим на коэффициент трафика:
+            # В пик сезона шаг сжимается (~30..110 мин -> много событий в день),
+            # В шторм/несезон растягивается (но не более 600 мин = 10 часов, чтобы не перепрыгнуть воскресенье)
+            base_minutes = random.randint(90, 330)
+            scaled_minutes = int(base_minutes / traffic_mult)
+            clamped_minutes = max(25, min(600, scaled_minutes))
+            
+            step = timedelta(minutes=clamped_minutes, seconds=random.randint(0, 59))
             if self.state["current_sim_time"] + step < now_utc:
                 self.state["current_sim_time"] += step
             else:

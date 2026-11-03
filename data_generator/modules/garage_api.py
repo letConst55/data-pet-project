@@ -8,8 +8,8 @@ class GarageAPI:
     def __init__(self, sim_state, publisher, locations_list, carriers_list, bike_models_list, shop_locations_list):
         self.state_mgr = sim_state
         self.publisher = publisher
-        self.LOCATIONS = locations_list # Здесь лежат гаражи (для ремонта и выездов)
-        self.SHOP_LOCATIONS = shop_locations_list # Здесь лежат магазины (для приемки)
+        self.LOCATIONS = locations_list           # Гаражи (для ремонта и выездов)
+        self.SHOP_LOCATIONS = shop_locations_list # Магазины (для приемки)
         self.CARRIERS = carriers_list
         self.BIKE_MODELS = bike_models_list
         
@@ -35,10 +35,36 @@ class GarageAPI:
         rental_ctx["field_service_flag"] = True
 
         event_dt = self.state_mgr.state["current_sim_time"]
+        ctx = self.state_mgr.get_world_context()
+        event = ctx["event_code"]
         
-        # ИСПРАВЛЕНИЕ: Выбираем локацию (мастерскую) выезда
         location_id = random.choice(self.LOCATIONS)
         
+        issues = ["dead_battery", "flat_tire", "engine_check", "lost_key"]
+        resolutions = ["fixed_on_site", "bike_replaced", "towed_to_shop"]
+
+        # Специфика поломок и стоимости выезда в зависимости от погодных аномалий
+        if event == "monsoon_flood":
+            issue_cat = random.choices(issues, weights=[35, 10, 50, 5], k=1)[0]
+            res_action = random.choices(resolutions, weights=[15, 35, 50], k=1)[0]
+            cost = round(random.uniform(45.0, 140.0), 2)
+            client_fault = random.choices([True, False], weights=[30, 70], k=1)[0]
+        elif event == "extreme_heatwave":
+            issue_cat = random.choices(issues, weights=[30, 15, 50, 5], k=1)[0]
+            res_action = random.choices(resolutions, weights=[40, 30, 30], k=1)[0]
+            cost = round(random.uniform(30.0, 110.0), 2)
+            client_fault = False
+        elif event == "songkran_festival":
+            issue_cat = random.choices(issues, weights=[20, 30, 15, 35], k=1)[0]
+            res_action = random.choices(resolutions, weights=[60, 25, 15], k=1)[0]
+            cost = round(random.uniform(25.0, 95.0), 2)
+            client_fault = random.choices([True, False], weights=[75, 25], k=1)[0]
+        else:
+            issue_cat = random.choice(issues)
+            res_action = random.choice(resolutions)
+            cost = round(random.uniform(20.0, 100.0), 2)
+            client_fault = random.choice([True, False])
+
         payload = {
             "service_event_id": f"se_{self.state_mgr.get_counter('repair')}",
             "rental_id": rental_ctx["rental_id"],
@@ -46,13 +72,12 @@ class GarageAPI:
             "bike_id": rental_ctx["bike_id"],
             "event_date": event_dt.date().isoformat(),
             "event_datetime": event_dt.isoformat(),
-            # ИСПРАВЛЕНИЕ: Добавили локацию и ищем механика именно на ней
             "location_id": location_id, 
             "employee_id": self.state_mgr.get_employee("can_field_service_flg", location_id),
-            "issue_category": random.choice(["dead_battery", "flat_tire", "engine_check", "lost_key"]),
-            "resolution_action": random.choice(["fixed_on_site", "bike_replaced", "towed_to_shop"]),
-            "service_cost_usd": round(random.uniform(20.0, 100.0), 2),
-            "client_fault_flag": random.choice([True, False])
+            "issue_category": issue_cat,
+            "resolution_action": res_action,
+            "service_cost_usd": cost,
+            "client_fault_flag": client_fault
         }
         self._send('mechanic_app_events', 'field_service_performed', payload)
 
@@ -65,13 +90,21 @@ class GarageAPI:
         client_id = random.choice(list(clients_dict.keys()))
         repair_id = f"rep_{self.state_mgr.get_counter('repair')}"
         event_dt = self.state_mgr.state["current_sim_time"]
+        ctx = self.state_mgr.get_world_context()
+        event = ctx["event_code"]
         
-        transport_start = event_dt + timedelta(hours=random.randint(2, 24))
-        repair_start = transport_start + timedelta(hours=random.randint(1, 12))
-        repair_end = repair_start + timedelta(days=random.randint(1, 7))
-        transport_end = repair_end + timedelta(hours=random.randint(2, 24))
+        # В кризис поставок и наводнение сроки транспортировки и ремонта растягиваются
+        if event in ("supply_chain_crisis", "monsoon_flood"):
+            transport_start = event_dt + timedelta(hours=random.randint(12, 48))
+            repair_start = transport_start + timedelta(hours=random.randint(6, 24))
+            repair_end = repair_start + timedelta(days=random.randint(5, 14))
+            transport_end = repair_end + timedelta(hours=random.randint(12, 48))
+        else:
+            transport_start = event_dt + timedelta(hours=random.randint(2, 24))
+            repair_start = transport_start + timedelta(hours=random.randint(1, 12))
+            repair_end = repair_start + timedelta(days=random.randint(1, 7))
+            transport_end = repair_end + timedelta(hours=random.randint(2, 24))
 
-        # Сначала выбираем локацию магазина
         location_shop_id = random.choice(self.SHOP_LOCATIONS)
 
         repair_ctx = {
@@ -105,8 +138,19 @@ class GarageAPI:
         repair_ctx = finished_repairs[0]
         self.state_mgr.state["active_repairs"].remove(repair_ctx)
 
-        invoice_total = round(random.uniform(50.0, 500.0), 2)
-        invoice_discount = random.choice([0.0, 0.0, 10.0, 25.0])
+        ctx = self.state_mgr.get_world_context()
+        event = ctx["event_code"]
+
+        # При сложных ремонтах после шторма или дефицита запчастей средний чек выше
+        if event in ("monsoon_flood", "supply_chain_crisis"):
+            invoice_total = round(random.uniform(140.0, 650.0), 2)
+            invoice_discount = random.choice([0.0, 0.0, 10.0])
+        elif event == "grand_promo":
+            invoice_total = round(random.uniform(80.0, 500.0), 2)
+            invoice_discount = random.choice([15.0, 25.0, 40.0])
+        else:
+            invoice_total = round(random.uniform(50.0, 500.0), 2)
+            invoice_discount = random.choice([0.0, 0.0, 10.0, 25.0])
 
         payload = {
             "repair_id": repair_ctx["repair_id"],
