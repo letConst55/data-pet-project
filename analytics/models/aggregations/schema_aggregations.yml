@@ -41,3 +41,103 @@ models:
             - rider_profile_segment_at_month
             - loyalty_segment_at_month
             - nationality
+  - name: stats_by_bikes
+    description: "Витрина-песочница: помесячная утилизация, износ, пробег и окупаемость каждого байка."
+    columns:
+      - name: report_month
+        tests:
+          - not_null
+      - name: bike_natural_key
+        tests:
+          - not_null
+      - name: utilization_rate
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 1
+      - name: end_of_month_condition_score
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 1
+              max_value: 10
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - report_month
+            - bike_natural_key
+
+  - name: stats_by_inventory
+    description: "Витрина-песочница: помесячный баланс складских остатков, продаж, закупок и оборачиваемости."
+    columns:
+      - name: report_month
+        tests:
+          - not_null
+      - name: product_natural_key
+        tests:
+          - not_null
+      - name: location_natural_key
+        tests:
+          - not_null
+      - name: out_of_stock_rate
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 1
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - report_month
+            - product_natural_key
+            - location_natural_key
+
+  - name: agg_monthly_ops_kpis
+    description: "Витрина-отчетность: верхнеуровневые ежемесячные KPI операционной эффективности."
+    columns:
+      - name: report_month
+        tests:
+          - unique
+          - not_null
+      - name: fleet_utilization_rate
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 1
+      - name: warehouse_out_of_stock_rate
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 1
+
+  - name: agg_monthly_fleet_utilization
+    description: "Витрина-отчетность: утилизация, техническое состояние и ROI в разрезе моделей байков."
+    columns:
+      - name: report_month
+        tests:
+          - not_null
+      - name: model_utilization_rate
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 1
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - report_month
+            - brand
+            - bike_type
+            - bike_title
+
+  - name: agg_monthly_supply_and_repairs
+    description: "Витрина-отчетность: анализ узких мест в ремонтах (Lead Time) и цепочке поставок по локациям."
+    columns:
+      - name: report_month
+        tests:
+          - not_null
+      - name: location_natural_key
+        tests:
+          - not_null
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - report_month
+            - location_natural_key

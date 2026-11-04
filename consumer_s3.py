@@ -41,7 +41,7 @@ consumer = KafkaConsumer(
 print(f"🎧 Консьюмер запущен. Слушаем топики: {', '.join(TARGET_TOPICS)}...")
 
 batch = []
-BATCH_SIZE = 50
+BATCH_SIZE = 500
 batch_counter = 0
 
 def flush_batch(batch_to_flush, is_emergency=False):
@@ -96,7 +96,7 @@ while True:
                 "topic": message.topic,
                 "data": message.value
             })
-            print(f"[{message.topic}] Получено: {message.value.get('event_type')}", flush=True)
+            #print(f"[{message.topic}] Получено: {message.value.get('event_type')}", flush=True)
             
             if len(batch) >= BATCH_SIZE:
                 flush_batch(batch)

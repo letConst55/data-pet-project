@@ -145,6 +145,7 @@ class InventoryAPI:
         lead_days = 14 if ctx["event_code"] == "supply_chain_crisis" else 5
         inv = self.state_mgr.state["inventory"]
 
+        count_rows = 0
         for prod_id, loc_data in inv.items():
             for loc_id, qty in loc_data.items():
                 payload = {
@@ -156,4 +157,8 @@ class InventoryAPI:
                     "isin_shipment_flag": qty < 10,
                     "planned_delivery_date": (event_dt + timedelta(days=lead_days)).date().isoformat() if qty < 10 else None
                 }
-                self._send('inventory_events', 'inventory_snapshot_taken', payload)
+                event_id = f"evt_{fake.uuid4()}"
+                self.publisher.publish('inventory_events', 'inventory_snapshot_taken', payload, event_dt, event_id)
+                count_rows += 1
+                
+        print(f"[SNAP | {event_dt.date().isoformat()}] [inventory_events] Снят еженедельный срез остатков ({week_year}, позиций: {count_rows})", flush=True)

@@ -1,0 +1,18 @@
+{
+    "files.watcherExclude": {
+        "**/minio_data/**": true,
+        "**/pg_data/**": true,
+        "**/grafana_data/**": true,
+        "**/airflow_home/**": true,
+        "**/venv/**": true,
+        "**/target/**": true,
+        "**/logs_*.txt": true
+    },
+    "search.exclude": {
+        "**/minio_data": true,
+        "**/pg_data": true,
+        "**/airflow_home": true,
+        "**/venv": true,
+        "**/target": true
+    }
+}
