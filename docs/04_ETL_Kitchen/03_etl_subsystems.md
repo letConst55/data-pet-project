@@ -1,61 +1,61 @@
-# 34 подсистемы ETL по Кимбаллу: Проекция на проект
+# 34 Kimball ETL Subsystems: Project Mapping
 
-## Введение
-Ральф Кимбалл в своей методологии выделяет 34 независимые подсистемы, которые должны присутствовать в надежной и масштабируемой "ETL-кухне" (ETL back room). На практике, особенно с приходом современных ELT-инструментов вроде dbt и облачных архитектур, многие из этих подсистем физически "схлопываются" в единые процессы или делегируются базам данных. 
+## Introduction
+In his methodology, Ralph Kimball identifies 34 independent subsystems that must be present in a robust and scalable "ETL back room". In practice—especially with the advent of modern ELT tools like dbt and cloud architectures—many of these subsystems physically "collapse" into unified processes or are delegated to the database engine.
 
-Для нашего проекта по аренде байков мы спроектировали пайплайн, который учитывает функционал подавляющего большинства этих подсистем. Несмотря на то, что это пет-проект, заложенные архитектурные решения делают конвейер готовым к переносу в настоящий Production (ну, в основном).
+For our bike rental project, we designed a pipeline that incorporates the functionality of the vast majority of these subsystems. Even though this is a pet project, the architectural decisions laid down make the pipeline effectively Production-ready.
 
-Ниже представлено распределение классических 34 подсистем по 4 основным макро-категориям с описанием того, как именно они реализованы в нашем проекте.
-
----
-
-## 1. Экстракция (Extracting: Getting Data into the Data Warehouse)
-*Охватывает подсистемы 1–3 (Профилирование, CDC, Система извлечения)*
-
-В классическом ETL на этот этап тратится огромное количество ресурсов. В нашем ELT-подходе экстракция максимально упрощена и отделена от трансформаций.
-
-*   **Подсистема извлечения (Subsystem 3: Extract System):** Реализована через Kafka-консьюмер (`consumer_s3.py`), который непрерывно читает бизнес-события из топиков брокера Redpanda и складывает их в S3 (MinIO) в формате NDJSON. 
-*   **Система захвата измененных данных (Subsystem 2: Change Data Capture System):** Поскольку мы используем паттерн Event Sourcing (генератор отдает каждое событие как неизменяемый факт в Kafka), нам не нужен классический CDC (вроде Debezium), который читает WAL-логи баз данных. Каждое событие уже само по себе является дельтой изменений. Инкрементальность загрузки обеспечивается в скрипте `s3_to_postgres.py` за счет `INSERT ... ON CONFLICT DO NOTHING`.
+Below is the distribution of the classic 34 subsystems across 4 primary macro-categories, describing exactly how they are implemented in our project.
 
 ---
 
-## 2. Очистка и согласование данных (Cleaning and Conforming Data)
-*Охватывает подсистемы 4–8 (Очистка, Схема ошибок, Аудит, Дедупликация, Согласование)*
+## 1. Extracting: Getting Data into the Data Warehouse
+*Covers Subsystems 1–3 (Profiling, CDC, Extract System)*
 
-Очистка в ELT-парадигме перенесена внутрь хранилища (PostgreSQL) и выполняется средствами dbt.
+In classic ETL, a massive amount of resources is spent on this stage. In our ELT approach, extraction is heavily simplified and decoupled from transformations.
 
-*   **Система дедупликации (Subsystem 7: Deduplication System):** Реализована на уровне Core-слоя dbt. Например, в `dim_client` и `dim_employee` используется конструкция `DISTINCT ON (natural_key, event_timestamp)` для удаления дублей событий, пришедших в рамках одного микро-батча.
-*   **Система очистки (Subsystem 4: Data Cleansing System):** Роль очистки и базовой типизации выполняет Staging-слой (например, `stg_bike_dispensed`). Там сырые строки из `JSONB` жестко кастятся в реляционные типы (числа, даты, булевы значения).
-*   **Генератор измерений аудита (Subsystem 6: Audit Dimension Assembler):** Мы реализовали кастомную систему загрузки результатов выполнения dbt (`upload_dbt_results.py`). Метрики работы моделей и тестов складываются в схему `audit`, что позволяет отслеживать, когда и как были сформированы данные.
-
----
-
-## 3. Доставка данных (Delivering: Prepare for Presentation)
-*Охватывает подсистемы 9–21 (Управление SCD, Суррогатные ключи, Построение фактов, Агрегаты и др.)*
-
-Это сердце нашего dbt-проекта, где формируется логическая размерная модель (Звезда).
-
-*   **Менеджер медленно меняющихся измерений (Subsystem 9: SCD Manager):** Полноценно реализован через инкрементальные модели dbt для `dim_client` и `dim_employee`. Мы автоматически рассчитываем хронологию версий (`row_effective_date`, `row_expiration_date`) с помощью оконной функции `LEAD()`.
-*   **Генератор суррогатных ключей (Subsystem 10: Surrogate Key Generator):** Вместо классических Sequence или IDENTITY, которые сложно поддерживать в распределенных системах, мы используем детерминированное хэширование (например, `md5(natural_key || '_' || row_effective_date::varchar)`). Это позволяет пайплайну быть идемпотентным и перезапускаемым в любой момент.
-*   **Менеджер специальных измерений (Subsystem 12: Special Dimensions Manager):** Обработка Junk Dimensions (мусорных измерений) реализована в таблице фактов `fct_client_bike_rent` через макрос `dbt_utils.generate_surrogate_key` поверх низкокардинальных флагов повреждений байка или шлемов.
-*   **Построители таблиц фактов (Subsystem 13: Fact Table Builders):** Реализованы через SQL-запросы в dbt. Яркий пример — накопительный снапшот `fct_client_bike_rent`, который извлекает данные из 3 разных staging-таблиц (бронирование, выдача, возврат) и сшивает их через `LEFT JOIN`, одновременно выполняя Point-in-Time Lookup для ключей SCD2 (чтобы привязать аренду к версии профиля сотрудника *на момент события*).
-*   **Построитель агрегатов (Subsystem 19: Aggregate Builder):** Вынесен в отдельный слой Aggregation Marts в dbt (Customer 360, Fleet Utilization и т.д.), чтобы предрасчитать тяжелые метрики для дашбордов Tableau.
+*   **Subsystem 3: Extract System:** Implemented via a Kafka consumer (`consumer_s3.py`), which continuously reads business events from Redpanda broker topics and dumps them into S3 (MinIO) in NDJSON format.
+*   **Subsystem 2: Change Data Capture (CDC) System:** Because we utilize the Event Sourcing pattern (the generator emits every event as an immutable fact to Kafka), we don't need a classic CDC tool (like Debezium) reading database WAL logs. Every event is natively a change delta. Incremental loading is guaranteed in the `s3_to_postgres.py` script via `INSERT ... ON CONFLICT DO NOTHING`.
 
 ---
 
-## 4. Управление средой ETL (Managing the ETL Environment)
-*Охватывает подсистемы 22–34 (Планировщик, Восстановление, Мониторинг, Параллелизм, Безопасность)*
+## 2. Cleaning and Conforming Data
+*Covers Subsystems 4–8 (Cleaning, Error Schema, Audit, Deduplication, Conforming)*
 
-Среда управления пайплайном критически важна для надежности (Observability & Orchestration).
+Cleaning in the ELT paradigm is shifted inside the warehouse (PostgreSQL) and executed by dbt.
 
-*   **Планировщик задач (Subsystem 22: Job Scheduler):** Имплементирован с помощью Apache Airflow. DAG `elt_pipeline_s3_to_dwh` оркестрирует весь процесс каждые 15 минут, контролируя порядок выполнения (Extract -> Branching -> dbt Run -> Audit Upload).
-*   **Система восстановления и перезапуска (Subsystem 24: Recovery and Restart System):** Пайплайн построен так, что его можно запустить повторно в случае сбоя. Загрузка в PostgreSQL идемпотентна (`ON CONFLICT DO NOTHING`), а dbt в любой момент может выполнить `--full-refresh`, сбросив и пересчитав все хранилище с нуля на основе сырых данных в Data Lake.
-*   **Мониторинг рабочих процессов (Subsystem 27: Workflow Monitor) и Система эскалации проблем (Subsystem 30: Problem Escalation System):** Связка встроенных тестов качества данных dbt (Data Quality Tests) и Grafana. Результаты тестов извлекаются нашим кастомным парсером и выводятся на дашборд. В реальном проекте на алерты Grafana вешаются вебхуки (например, в Slack или Telegram) для эскалации инцидентов инженерам.
-*   **Система управления версиями (Subsystem 25: Version Control System):** Весь код dbt-проекта (SQL-запросы, тесты, YAML-файлы с описанием контрактов), код генератора и конфигурация инфраструктуры (Docker) хранятся в Git, обеспечивая практику Infrastructure as Code (IaC) и Analytics as Code (AaC).
+*   **Subsystem 7: Deduplication System:** Implemented at the dbt Core layer. For instance, in `dim_client` and `dim_employee`, we use `DISTINCT ON (natural_key, event_timestamp)` to strip duplicate events arriving within a single micro-batch.
+*   **Subsystem 4: Data Cleansing System:** The Staging layer (e.g., `stg_bike_dispensed`) handles cleansing and foundational typing. There, raw strings from `JSONB` are strictly cast to relational types (numbers, dates, booleans).
+*   **Subsystem 6: Audit Dimension Assembler:** We built a custom system to load dbt execution results (`upload_dbt_results.py`). Model and test metrics are stored in the `audit` schema, allowing us to track when and how data was generated.
 
 ---
 
-## Резюме
-Использование современных инструментов, таких как dbt, Airflow и Kafka, позволяет "собрать" 34 классические ETL-подсистемы Кимбалла в лаконичный и читаемый код. Мы не пропустили ни одного ключевого этапа: извлечение защищено от падений (Kafka + S3), очистка гарантирована контрактами данных (Staging), историчность сохраняется детерминированно (SCD2 + MD5), а оркестрация и мониторинг качества данных прозрачны (Airflow + Grafana). 
+## 3. Delivering: Prepare for Presentation
+*Covers Subsystems 9–21 (SCD Management, Surrogate Keys, Fact Building, Aggregates, etc.)*
 
-Такая архитектура легко масштабируется от локального пет-проекта до HighLoad корпоративного хранилища данных.
+This is the beating heart of our dbt project, where the logical dimensional model (Star Schema) takes shape.
+
+*   **Subsystem 9: SCD Manager:** Fully implemented via incremental dbt models for `dim_client` and `dim_employee`. We automatically calculate version chronology (`row_effective_date`, `row_expiration_date`) using the `LEAD()` window function.
+*   **Subsystem 10: Surrogate Key Generator:** Instead of classic Sequences or IDENTITY columns—which are notoriously difficult to maintain in distributed systems—we use deterministic hashing (e.g., `md5(natural_key || '_' || row_effective_date::varchar)`). This keeps the pipeline idempotent and restartable at any time.
+*   **Subsystem 12: Special Dimensions Manager:** Junk Dimensions are handled in the `fct_client_bike_rent` fact table using the `dbt_utils.generate_surrogate_key` macro over low-cardinality flags (bike/helmet damage).
+*   **Subsystem 13: Fact Table Builders:** Implemented via SQL queries in dbt. A prime example is the `fct_client_bike_rent` accumulating snapshot, which extracts data from 3 different staging tables (booking, dispense, return) and stitches them together via `LEFT JOIN`, simultaneously executing a Point-in-Time Lookup for SCD2 keys (to tie the rental to the employee profile version active *at the time of the event*).
+*   **Subsystem 19: Aggregate Builder:** Offloaded to a dedicated Aggregation Marts layer in dbt (Customer 360, Fleet Utilization, etc.) to pre-calculate heavy metrics for Tableau dashboards.
+
+---
+
+## 4. Managing the ETL Environment
+*Covers Subsystems 22–34 (Scheduler, Recovery, Monitoring, Parallelism, Security)*
+
+The pipeline management environment is mission-critical for reliability (Observability & Orchestration).
+
+*   **Subsystem 22: Job Scheduler:** Implemented using Apache Airflow. The `elt_pipeline_s3_to_dwh` DAG orchestrates the entire process every 15 minutes, controlling execution order (Extract -> Branching -> dbt Run -> Audit Upload).
+*   **Subsystem 24: Recovery and Restart System:** The pipeline is designed to be fully restartable in the event of a crash. Loading into PostgreSQL is idempotent (`ON CONFLICT DO NOTHING`), and dbt can execute a `--full-refresh` at any time, dropping and recalculating the entire warehouse from scratch based on the raw data in the Data Lake.
+*   **Subsystem 27: Workflow Monitor & Subsystem 30: Problem Escalation System:** A combination of built-in dbt Data Quality Tests and Grafana. Test results are extracted by our custom parser and visualized on a dashboard. In a real-world scenario, Grafana alerts trigger webhooks (e.g., to Slack or Telegram) to escalate incidents to engineers.
+*   **Subsystem 25: Version Control System:** All dbt project code (SQL queries, tests, YAML contract definitions), generator code, and infrastructure configurations (Docker) are tracked in Git, cementing Infrastructure as Code (IaC) and Analytics as Code (AaC) practices.
+
+---
+
+## Summary
+Using modern tools like dbt, Airflow, and Kafka allows us to "package" Kimball's 34 classic ETL subsystems into elegant, readable code. We haven't skipped a single key stage: extraction is crash-proof (Kafka + S3), cleaning is guaranteed by data contracts (Staging), history is preserved deterministically (SCD2 + MD5), and orchestration and data quality monitoring are transparent (Airflow + Grafana).
+
+This architecture scales effortlessly from a local pet project to a HighLoad enterprise data warehouse.

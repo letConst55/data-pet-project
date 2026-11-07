@@ -1,76 +1,76 @@
-# Контроль качества данных и аудит (Data Quality & Observability)
+# Data Quality & Observability (Audit)
 
-## Введение
-Этот раздел описывает систему контроля качества данных и мониторинга (Data Observability), встроенную в наш ELT-пайплайн. Гарантия консистентности и бизнес-логической корректности данных является критическим условием доверия бизнес-пользователей к хранилищу.
+## Introduction
+This section details the Data Quality and Data Observability framework embedded within our ELT pipeline. Guaranteeing the consistency and business-logic accuracy of the data is an absolute prerequisite for securing business users' trust in the warehouse.
 
-Мы реализовали автоматизированную систему тестирования внутри dbt-проекта и кастомный механизм логирования артефактов выполнения для визуализации состояния хранилища в Grafana.
-
----
-
-## 1. Система тестирования dbt (Data Quality Tests)
-
-Система тестов спроектирована таким образом, чтобы покрывать как базовые технические ограничения, так и сложную доменную логику бизнеса. Все тесты можно разделить на три ключевые категории.
-
-### 1.1 Column Tests (Тесты колонок)
-Базовые проверки на уровне отдельных полей, которые описываются конфигурационно в файле `schema.yml`.
-*   **Уникальность и Not Null:** Применяются ко всем суррогатным и дегенеративным ключам (degenerate) (например, `client_sk`, `rental_id`).
-*   **Ограничения домена (Accepted Values):** Защита от попадания "мусорных" значений в справочники. Например, в `dim_bike_condition` поле `rental_condition_score` жестко ограничено значениями от 1 до 10, а день недели в календаре — от 1 до 7.
-
-### 1.2 Structure Tests (Тесты структуры и целостности)
-Проверки, гарантирующие целостность связей и структур данных, также описываемые в `schema.yml`:
-*   **Составные ключи:** Для таблицы-моста иерархии сотрудников `brg_emp_hierarchy` используется макрос `dbt_utils.unique_combination_of_columns` для комбинации руководителя и подчиненного (`manager_employee_id`, `subordinate_employee_id`).
-*   **Целостность активных срезов:** В измерениях SCD2 (например, `dim_client` и `dim_employee`) натуральный бизнес-ключ не уникален на уровне всей таблицы, но он **обязан** быть уникальным для активного среза. Это реализовано через кастомное условие `where: "current_row_indicator = true"` внутри теста на уникальность.
-
-### 1.3 Business Tests (Кастомные бизнес-тесты)
-Сложные проверки, реализованные в виде отдельных SQL-файлов в папке `tests/`. Они проверяют, имеют ли данные бизнес-смысл. Если такой SQL-запрос возвращает хотя бы одну строку — тест считается проваленным.
-
-*   **Паттерн CTE + UNION ALL:** Мы объединяем несколько логически связанных проверок для одной витрины в единый файл для удобства дебага и снижения нагрузки на базу. Каждое бизнес-правило проверяется в своей изолированной CTE, а затем результаты склеиваются с текстовым флагом причины ошибки (например, `error_reason = 'invalid_date_chronology'`). Это позволяет моментально локализовать проблему при падении пайплайна.
-*   **Проверка интервалов SCD2:** В файле `dim_clients_scd2_intervals.sql` реализована сложная логика поиска аномалий в истории клиента: инверсии дат (начало позже конца), разрывы (gaps) или пересечения (overlaps) между версиями, а также проверка корректности заглушки актуальной версии (дата 9999-12-31).
-*   **Математика и финансы:** Кастомные тесты (например, `assert_client_amounts_logic.sql` и проверки внутри фактов) гарантируют, что итоговые суммы точно бьются с формулами: `(Дни * Тариф) - Скидка + Удержания из залога`, а накопительный LTV равен сумме трат во всех отделах. Адекватность характеристик байков проверяется в `dim_bikes_valid_specs.sql` (исключение байков до 1990 года выпуска, с нулевым объемом двигателя и ценой).
-*   **Сложные логические цепочки и ссылочная целостность во времени:** В `fct_rent_extension_chain.sql` мы проверяем факты продления аренды, убеждаясь, что если флаг продления стоит, то в базе действительно существует следующая аренда для этого же клиента и байка. При этом джойн выполняется по неизменному натуральному ключу, чтобы избежать ложных срабатываний из-за смены SCD2-версий клиента во время аренды (SCD2 Time Travel Trap).
-
-#### Реестр кастомных тестов проекта (папка `tests/`)
-Ниже представлен список всех SQL-файлов из директории `tests/` с кратким описанием их бизнес-смысла:
-
-*   **`assert_client_amounts_logic.sql`** — Проверяет, что накопленный LTV клиента строго равен сумме его исторических трат на аренду, покупки в магазине и внешний ремонт.
-*   **`assert_ops_lead_time_logic.sql`** — Проверяет математическую сходимость временных отрезков: дни в аренде + простой равны календарному месяцу, а сумма этапов доставки/ремонта равна общему Lead Time.
-*   **`dim_bikes_valid_specs.sql`** — Отлавливает байки с отрицательной ценой, мощностью, нулевым объемом двигателя или некорректным годом выпуска.
-*   **`dim_calendar_no_gaps.sql`** — Гарантирует отсутствие пропусков (дыр) в датах на протяжении всего сформированного календаря.
-*   **`dim_clients_completeness.sql`** — Убеждается, что все клиенты из сырого слоя попали в витрину и что каждый клиент имеет строго одну актуальную активную запись.
-*   **`dim_clients_scd2_intervals.sql`** — Ищет аномалии SCD2-версионирования: нахлесты дат, разрывы истории и некорректные даты закрытия архивных записей.
-*   **`dim_location_valid_business_rules.sql`** — Проверяет, что каждая локация имеет хотя бы один активный отдел бизнеса и что локации арендных событий физически существуют в справочнике.
-*   **`fct_client_bike_rent_business_logic.sql`** — Комплексный тест аренды (7 проверок): хронология дат, финансовая формула чека, допуски сотрудников, соответствие оценки состоянию пробега и обоснованность штрафов.
-*   **`fct_inventory_snapshot_business_logic.sql`** — Комплексный тест склада (5 проверок): консистентность флага наличия, логика дат ожидаемых поставок, исключение услуг из физических остатков и день снятия снимка.
-*   **`fct_procurement_business_logic.sql`** — Комплексный тест закупок (4 проверки): хронология доставки от вендора, наличие инвойсов/чеков и положительные суммы закупки.
-*   **`fct_rent_extension_chain.sql`** — Проверяет, что за закрытой арендой с флагом "продлено" действительно следует физически созданная новая аренда.
-*   **`fct_rent_helmet_damage.sql`** — Гарантирует, что штраф за поврежденный шлем не может быть наложен на клиента, если шлемы ему не выдавались.
-*   **`fct_repair_business_logic.sql`** — Комплексный тест ремонта клиентских байков (4 проверки): хронология логистики между магазином и гаражом, адекватность скидок и допуски механиков.
-*   **`fct_service_events_business_logic.sql`** — Комплексный тест выездного сервиса (4 проверки): привязка выезда к реальной аренде, стоимость выезда > 0 и наличие прав у механика.
-*   **`fct_shop_order_business_logic.sql`** — Комплексный тест розничного магазина (5 проверок): сходимость базовой цены со скидкой, наличие физического магазина на локации и строгий квант (1 шт.) для услуг тюнинга.
+We implemented an automated testing suite inside the dbt project and a custom logging mechanism for execution artifacts to visualize the warehouse's health in Grafana.
 
 ---
 
-## 2. Наполнение схемы Audit (Парсинг результатов dbt)
+## 1. dbt Testing Suite (Data Quality Tests)
 
-Для того чтобы результаты работы тестов и моделей не оставались просто логами в консоли, мы реализовали процесс их захвата в базу данных. За это отвечает Python-скрипт `upload_dbt_results.py`, который запускается как финальный шаг в графе Airflow.
+The testing framework is designed to cover both basic technical constraints and complex business domain logic. All tests can be grouped into three core categories.
 
-**Технические особенности реализации:**
-*   Скрипт читает системный JSON-файл `analytics/target/run_results.json`, который dbt генерирует после каждой сборки проекта.
-*   С помощью префиксов `unique_id` скрипт разделяет сущности на тесты (`test.`) и модели (`model.`).
-*   Данные о каждой выполненной модели (имя, статус, время выполнения) загружаются в таблицу `audit.dbt_model_results`.
-*   Данные о тестах (имя теста, статус, количество ошибок/failures, время выполнения) загружаются в таблицу `audit.dbt_test_results`.
+### 1.1 Column Tests
+Foundational validations at the individual field level, configured declaratively in the `schema.yml` file.
+*   **Unique and Not Null:** Applied to all surrogate and degenerate keys (e.g., `client_sk`, `rental_id`).
+*   **Domain Constraints (Accepted Values):** Defends against "garbage" values creeping into reference tables. For instance, in `dim_bike_condition`, the `rental_condition_score` field is strictly confined to values between 1 and 10, and the day of the week in the calendar is limited to 1 through 7.
 
-Этот кастомный парсер позволяет нам отказаться от тяжелых сторонних dbt-пакетов и сторонних SaaS-решений, полностью контролируя слой логирования.
+### 1.2 Structure and Integrity Tests
+Validations guaranteeing relationship integrity and data structures, also defined in `schema.yml`:
+*   **Composite Keys:** For the `brg_emp_hierarchy` bridge table, the `dbt_utils.unique_combination_of_columns` macro is used to validate the manager-subordinate combination (`manager_employee_id`, `subordinate_employee_id`).
+*   **Active Slice Integrity:** In SCD2 dimensions (like `dim_client` and `dim_employee`), the natural business key is inherently non-unique across the whole table, but it **must** be strictly unique for the currently active slice. This is enforced via a custom `where: "current_row_indicator = true"` condition injected into the uniqueness test.
+
+### 1.3 Custom Business Tests
+Complex validations implemented as standalone SQL files inside the `tests/` directory. They verify whether the data makes actual business sense. If one of these SQL queries returns even a single row, the test is marked as failed.
+
+*   **CTE + UNION ALL Pattern:** We consolidate multiple logically related checks for a single data mart into one file to simplify debugging and reduce database load. Each business rule is evaluated in its isolated CTE, and the results are appended with a textual error flag (e.g., `error_reason = 'invalid_date_chronology'`). This allows for immediate problem localization if the pipeline crashes.
+*   **SCD2 Interval Validation:** The `dim_clients_scd2_intervals.sql` file houses complex logic to hunt down anomalies in client history: date inversions (start is after end), gaps, or overlaps between versions, alongside validating the active record placeholder (date 9999-12-31).
+*   **Math and Finances:** Custom tests (like `assert_client_amounts_logic.sql` and checks inside facts) ensure that final totals perfectly align with formulas: `(Days * Rate) - Discount + Deposit Deductions`, and that cumulative LTV equals total spend across all departments. Bike specification sanity is verified in `dim_bikes_valid_specs.sql` (flagging bikes manufactured before 1990, or boasting zero engine displacement or price).
+*   **Complex Logic Chains and Chronological Referential Integrity:** In `fct_rent_extension_chain.sql`, we audit rental extensions, ensuring that if an extension flag is raised, the subsequent rental for that exact client and bike actually exists in the database. Crucially, the join is executed on the immutable natural key to prevent false positives caused by SCD2 client version changes occurring mid-rental (SCD2 Time Travel Trap).
+
+#### Project Custom Tests Registry (`tests/` directory)
+Below is a list of all SQL files in the `tests/` directory, briefly describing their business intent:
+
+*   **`assert_client_amounts_logic.sql`** — Verifies that a client's cumulative LTV strictly equals the sum of their historical spending on rentals, shop purchases, and external repairs.
+*   **`assert_ops_lead_time_logic.sql`** — Validates the mathematical convergence of timelines: days rented + idle time equal calendar month days, and the sum of delivery/repair stages equals total Lead Time.
+*   **`dim_bikes_valid_specs.sql`** — Catches bikes with negative prices, horsepower, zero engine volume, or invalid manufacturing years.
+*   **`dim_calendar_no_gaps.sql`** — Guarantees no date gaps (holes) exist across the entire generated calendar timeline.
+*   **`dim_clients_completeness.sql`** — Ensures all clients from the raw layer made it into the mart and that every client has exactly one active record.
+*   **`dim_clients_scd2_intervals.sql`** — Hunts for SCD2 versioning anomalies: date overlaps, history gaps, and invalid archive record closing dates.
+*   **`dim_location_valid_business_rules.sql`** — Checks that every location has at least one active business department and that rental event locations physically exist in the reference table.
+*   **`fct_client_bike_rent_business_logic.sql`** — Comprehensive rental test (7 checks): date chronology, receipt financial math, employee permissions, condition-to-mileage alignment, and penalty justification.
+*   **`fct_inventory_snapshot_business_logic.sql`** — Comprehensive warehouse test (5 checks): availability flag consistency, planned delivery date logic, exclusion of services from physical stock, and snapshot capture day.
+*   **`fct_procurement_business_logic.sql`** — Comprehensive procurement test (4 checks): vendor delivery chronology, invoice/receipt presence, and positive purchase amounts.
+*   **`fct_rent_extension_chain.sql`** — Verifies that a closed rental flagged as "extended" is genuinely followed by a physically created new rental event.
+*   **`fct_rent_helmet_damage.sql`** — Guarantees a client cannot be penalized for a damaged helmet if no helmets were ever issued to them.
+*   **`fct_repair_business_logic.sql`** — Comprehensive client bike repair test (4 checks): shop-to-garage logistics chronology, discount sanity, and mechanic permissions.
+*   **`fct_service_events_business_logic.sql`** — Comprehensive field service test (4 checks): dispatch linked to an active rental, dispatch cost > 0, and valid mechanic permissions.
+*   **`fct_shop_order_business_logic.sql`** — Comprehensive retail shop test (5 checks): base price vs. discount convergence, physical shop presence at the location, and strict quantum (qty = 1) for tuning services.
+
+---
+
+## 2. Populating the Audit Schema (Parsing dbt Results)
+
+To ensure model and test results aren't just buried in terminal logs, we implemented a mechanism to capture them into the database. This is handled by the `upload_dbt_results.py` Python script, which runs as the final step in the Airflow DAG.
+
+**Technical Implementation Details:**
+*   The script reads the system JSON file `analytics/target/run_results.json`, generated by dbt after every project build.
+*   Using the `unique_id` prefixes, the script separates entities into tests (`test.`) and models (`model.`).
+*   Data for each executed model (name, status, execution time) is loaded into the `audit.dbt_model_results` table.
+*   Data for tests (test name, status, failure count, execution time) is loaded into the `audit.dbt_test_results` table.
+
+This custom parser eliminates reliance on bulky third-party dbt packages or external SaaS solutions, giving us complete control over our logging layer.
 
 ---
 
 ## 3. Data Observability Dashboard (Grafana)
 
-Слой визуализации метрик пайплайна реализован с помощью инструмента Grafana, который выступает в роли "монитора здоровья" (Observability) для инженера данных. 
+The pipeline metrics visualization layer is built using Grafana, which serves as a "health monitor" (Observability) for the data engineer.
 
 ![](grafana_img.jpeg)
 
-**Принцип работы и особенности:**
-*   **Источники данных:** Grafana подключается к нашей базе данных PostgreSQL и строит визуализации исключительно на основе данных из схемы `audit` (таблицы `dbt_test_results` и `dbt_model_results`).
-*   **Мониторинг в реальном времени:** Дашборды отображают длительность пересчета каждой витрины, процент успешных загрузок, а также списки проваленных бизнес-тестов. Если, к примеру, тест `fct_procurement_business_logic` упал, инженер сразу увидит это на графике и сможет оперативно локализовать проблему.
-*   **Persisted Volumes (Сохранение состояния):** В локальной архитектуре (`docker-compose.yml`) директория конфигурации и базы данных Grafana примонтирована к локальной файловой системе хоста (`./grafana_data` -> `/var/lib/grafana`). Это критически важное архитектурное решение гарантирует, что настроенные подключения к БД, созданные юзеры и собранные дашборды переживут полное уничтожение (`docker-compose down -v`) и пересоздание контейнеров.
+**Operational Principles and Features:**
+*   **Data Sources:** Grafana connects to our PostgreSQL database and builds visualizations exclusively using data from the `audit` schema (the `dbt_test_results` and `dbt_model_results` tables).
+*   **Real-Time Monitoring:** Dashboards display the recalculation duration for each mart, the percentage of successful loads, and lists of failed business tests. If, for instance, the `fct_procurement_business_logic` test fails, the engineer immediately sees it on the chart and can rapidly localize the issue.
+*   **Persisted Volumes (State Preservation):** In the local architecture (`docker-compose.yml`), Grafana's configuration and database directories are mounted to the host's local file system (`./grafana_data` -> `/var/lib/grafana`). This critical architectural decision ensures that configured DB connections, created users, and assembled dashboards survive the complete destruction (`docker-compose down -v`) and recreation of containers.

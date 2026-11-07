@@ -1,52 +1,52 @@
-# Оркестрация и управление жизненным циклом (Orchestration & Operations)
+# Orchestration & Operations
 
-## Введение
-Наконец рассмотрим подход к управлению жизненным циклом нашего хранилища данных. На этапе развертывания и эксплуатации (Deployment and Operations по Кимбаллу) критически важно иметь надежные инструменты оркестрации пайплайнов и удобные механизмы для старта и остановки всей инфраструктуры.
+## Introduction
+Finally, let's examine the lifecycle management approach for our data warehouse. During the Deployment and Operations phase (according to the Kimball methodology), it is critical to have reliable pipeline orchestration tools and convenient mechanisms for starting and stopping the entire infrastructure.
 
-В нашем проекте эти задачи разделены на два уровня:
-1.  **Оркестрация ELT-процессов:** Выполняется внутри Apache Airflow.
-2.  **Управление жизненным циклом среды (Infrastructure Operations):** Реализовано через управляющие Bash-скрипты.
-
----
-
-## 1. Оркестрация данных (Apache Airflow)
-
-Главным оркестратором потоков данных в нашем проекте является Apache Airflow. Его задача — управлять зависимостями и расписанием всех ELT-процессов.
-
-Как было подробно описано в разделе физического дизайна (`03_physical_design.md`), весь процесс управляется единым направленным ациклическим графом (DAG) `elt_pipeline_s3_to_dwh`. 
-Airflow отвечает за:
-*   Своевременный запуск скрипта экстракции данных из S3 в PostgreSQL каждые 15 минут.
-*   Динамический выбор режима трансформации (Full Refresh или Incremental) в dbt.
-*   Запуск сборки витрин (dbt build).
-*   Вызов парсера логов (`upload_dbt_results.py`) для выгрузки результатов тестов в схему аудита.
-
-Airflow полностью изолирован от этапа генерации данных и стриминга (Kafka), концентрируясь исключительно на пакетной (batch) обработке подготовленных в Data Lake файлов.
+In our project, these tasks are divided into two levels:
+1.  **ELT Process Orchestration:** Executed within Apache Airflow.
+2.  **Infrastructure Lifecycle Management (Operations):** Implemented via control Bash scripts.
 
 ---
 
-## 2. Управление инфраструктурой (Operations Scripts)
+## 1. Data Orchestration (Apache Airflow)
 
-Поскольку проект представляет собой сложную распределенную систему (Генератор, Kafka-консьюмер, Docker-контейнеры, Airflow), ручной запуск каждого компонента сопряжен с риском ошибок. Для автоматизации развертывания (Deployment) и безопасной остановки (с опциональным сбросом состояния) были разработаны два корневых Bash-скрипта.
+The primary data flow orchestrator in our project is Apache Airflow. Its task is to manage dependencies and schedule all ELT processes.
 
-### 2.1 Запуск конвейера (`start_pipeline.sh`)
-Скрипт `start_pipeline.sh` выполняет последовательную инициализацию всех узлов системы, строго соблюдая зависимости:
+As detailed in the physical design section (`03_physical_design.md`), the entire process is governed by a single Directed Acyclic Graph (DAG) named `elt_pipeline_s3_to_dwh`. 
+Airflow is responsible for:
+*   Timely execution of the data extraction script (S3 to PostgreSQL) every 15 minutes.
+*   Dynamic selection of the dbt transformation mode (Full Refresh or Incremental).
+*   Triggering the data mart builds (`dbt build`).
+*   Calling the log parser (`upload_dbt_results.py`) to load test results into the audit schema.
 
-1.  **Подъем инфраструктуры:** Инициализация Docker-контейнеров (PostgreSQL, Redpanda, MinIO, Grafana) в фоновом режиме через `docker compose up -d`.
-2.  **Активация окружения:** Переход в виртуальное Python-окружение проекта (`source venv/bin/activate`).
-3.  **Старт источника данных (Генератор):** Запуск симулятора бизнеса аренды байков (`data_generator/main.py`). Процесс переводится в фон (`&`), а его идентификатор (PID) сохраняется в скрытый файл `.generator.pid` для последующего безопасного завершения. Вывод перенаправляется в лог-файл `logs_generator.txt`.
-4.  **Старт стриминга (Consumer):** Запуск скрипта `consumer_s3.py`, который начинает перехватывать топики из Kafka и формировать Data Lake. Его PID также логируется в `.consumer.pid`.
-5.  **Старт оркестратора:** Запуск `airflow standalone` с указанием локальной директории `AIRFLOW_HOME`, сохранением логов и PID-файла (`.airflow.pid`).
-6.  **Отчетность:** Вывод ссылок на веб-интерфейсы MinIO и Airflow для визуального контроля.
+Airflow is completely isolated from the data generation and streaming (Kafka) phases, focusing exclusively on the batch processing of files staged in the Data Lake.
 
-### 2.2 Остановка и сброс хранилища (`stop_pipeline.sh`)
-Скрипт `stop_pipeline.sh` выполняет не просто остановку проекта, но и паттерн **"Reset to Zero"** (сброс до чистого листа). Это крайне важно для идемпотентности разработки: при следующем запуске пайплайн начнется в абсолютно чистой и консистентной среде.
+---
 
-Шаги выполнения скрипта:
-1.  **Graceful Shutdown фоновых процессов:** Скрипт читает PID-файлы генератора, консьюмера и Airflow, аккуратно завершая их работу командой `kill`. Дополнительно выполняется `pkill` для гарантии отсутствия зависших процессов. *Примечание: как описано ранее, консьюмер при получении этого сигнала успевает экстренно сбросить остатки буфера в S3.*
-2.  **Очистка операционного слоя (ODS):** Скрипт подключается к контейнеру PostgreSQL (`local_postgres`) через `docker exec` и выполняет команду `TRUNCATE TABLE` для всех таблиц схемы `ods_events` (`ods_client_events`, `ods_mechanic_events` и т.д.) с параметром `RESTART IDENTITY CASCADE`.
-3.  **Каскадная очистка витрин (dbt):** Выполняется команда `dbt run --full-refresh`. Поскольку слой ODS уже пуст, dbt перестраивает все размерные модели (Staging и Core) "вхолостую", фактически очищая все таблицы фактов и измерений хранилища данных.
-4.  **Очистка Data Lake (S3 / MinIO):** Скрипт заходит внутрь контейнера MinIO и физически удаляет все сырые NDJSON-файлы из бакетов (`rm -rf /data/*/*`), при этом сохраняя сами папки бакетов для будущих запусков.
-5.  **Остановка инфраструктуры:** Выполняется `docker compose down` для остановки баз данных и брокера сообщений.
-6.  **Сброс стейта генератора:** Удаляется файл `generator_state.json`, чтобы при следующем старте симуляция бизнеса (клиенты, пробеги байков, запасы на складе) началась с нулевой отметки.
+## 2. Infrastructure Management (Operations Scripts)
 
-Таким образом, данные скрипты автоматизируют рутину инженера данных и обеспечивают надежное и предсказуемое поведение среды на этапах разработки и тестирования пайплайна.
+Because the project is a complex distributed system (Generator, Kafka Consumer, Docker containers, Airflow), starting each component manually carries a high risk of error. To automate deployment and ensure safe shutdowns (with an optional state reset), two root Bash scripts were developed.
+
+### 2.1 Starting the Pipeline (`start_pipeline.sh`)
+The `start_pipeline.sh` script sequentially initializes all system nodes, strictly adhering to dependencies:
+
+1.  **Infrastructure spin-up:** Initializes Docker containers (PostgreSQL, Redpanda, MinIO, Grafana) in the background via `docker compose up -d`.
+2.  **Environment activation:** Activates the project's Python virtual environment (`source venv/bin/activate`).
+3.  **Data source start (Generator):** Launches the bike rental business simulator (`data_generator/main.py`). The process is pushed to the background (`&`), and its Process ID (PID) is saved in a hidden `.generator.pid` file for subsequent safe termination. Output is redirected to the `logs_generator.txt` file.
+4.  **Streaming start (Consumer):** Launches the `consumer_s3.py` script, which begins intercepting Kafka topics and forming the Data Lake. Its PID is also logged in `.consumer.pid`.
+5.  **Orchestrator start:** Runs `airflow standalone`, specifying the local `AIRFLOW_HOME` directory, saving logs and a PID file (`.airflow.pid`).
+6.  **Reporting:** Outputs links to the MinIO and Airflow web interfaces for visual monitoring.
+
+### 2.2 Stopping and Resetting the Warehouse (`stop_pipeline.sh`)
+The `stop_pipeline.sh` script goes beyond merely stopping the project; it executes a **"Reset to Zero"** pattern (wiping the slate clean). This is crucial for development idempotency: upon the next launch, the pipeline will start in an absolutely clean and consistent environment.
+
+Script execution steps:
+1.  **Graceful Shutdown of background processes:** The script reads the PID files for the generator, consumer, and Airflow, safely terminating them using the `kill` command. Additionally, `pkill` is executed to guarantee no hung processes remain. *Note: As described earlier, upon receiving this signal, the consumer manages an emergency flush of its remaining buffer to S3.*
+2.  **ODS layer cleanup:** The script connects to the PostgreSQL container (`local_postgres`) via `docker exec` and executes a `TRUNCATE TABLE` command for all tables in the `ods_events` schema (e.g., `ods_client_events`, `ods_mechanic_events`) using the `RESTART IDENTITY CASCADE` parameter.
+3.  **Cascading data mart cleanup (dbt):** The `dbt run --full-refresh` command is executed. Because the ODS layer is already empty, dbt rebuilds all dimensional models (Staging and Core) "empty," effectively wiping all fact and dimension tables in the data warehouse.
+4.  **Data Lake cleanup (S3 / MinIO):** The script enters the MinIO container and physically deletes all raw NDJSON files from the buckets (`rm -rf /data/*/*`), while preserving the bucket directories themselves for future runs.
+5.  **Infrastructure shutdown:** Executes `docker compose down` to stop the databases and message broker.
+6.  **Generator state reset:** Deletes the `generator_state.json` file so that upon the next start, the business simulation (clients, bike mileages, warehouse inventory) begins from ground zero.
+
+Thus, these scripts automate data engineering routines and ensure reliable, predictable environment behavior during the pipeline development and testing stages.

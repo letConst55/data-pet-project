@@ -1,90 +1,90 @@
-# Сбор бизнес-требований (Business Requirements Definition)
+# Business Requirements Definition
 
-## Введение
-Согласно методологии Кимбалла, проектирование хранилища данных начинается с выявления потребностей бизнеса. В данном документе мы собрали результаты гипотетического интервью со стейкхолдерами — руководителями трех ключевых направлений: "Магазин", "Мастерская" и "Аренда". 
+## Introduction
+According to the Kimball methodology, designing a data warehouse always begins with identifying business needs. This document consolidates the results of hypothetical interviews with our primary stakeholders—the heads of the three key departments: Shop, Garage, and Rental.
 
-Цель документа — показать какими могли бы быть бизнес-цели каждого отдела, сформулировать ключевые аналитические вопросы и определить метрики (KPI), которые хранилище данных (DWH) должно уметь рассчитывать. Эти требования являются основой для выбора бизнес-процессов и построения Enterprise Data Warehouse Bus Matrix.
-
----
-
-## 1. Отдел "Аренда" (Rental Department)
-
-**Стейкхолдер:** Руководитель отдела аренды / Operations Manager.
-**Основная роль отдела:** Управление процессами выдачи и возврата байков, фиксация технического состояния и клиентская поддержка.
-
-### Бизнес-цели
-*   Максимизация утилизации автопарка (Fleet Utilization) — байки должны приносить деньги, а не простаивать на парковке.
-*   Улучшение клиентского опыта и снижение проблем на дорогах.
-*   Контроль за износом техники и обоснованностью удержаний из залога при возврате.
-
-### Ключевые аналитические вопросы
-1.  Каков процент утилизации нашего парка (дней в аренде / доступных дней) в разрезе моделей байков, месяцев, профилей клиентов или конкретных локаций?
-2.  Как часто клиенты просят заменить байк в течение срока аренды? Каковы основные причины (поломка, неудобство)?
-3.  Как быстро деградирует техническое состояние байков различных брендов в зависимости от пробега и количества аренд?
-4.  Какова сезонность бронирований и как она коррелирует с погодными условиями в Бангкоке?
-5.  Каких клиентов можно считать наиболее надежными?
-
-### Требуемые KPI
-*   **Утилизация парка (Fleet Utilization Rate).**
-*   **Средний чек аренды (Average Order Value) и средняя продолжительность аренды (Average Rental Duration).**
-*   **Индекс деградации состояния байка** (разница между оценками состояния при выдаче и возврате).
+The goal of this document is to outline the business objectives of each department, formulate key analytical questions, and define the metrics (KPIs) that the Data Warehouse (DWH) must be able to calculate. These requirements serve as the foundation for selecting our core business processes and designing the Enterprise Data Warehouse Bus Matrix.
 
 ---
 
-## 2. Отдел "Мастерская" (Garage Department)
+## 1. Rental Department
 
-**Стейкхолдер:** Главный механик / Head of Maintenance.
-**Основная роль отдела:** Регламентное обслуживание арендных байков, ремонт байков клиентов (переданных из магазина) и учет складских запасов запчастей. Также включает выезды к клиентам при поломках.
+**Stakeholder:** Operations Manager / Head of Rentals
+**Primary Role:** Managing bike dispense and return processes, logging technical conditions, and providing customer support.
 
-### Бизнес-цели
-*   Минимизация времени простоя байков (Lead Time ремонта), чтобы быстрее возвращать их в доступный арендный парк.
-*   Снижение затрат на выездное обслуживание (Field Service).
-*   Обеспечение постоянного наличия востребованных запчастей на складах мастерских.
-*   Оптимизация процессов обслуживания байков, обучение и сертификация механиков.
+### Business Goals
+*   Maximize Fleet Utilization — bikes should generate revenue on the road, not sit idle in parking lots.
+*   Improve the overall customer experience and minimize on-road technical incidents.
+*   Monitor equipment wear and tear to ensure fair deposit deductions upon return.
 
-### Ключевые аналитические вопросы
-1.  Сколько времени в среднем занимает полный цикл ремонта клиентского байка с момента отправки из магазина до возвращения? 
-2.  Как часто наши механики выезжают к клиентам на дороги (спущенные колеса, севшие аккумуляторы) и какова средняя стоимость такого выезда? Происходит ли это по вине клиента или из-за плохого ТО?
-3.  Случаются ли у нас ситуации "out-of-stock" (отсутствие в наличии на складе) по критически важным запчастям, таким как тормозные колодки или фильтры? Как часто это происходит?
-4.  Какова производительность каждого механика (количество выполненных ремонтов и выездов)?
+### Key Analytical Questions
+1.  What is our fleet utilization rate (rented days / available days) broken down by bike models, months, client profiles, and specific locations?
+2.  How often do clients request a bike swap during their rental period? What are the primary drivers (breakdowns, ergonomic discomfort)?
+3.  How rapidly does the technical condition of various bike brands degrade relative to accumulated mileage and rental frequency?
+4.  What is the booking seasonality, and how does it correlate with weather patterns in Bangkok?
+5.  Which client segments are statistically the most reliable and trouble-free?
 
-### Требуемые KPI
-*   **Доля выездных ремонтов (Field Service Rate)** от общего числа активных аренд.
-*   **Среднее время ремонта (Average Repair Lead Time).**
-*   **Доступность запчастей (Parts Availability Rate / Out-of-stock rate).**
-
----
-
-## 3. Отдел "Магазин" (Shop & Retail Department)
-
-**Стейкхолдер:** Менеджер по рознице и закупкам / Retail & Procurement Manager.
-**Основная роль отдела:** Розничные продажи аксессуаров/запчастей, услуги тюнинга и управление закупками (включая взаимодействие с поставщиками).
-
-### Бизнес-цели
-*   Повышение прибыльности розничных продаж и услуг тюнинг-отдела.
-*   Оптимизация цепочки поставок (Supply Chain): своевременная закупка байков и запчастей по оптимальным ценам.
-*   Построение надежной сети поставщиков.
-
-### Ключевые аналитические вопросы
-1.  Какие запчасти и услуги (например, установка кофров) приносят наибольшую маржу в рознице?
-2.  Какова средняя длительность пайплайна закупки от создания заказа поставщику до фактического прибытия груза в магазин?
-3.  Кто из поставщиков наиболее надежен (не нарушает сроки доставки), а кто часто задерживает грузы?
-4.  Какие клиенты комбинируют покупку запчастей с заказом комплексного ремонта своего байка через наш тюнинг-отдел?
-
-### Требуемые KPI
-*   **Объем розничных продаж (Retail Revenue) и средний чек.**
-*   **Процент своевременных поставок (On-Time Delivery Rate) в разрезе поставщиков.**
-*   **Оборачиваемость запасов (Inventory Turnover).**
+### Required KPIs
+*   **Fleet Utilization Rate.**
+*   **Average Order Value (AOV) and Average Rental Duration.**
+*   **Bike Condition Degradation Index** (the delta between the condition scores logged at dispense and return).
 
 ---
 
-## Резюме для моделирования (Summary for Dimensional Modeling)
-На основе собранных требований мы можем выделить ключевые бизнес-процессы (Business Processes), которые должны стать таблицами фактов в нашем DWH:
-1.  **Процесс аренды байка** (выдача, эксплуатация, возврат).
-2.  **Покупки в магазине и тюнинг**.
-3.  **Снапшот инвентаря** (еженедельные срезы остатков запчастей в мастерских).
-4.  **Пайплайн поставок** (отслеживание этапов движения товара от поставщика).
-5.  **Пайплайн ремонта клиентских байков**.
-6.  **Выездные сервисные события**.
+## 2. Garage Department
 
-Общими измерениями (Conformed Dimensions) для этих процессов гарантированно станут: **Дата (Calendar), Клиент, Сотрудник, Локация и Товар/Байк**.
+**Stakeholder:** Head of Maintenance / Chief Mechanic
+**Primary Role:** Scheduled maintenance of the rental fleet, repair of external client bikes (forwarded from the shop), and spare parts inventory tracking. This also encompasses field service dispatches for breakdowns.
+
+### Business Goals
+*   Minimize bike downtime (Repair Lead Time) to quickly return assets to the available rental fleet.
+*   Reduce the operational costs associated with Field Service dispatches.
+*   Ensure high-demand spare parts are consistently available in garage warehouses.
+*   Optimize maintenance workflows and track mechanic productivity.
+
+### Key Analytical Questions
+1.  How long, on average, is the full repair cycle for a client's bike, from the moment it leaves the shop to its return?
+2.  How frequently are our mechanics dispatched for on-road rescues (flat tires, dead batteries), and what is the average cost per dispatch? Are these incidents caused by client negligence or poor scheduled maintenance?
+3.  Do we experience "out-of-stock" scenarios for critical consumables like brake pads or air filters? How often does this happen?
+4.  What is the productivity of each mechanic (measured by completed repairs and field dispatches)?
+
+### Required KPIs
+*   **Field Service Rate** (as a percentage of total active rentals).
+*   **Average Repair Lead Time.**
+*   **Parts Availability Rate / Out-of-Stock Rate.**
+
+---
+
+## 3. Shop & Retail Department
+
+**Stakeholder:** Retail & Procurement Manager
+**Primary Role:** Retail sales of gear and spare parts, tuning services, and supply chain management (including vendor relations).
+
+### Business Goals
+*   Increase the profitability of retail sales and tuning services.
+*   Optimize the Supply Chain: ensure timely procurement of bikes and parts at optimal prices.
+*   Build a resilient and reliable vendor network.
+
+### Key Analytical Questions
+1.  Which spare parts and services (e.g., top box installation) yield the highest retail margins?
+2.  What is the average duration of the procurement pipeline, from creating a vendor order to the actual arrival of the shipment at our locations?
+3.  Which vendors are the most reliable (adhering strictly to delivery SLAs), and which ones frequently delay shipments?
+4.  Which client segments tend to combine buying spare parts with ordering comprehensive repairs through our tuning department (cross-sell)?
+
+### Required KPIs
+*   **Retail Revenue and Average Ticket Size (AOV).**
+*   **On-Time Delivery Rate by vendor.**
+*   **Inventory Turnover Ratio.**
+
+---
+
+## Summary for Dimensional Modeling
+Based on the gathered requirements, we can isolate the key Business Processes that will translate into Fact Tables within our DWH:
+1.  **Bike Rental Process** (dispense, usage, return).
+2.  **Shop Purchases and Tuning**.
+3.  **Inventory Snapshot** (weekly snapshots of spare parts balances across garages).
+4.  **Procurement Pipeline** (tracking the stages of product delivery from vendors).
+5.  **Client Bike Repair Pipeline**.
+6.  **Field Service Events**.
+
+The core Conformed Dimensions linking these processes will undeniably be: **Date (Calendar), Client, Employee, Location, and Product/Bike**.

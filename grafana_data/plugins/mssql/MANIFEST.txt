@@ -7,8 +7,8 @@ Hash: SHA512
   "signedByOrg": "grafana",
   "signedByOrgName": "Grafana Labs",
   "plugin": "mssql",
-  "version": "13.0.9",
-  "time": 1793121534052,
+  "version": "13.0.10",
+  "time": 1793632918360,
   "keyId": "7e4d0c6a708866e7",
   "files": {
     "189.js": "04723c69a3de44b94b2aa3cc1beafda0e0b605b5c005ebabfa08d0e82601ee6a",
@@ -20,9 +20,9 @@ Hash: SHA512
     "482.js": "3b43ee5790e2dd406c47993ab51122d5b8ac290312a38787028a85a2dba493d2",
     "40.js.map": "1507642d0ce57975acda1fc403141e159cf8b7496e2e65941cf96ca162ebc3e7",
     "460.js": "cdf8ef8c091b4b019f6dfcaa456c90b575db86a37d4b71ad008f7b392479549d",
-    "sql-query-editor.js.map": "3ce4e16aeeb6e45d43fc8c9a22783535195cd124b28f62418b686e41fa5825e9",
-    "CHANGELOG.md": "a0ad7c180b2d8c4307a8b8cf02ef7542d4da19382aec75a3b1ea786bd39049db",
-    "sql-query-editor.js": "60b49f27459ec45ce2a3a3d7ebaf7a1607f2e2fcd4ca40f6652bb003da86eeaa",
+    "sql-query-editor.js.map": "eabc4f37b5a4ba8335029cfa586dcc59a9fa19af52a1fb74c3d84a39e8c9644b",
+    "CHANGELOG.md": "af55215d5db7f7095d43d6507641d00958adba55d9bc59b830938cc4cdce72b0",
+    "sql-query-editor.js": "4e12fae9b0cc80d13aacce992730d91875a8f84a6bf85026198b2b8bda5624bb",
     "locales/cs-CZ/mssql.json": "1df7694097774ed67481e7780ece8ceeb2dfa9863442faa53b08d85e1a41bfee",
     "locales/sv-SE/mssql.json": "7e437565de95a59b1f7ac3bcc0e49d6e2951f6174898a1362c7f9f071ffdc878",
     "locales/en-US/mssql.json": "c375668cdd66096a86847ba88b0f684b22fd8c7fa8c7fa90c1e99ea4212875aa",
@@ -43,11 +43,11 @@ Hash: SHA512
     "locales/pl-PL/mssql.json": "672bb8938e1216fcfc382e2378319205a05d1044e2da811b33fb0f0a8ad59621",
     "locales/id-ID/mssql.json": "7cc6679abdbe9acada822a0400464404fd1e96803c6bd05509eadcf6c3f4b21c",
     "35.js": "f092a4aa0afccfdb810a7df81460ba2c3664a684433f53ec4629283f1154b312",
-    "plugin.json": "a2f2e0753a0d2fc660013fb4c15ee5aa8f3386a620e87cf693f35531da27d00e",
+    "plugin.json": "6e64df403c3e90425ed2a8a990468024dfcf6907a1baaff4484b567bf15e00ac",
     "321.js.map": "cec3dcbdee0e072bb7412290d23500cb7a225e0a0cf47cb6338cdcbe57bb5f4e",
     "384.js.map": "17b5671be73aec7785ecac692576e43de30a85c57668bd6e781a8605b2bfa2b8",
     "384.js": "cc2c776e0d95a5cf17eb4733a52e8c9e61c62a02799905f75fc560f5a192251b",
-    "module.js": "60c85a3d09a424826e0ada23a5c5544e962a34c2d5ed5c6a30916cb53d467279",
+    "module.js": "c4c6250d6d17a480844dcd369f69d72538e5e52dc1ed0f943835be891fcefe9e",
     "img/sql_server_logo.svg": "93d5f0afed372f17602ecf87536c218942032a9a9679c77841a3f189827dcb93",
     "40.js": "3d0c140dfaedad0ff32445463e76b698acaa9a02fe6657e72e114a8a4eef0d5f",
     "908.js": "3b58685d40840da9ea01591fca5d3bc40b5f252e43a58740ba5a2aa77ee5255c",
@@ -64,7 +64,7 @@ Hash: SHA512
     "go_plugin_build_manifest": "d17a45fd05eb0fe61039becd1f49fbdebfe1d9b6816ea16729216d04dca4d2bf",
     "734.js.map": "e956d28f81e51bbed48ecbb8f74e1f8b1d6642998c2a1b56029602cf1badf86d",
     "195.js": "5911300b86c10e74c55e55177e404e6ea2a30da43705bdb992c2af94081c391d",
-    "module.js.LICENSE.txt": "5f8c7a54980853e89db8f42f29cf29c65704398d93e72eeddc2bad0b21813c62",
+    "module.js.LICENSE.txt": "ceb170eaa80002312bc3298e0d068917b8249823f83efd809135cd8c94672d6a",
     "156.js.map": "2ba74b3e40bc5853c262ad824cb59026811a898d33f5d5367ab131b4b3163e16",
     "156.js": "c96c5104edb45844b22c6da8667afae74ab43cf9a7a824d6968fd23667eece37",
     "492.js": "0f99d83ae64aab16ab07612a1e856a25a2417657b32337647fa8cbdf7062def4",
@@ -80,17 +80,17 @@ Hash: SHA512
     "734.js": "44166202241dc70e34ead9be09a1c60ed712976ba9ba189dddf693a77cc42929",
     "466.js.map": "8675258ee68d0d750abd90d03b011fd00e7428e96dc3f8360bf9ff6b98601680",
     "908.js.map": "af5a6180cd8ff859a7b874b3e18a490554f12829a6924813c226af8daa4db9c9",
-    "gpx_grafana-mssql-datasource_linux_arm64": "3137bbd5e3ac58c151c3899055fe41a16e0b895489a33efe2e7bf4eaf1b76cbd",
-    "module.js.map": "a93550acf86e97500a21f51c9f608e1c9d84e8ee71c89f2ceedc133a77274527"
+    "gpx_grafana-mssql-datasource_linux_arm64": "3e967844fff451f6fa951242ed88d3d528f3c41071829905af3351df31e4cbca",
+    "module.js.map": "b4e0c6e8f75473015c582d12e02e7ade6b073fab69289691b127a5bcc64dd7f4"
   }
 }
 -----BEGIN PGP SIGNATURE-----
 
-wsA9BAETCgBtBYJq4Nz+CRB+TQxqcIhm50UUAAAAAAAcACBzYWx0QG5vdGF0
-aW9ucy5vcGVucGdwanMub3JnviiNnvGu5JDw+tOFUS9snr/uzn/4mHMYQHLC
-7P8YE90WIQTzOyW2kQdOhGNlcPN+TQxqcIhm5wAAfQQCBA7M74gg8bHFiEn0
-0DF6/J7cBOuLRbggeOPkLKbx2eJQNP19D0/ZNqP7SZgdYkitFUQK2DdWCcvH
-gdAmiaqZ/QHlAgd19I+zjBE8cTIXG7RKO/77acdk8d/hpXT3zwa6iyzOfyZ5
-Yh+LlMeCko89qBvdXA2cBUrvD18Lpyf9pwoZPCReoA==
-=3kcE
+wsA+BAETCgBtBYJq6KqWCRB+TQxqcIhm50UUAAAAAAAcACBzYWx0QG5vdGF0
+aW9ucy5vcGVucGdwanMub3JnLQkNucxzR1O/zovyuYJEbN9OtfOPQd4VOfAN
+fl+t/UQWIQTzOyW2kQdOhGNlcPN+TQxqcIhm5wAAUDYCCQEbOVC8ALmv5l7i
+XQilrnkAT5UnasrZosYi/yssvr51lcOLURpFGDhFEz13P5GHWTkLb0oQ38oo
+MezXQ/vr3cF/yQIGJkRtnNTYtPm6ueGkdNoZ+LA3BS20I6C5+RuCqDxR/vQY
+WbH4Oqsa+pe9h3Qb0G+9k1z3mvqc9kk0+OK4KpjSmvc=
+=KRqC
 -----END PGP SIGNATURE-----

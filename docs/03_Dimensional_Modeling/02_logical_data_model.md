@@ -1,366 +1,334 @@
 ## Core
 
-Золотой слой готовый к анализу данных (схема *core* в базе данных). Именно на этом этапе модель представляет из себя отражение вышеописанных бизнес процессов по bus matrix и является первым слоем, в который имеют доступ бизнес пользователи и к которому могут подключаться BI приложения. Опишем каждый объект модели данных в отдельности.
+The Gold layer ready for data analysis (the *core* schema in the database). At this stage, the model reflects the business processes outlined in the bus matrix and serves as the primary layer accessed by business users and BI applications. Let's describe each object of the data model individually.
 
 ### fct_client_bike_rent
 
- 
- Главная таблица фактов, которую можно отнести к накопительному снапшоту. Аренда байка это длительный процесс, своего рода пайплайн, который может быть растянут даже на несколько месяцев (но в нашем бизнесе не более, чем на 28 дней). Гранулярность витрины - клиент + байк + дата (datetime) аренды (фактически, данная гранулярность и описывается ключом rental_id). Клиент может брать в аренду сколько угодно байков и любые байки любое количество раз, но один байк может быть закреплен только за одним клиентом в данный момент времени. Иными словами, записи для данного клиента и данного байка не могут пересекаться по времени. Если клиент продлевает аренду, то заводится новая запись и проставляется флаг, что этот период аренды является продлением предыдущего. Также в эту витрину для удобства включается атрибут-флаг, который показывает факт выезда механика к клиенту при возникновении технической неисправности.
+The primary fact table, designed as an accumulating snapshot. Bike rental is a prolonged process, essentially a pipeline that can stretch across multiple weeks (but strictly no more than 28 days in our business). The granularity of this data mart is one client + one bike + rental datetime (effectively, this grain is defined by the `rental_id` key). A client can rent any number of bikes any number of times, but a specific bike can only be assigned to one client at a given moment. In other words, records for a specific client and bike cannot overlap in time. If a client extends the rental, a new record is created with a flag indicating that this rental period is an extension of the previous one. For analytical convenience, this mart also includes a flag attribute indicating whether a mechanic was dispatched to the client for technical assistance during the rental.
 
 | column name                      | data type | description                                                   |
 |----------------------------------|-----------|---------------------------------------------------------------|
-| rental_id (PK) (DD)              | text      | Идентификатор факта аренды                                    |
-| client_sk (FK)                   | text      | Идентификатор клиента (суррогатный ключ)                                       |
-| bike_sk (FK)                     | text      | Идентификатор байка (суррогатный ключ)                                  |
-| location_dis_id (FK)             | text      | Идентификатор точки выдачи байка                              |
-| location_return_id (FK)          | text      | Идентификатор точки возврата байка                            |
-| planned_start_date (FK)          | date      | Планируемая дата начала аренды                                |
-| planned_end_date (FK)            | date      | Планируемая дата окончания аренды                             |
-| fact_start_date (FK)             | date      | Фактическая дата начала аренды                                |
-| fact_start_datetime            | timestamp      | Фактическая дата и время начала аренды                                |
-| fact_end_date (FK)               | date      | Фактические дата окончания аренды                             |
-| fact_end_datetime               | timestamp      | Фактические дата и время окончания аренды                             |
-| rental_price_daily               | numeric   | Цена аренды в день                                            |
-| deposit_amount                   | numeric   | Сумма залога                                                  |
-| deposit_deducted_amount          | numeric   | Удержанная сумма из залога                                    |
-| deduction_reason_code (FK)       | text      | Причина удержания части залога                                |
-| discount_amount                  | numeric   | Сумма скидки                                                  |
-| total_amount                     | numeric   | Итоговая стоимость аренды                                     |
-| employee_disp_id (FK)            | text      | Идентификатор выдавшего байка сотрудника                      |
-| employee_return_id (FK)          | text      | Идентификатор сотрудника, кто принял возврат байка            |
-| actual_start_mileage             | numeric   | Пробег байка на начало аренды                                 |
-| actual_end_mileage               | numeric   | Пробег байка после завершения аренды                          |
-| fuel_start_percent               | numeric   | Уровень топлива на начало аренды                              |
-| fuel_end_percent                 | numeric   | Уровень топлива после завершения аренды                       |
-| pre_rental_condition_score (FK)  | int       | Оценка технического состояния байка перед выдачей             |
-| post_rental_condition_score (FK) | int       | Оценка технического состояния байка после возврата            |
-| helmets_issued_qty               | int       | Количество выданных шлемов                                    |
-| rental_junk_sk               | text   | Внешний ключ, ссылающийся на junk dimension с флагами |
- 
+| rental_id (PK) (DD)              | text      | Rental fact identifier                                        |
+| client_sk (FK)                   | text      | Client identifier (surrogate key)                             |
+| bike_sk (FK)                     | text      | Bike identifier (surrogate key)                               |
+| location_dis_id (FK)             | text      | Dispense location identifier                                  |
+| location_return_id (FK)          | text      | Return location identifier                                    |
+| planned_start_date (FK)          | date      | Planned rental start date                                     |
+| planned_end_date (FK)            | date      | Planned rental end date                                       |
+| fact_start_date (FK)             | date      | Actual rental start date                                      |
+| fact_start_datetime              | timestamp | Actual rental start date and time                             |
+| fact_end_date (FK)               | date      | Actual rental end date                                        |
+| fact_end_datetime                | timestamp | Actual rental end date and time                               |
+| rental_price_daily               | numeric   | Daily rental price                                            |
+| deposit_amount                   | numeric   | Deposit amount                                                |
+| deposit_deducted_amount          | numeric   | Amount deducted from the deposit                              |
+| deduction_reason_code (FK)       | text      | Reason code for deposit deduction                             |
+| discount_amount                  | numeric   | Discount amount                                               |
+| total_amount                     | numeric   | Total rental cost                                             |
+| employee_disp_id (FK)            | text      | Identifier of the employee who dispensed the bike             |
+| employee_return_id (FK)          | text      | Identifier of the employee who received the returned bike     |
+| actual_start_mileage             | numeric   | Bike mileage at the start of the rental                       |
+| actual_end_mileage               | numeric   | Bike mileage at the end of the rental                         |
+| fuel_start_percent               | numeric   | Fuel level at the start of the rental                         |
+| fuel_end_percent                 | numeric   | Fuel level at the end of the rental                           |
+| pre_rental_condition_score (FK)  | int       | Technical condition score of the bike before dispense         |
+| post_rental_condition_score (FK) | int       | Technical condition score of the bike upon return             |
+| helmets_issued_qty               | int       | Number of helmets issued                                      |
+| rental_junk_sk                   | text      | Foreign key referencing the junk dimension containing flags   |
 
 ### dim_bike
 
- 
- Измерение (справочник) байков, гранулярность - один уникальный байк. Принимаем, что нам не нужно хранить историю изменения атрибутов по байкам, данная витрина обновляется через полную перезапись (scd1). Исходные данные представлены в формате csv файла, загруженного в базу через seed dbt.
+The bike dimension (reference table), with a granularity of one unique bike. We assume there is no need to track the history of attribute changes for bikes; this table is updated via full overwrite (SCD Type 1). The source data is provided as a CSV file loaded into the database via dbt seeds.
 
 | column name               | data type | description                           |
 |---------------------------|-----------|---------------------------------------|
-| bike_sk (PK)              | text      | Идентификатор байка (суррогатный ключ)|
-| bike_natural_key (NK)     | int       | Натуральный ключ байка                |
-| WIN_number                | text      | ВИН номер байка                       |
-| plate_number              | text      | Номер байка (табличка с номером)      |
-| title                     | text      | Наименование модели                   |
-| type                      | text      | Тип (класс) байка                     |
-| model_year                | int       | Год модели                            |
-| color                     | text      | Цвет                                  |
-| brand                     | text      | Бренд                                 |
-| hourse_power              | numeric   | Мощность в лс.                        |
-| engine_volume (cc)        | int       | Объем двигателя (куб. см.)            |
-| gearbox_type              | text      | Тип коробки передач                   |
-| usb_charging_availability | boolean   | Флаг наличия USB порта зарядки        |
-| procurement_price         | int       | Закупочная цена                       |
- 
+| bike_sk (PK)              | text      | Bike identifier (surrogate key)       |
+| bike_natural_key (NK)     | int       | Bike natural key                      |
+| WIN_number                | text      | Bike VIN number                       |
+| plate_number              | text      | License plate number                  |
+| title                     | text      | Model title                           |
+| type                      | text      | Bike type (class)                     |
+| model_year                | int       | Model year                            |
+| color                     | text      | Color                                 |
+| brand                     | text      | Brand                                 |
+| hourse_power              | numeric   | Horsepower (HP)                       |
+| engine_volume_cc          | int       | Engine volume (cc)                    |
+| gearbox_type              | text      | Gearbox type                          |
+| usb_charging_availability | boolean   | Flag indicating USB charger presence  |
+| procurement_price         | int       | Procurement price                     |
 
 ### dim_client
 
- 
- Справочник клиентов, обновляется по стратегии scd2, гранулярность - суррогатный ключ клиента. В витрине присутствуют технические поля для отметок периода действия каждой записи, а также булевское поле, в котором проставляется флаг актуальной версии записей.
- 
+The client dimension, updated using the SCD Type 2 strategy. Granularity is one surrogate client key. The table includes technical fields to track the effective period of each record, as well as a boolean flag indicating the currently active version of the record.
+
 | column name              | data type | description                                   |
 |--------------------------|-----------|-----------------------------------------------|
-| client_sk (PK)           | text      | Идентификатор клиента (суррогатный ключ)      |
-| client_natural_key (NK)  | text      | Идентификатор клиента (натуральный ключ)      |
-| full_name                | text      | Полное имя клиента                            |
-| gender                   | text      | Пол                                           |
-| birthday                 | date      | Дата рождения                                 |
-| salutation               | text      | Форма приветствия                             |
-| preferred_payment_method | text      | Предпочитаемый метод оплаты                   |
-| phone                    | text      | Мобильный телефон                             |
-| email                    | text      | Электронная почта                             |
-| nationality              | text      | Национальность                                |
-| residential_address      | text      | Адрес проживания                              |
-| driving_experience_years | int       | Количество лет (как опыт вождения)            |
-| drive_license_category   | text      | Категория водительских прав                   |
-| drive_license_verified   | boolean   | Факт наличия и актуальности водительских прав |
-| rating_score             | int       | Внутренний рейтинг клиента                    |
-| row_effective_date       | date      | Дата начала действия записи                   |
-| row_expiration_date      | date      | Дата окончания действия записи                |
-| current_row_indicator    | boolean   | Флаг актуальности записи                      |
+| client_sk (PK)           | text      | Client identifier (surrogate key)             |
+| client_natural_key (NK)  | text      | Client identifier (natural key)               |
+| full_name                | text      | Client's full name                            |
+| gender                   | text      | Gender                                        |
+| birthday                 | date      | Date of birth                                 |
+| salutation               | text      | Salutation form                               |
+| preferred_payment_method | text      | Preferred payment method                      |
+| phone                    | text      | Mobile phone number                           |
+| email                    | text      | Email address                                 |
+| nationality              | text      | Nationality                                   |
+| residential_address      | text      | Residential address                           |
+| driving_experience_years | int       | Years of driving experience                   |
+| drive_license_category   | text      | Driving license category                      |
+| drive_license_verified   | boolean   | Flag indicating a valid/verified license      |
+| rating_score             | int       | Internal client rating score                  |
+| row_effective_date       | date      | Record effective start date                   |
+| row_expiration_date      | date      | Record expiration date                        |
+| current_row_indicator    | boolean   | Current active record flag                    |
 
 ### dim_calendar
 
- 
- Классическое измерение календаря, включающая различные атрибуты дат, такие как номер дня недели, флаг рабочего дня или выходного, праздники, номера недель и т.п. Гранулярность - один день.
+A classic calendar dimension encompassing various date attributes such as day of the week, holiday/weekend flags, week numbers, etc. Granularity is one day.
 
 | column name         | data type | description                     |
 |---------------------|-----------|---------------------------------|
-| date (PK)           | date      | Дата                            |
-| month_year          | text      | Месяц-год                       |
-| quarter_year        | text      | Квартал-год                     |
-| week_number         | int       | Номер недели                    |
-| dow_number          | int       | Номер дня недели                |
-| dow_text            | text      | Наименование дня недели         |
-| is_holiday_flg      | boolean   | Флаг праздничного дня           |
-| holiday_name        | text      | Название праздника              |
-| date_key_int        | int       | Ключ даты                       |
-| year_number         | int       | Номер года                      |
-| quarter_number      | int       | Номер квартала                  |
-| month_number        | int       | Номер месяца                    |
-| month_name          | text      | Название месяца                 |
-| month_name_short    | text      | Короткое название месяца        |
-| day_of_month        | int       | Номер дня в месяце              |
-| day_of_year         | int       | Номер дня в текущем году        |
-| dow_text_short      | text      | Короткое название дня недели    |
-| is_weekend_flag     | boolean   | Флаг выходного дня              |
-| is_working_day_flag | boolean   | Флаг рабочего дня               |
-| bkk_weather_season  | text      | Текущий сезон погоды в Бангкоке |
-| week_start_date     | date      | Дата начала недели              |
-| month_start_date    | date      | Дата начала месяца              |
-| month_end_date      | date      | Дата последнего дня месяца      |
-| is_month_end_flag   | boolean   | Флаг последнего дня месяца      |
-
+| date (PK)           | date      | Date                            |
+| month_year          | text      | Month-Year                      |
+| quarter_year        | text      | Quarter-Year                    |
+| week_number         | int       | Week number                     |
+| dow_number          | int       | Day of week number              |
+| dow_text            | text      | Day of week name                |
+| is_holiday_flg      | boolean   | Holiday flag                    |
+| holiday_name        | text      | Holiday name                    |
+| date_key_int        | int       | Date key (integer)              |
+| year_number         | int       | Year number                     |
+| quarter_number      | int       | Quarter number                  |
+| month_number        | int       | Month number                    |
+| month_name          | text      | Month name                      |
+| month_name_short    | text      | Short month name                |
+| day_of_month        | int       | Day of the month                |
+| day_of_year         | int       | Day of the year                 |
+| dow_text_short      | text      | Short day of week name          |
+| is_weekend_flag     | boolean   | Weekend flag                    |
+| is_working_day_flag | boolean   | Working day flag                |
+| bkk_weather_season  | text      | Current weather season in BKK   |
+| week_start_date     | date      | Week start date                 |
+| month_start_date    | date      | Month start date                |
+| month_end_date      | date      | Last day of the month           |
+| is_month_end_flag   | boolean   | Last day of the month flag      |
 
 ### dim_rental_junk
 
- 
- Классическое мусорное измерение (junk dimension), собирающее в себе комбинации низкокардинальных флагов, чтобы не засорять таблицу фактов. При этом в fct_client_bike_rent создается суррогатный ключ, ссылающийся на данное измерение. Для удобства использования в BI дашбордах флаги также объединены в комбинации по логике самих данных. 
+A classic junk dimension consolidating various low-cardinality boolean flags to avoid cluttering the fact table. `fct_client_bike_rent` stores a single surrogate key referencing this dimension. For ease of use in BI dashboards, flags are also grouped into logical categories based on data attributes.
 
-| column name         | data type | description                     |
-|---------------------|-----------|---------------------------------|
-| rental_junk_sk (PK) | text      | Суррогатный ключ, определяет гранулярность  |
-| helmet_damage_flag          | boolean      | Факт повреждения хотя бы одного шлема после завершения аренды                       |
-| field_service_flag        | boolean      | Факт наличия хотя бы одного выезда механика к клиенту                     |
-| rent_extend_flag         | boolean       | Факт продления аренды (после завершения текущей)                    |
-| bike_exchange_flag          | boolean       | Факт замены байка и продления аренды                |
-| return_status_category            | text      | Категория флага         |
- 
+| column name               | data type | description                                                                 |
+|---------------------------|-----------|-----------------------------------------------------------------------------|
+| rental_junk_sk (PK)       | text      | Surrogate key defining granularity                                          |
+| helmet_damage_flag        | boolean   | Flag indicating damage to at least one helmet upon return                   |
+| field_service_flag        | boolean   | Flag indicating at least one mechanic field dispatch during the rental      |
+| rent_extend_flag          | boolean   | Flag indicating rental extension (after the current one ends)               |
+| bike_exchange_flag        | boolean   | Flag indicating a bike swap along with a rental extension                   |
+| return_status_category    | text      | Flag category descriptor                                                    |
 
 ### dim_employee
 
- 
- Справочник сотрудников компании. Гранулярность - суррогатный ключ, история изменения атриубтов хранится по стратегии scd2. Также в модели данных присутствует таблица мост, которая хранит иерархию сотрудников и на которую ссылается dim_employee.
+The company employee dimension. Granularity is one surrogate key, and attribute history is maintained using the SCD Type 2 strategy. The data model also includes a bridge table storing the employee hierarchy, which `dim_employee` references.
 
 | column name               | data type | description                                                                           |
 |---------------------------|-----------|---------------------------------------------------------------------------------------|
-| employee_sk (PK)          | text      | Идентификатор сотрудника (суррогатный ключ)                                           |
-| employee_natural_key (NK) | text      | Идентификатор сотрудника (натуральный ключ)                                           |
-| full_name                 | text      | Полное имя сотрудника                                                                 |
-| phone                     | text      | Мобильный телефон                                                                     |
-| email                     | text      | Электронная почта                                                                     |
-| position_title            | text      | Наименование должности сотрудника                                                     |
-| grade_level               | text      | Уровень позиции сотрудника (джун, мидл и т.п.)                                        |
-| assigned_location_id      | text      | Основная локация, за которой закреплен сотрудник                                      | 
-| department                | text      | Наименование департамента (отдела)                                                    |
-| can_dispense_return_flg   | boolean   | Флаг, показывающий допуск сотрудника для выдачи байка клиенту                         |
-| can_field_service_flg     | boolean   | Флаг, показывающий допуск сотрудника для выезда к клиенту (для решения тех. проблемы) |
-| can_workshop_repair_flg   | boolean   | Флаг, показывающий допуск сотрудника для работ по ремонту байка                       |
-| can_sell_retail_flg       | boolean   | Флаг, показывающий допуск сотрудника для работы в отделе Магазина                     |
-| row_effective_date        | date      | Дата начала действия записи                                                           |
-| row_expiration_date       | date      | Дата завершения действия записи                                                       |
-| manager_employee_id | text   | Идентификатор менеджера (руководителя) |
-| is_active_flag | boolean   | Флаг, показывающий, что сотрудник работает |
-| current_row_indicator     | boolean   | Флаг текущей актуальной записи                                                        |
- 
+| employee_sk (PK)          | text      | Employee identifier (surrogate key)                                                   |
+| employee_natural_key (NK) | text      | Employee identifier (natural key)                                                     |
+| full_name                 | text      | Employee's full name                                                                  |
+| phone                     | text      | Mobile phone number                                                                   |
+| email                     | text      | Email address                                                                         |
+| position_title            | text      | Employee's job title                                                                  |
+| grade_level               | text      | Employee's grade level (junior, middle, etc.)                                         |
+| assigned_location_id      | text      | Primary location the employee is assigned to                                          |
+| department                | text      | Department name                                                                       |
+| can_dispense_return_flg   | boolean   | Flag indicating clearance to dispense/receive bikes to/from clients                   |
+| can_field_service_flg     | boolean   | Flag indicating clearance for field service dispatches (on-road support)              |
+| can_workshop_repair_flg   | boolean   | Flag indicating clearance to perform workshop bike repairs                            |
+| can_sell_retail_flg       | boolean   | Flag indicating clearance to work in the retail shop                                  |
+| row_effective_date        | date      | Record effective start date                                                           |
+| row_expiration_date       | date      | Record expiration date                                                                |
+| manager_employee_id       | text      | Manager's (supervisor's) identifier                                                   |
+| is_active_flag            | boolean   | Flag indicating if the employee is currently active/employed                          |
+| current_row_indicator     | boolean   | Current active record flag                                                            |
 
 ### brg_emp_hierarchy
 
-
- Таблица мост, содержащая данные об иерархии сотрудников. Здесь заранее развернута транзитивная замкнутость (все связи «Руководитель — Подчиненный» на любую глубину, включая связь сотрудника с самим собой на уровне 0), а также показано количество ступеней между сотрудниками и флаг высшего и низшего ранга.
+A bridge table containing employee hierarchy data. This table pre-calculates transitive closure (all "Manager-Subordinate" relationships at any depth, including an employee's relationship to themselves at level 0). It also tracks the number of steps (depth) between employees and flags top-level and bottom-level positions.
 
 | column name                  | data type | description                                                 |
 |------------------------------|-----------|-------------------------------------------------------------|
-| manager_employee_id (FK)     | text      | Натуральный ключ руководителя                               |
-| subordinate_employee_id (FK) | text      | Натуральный ключ подчиненного                               |
-| hierarchy_depth (FK)         | int       | Глубина иерархии (кол-во ступений между двумя сотрудниками) |
-| is_top_level_flg             | boolean   | Флаг высшей позиции                                         |
-| is_bottom_level_flg          | boolean   | Флаг низшей позиции                                         |
-
+| manager_employee_id (FK)     | text      | Manager's natural key                                       |
+| subordinate_employee_id (FK) | text      | Subordinate's natural key                                   |
+| hierarchy_depth (FK)         | int       | Hierarchy depth (number of steps between the two employees) |
+| is_top_level_flg             | boolean   | Top-level position flag                                     |
+| is_bottom_level_flg          | boolean   | Bottom-level position flag                                  |
 
 ### dim_location
 
- 
- Справочник локаций, гранулярность - отдельная отдельная уникальная локация. Локация может быть как только мастерской, точкой аренды или магазином, так и комбинацией всех отделов. Например, точка аренды и магазин могут быть совмещены и физически располагаться в одном здании (в одной локации).
+The location dimension, with a granularity of one unique facility. A location can be solely a workshop, a rental spot, a shop, or a combination of all departments. For instance, a rental spot and a shop can be combined and physically situated in the same building (the same location).
 
 | column name               | data type | description                              |
 |---------------------------|-----------|------------------------------------------|
-| location_sk (PK)          | text      | Идентификатор локации (суррогатный ключ) |
-| location_natural_key (NK) | text      | Идентификатор локации (натуральный ключ) |
-| title                     | text      | Наименование локации                     |
-| full_address              | text      | Адрес                                    |
-| post index                | text      | Почтовый индекс                          |
-| is_garage_flag            | boolean   | Флаг наличия мастерской                  |
-| is_shop_flag              | boolean   | Флаг наличия магазина                    |
-| is_warehouse_flag         | boolean   | Флаг наличия точки аренды                |
- 
+| location_sk (PK)          | text      | Location identifier (surrogate key)      |
+| location_natural_key (NK) | text      | Location identifier (natural key)        |
+| title                     | text      | Location title/name                      |
+| full_address              | text      | Physical address                         |
+| post_index                | text      | Zip/Postal code                          |
+| is_garage_flag            | boolean   | Flag indicating presence of a workshop   |
+| is_shop_flag              | boolean   | Flag indicating presence of a shop       |
+| is_warehouse_flag         | boolean   | Flag indicating presence of a rental spot|
 
 ### dim_bike_condition
 
- 
- Мы добавляем в таблицу фактов client_bike_rent ключ состояния байка (фактически, используем поле с оценкой состояния в качестве ключа), который ссылается на отдельное mini-dimension, состоящее из 10 строк - каждая строка будет описывать, что означает, например, состояние на 7. Сюда включены несколько атрибутов, (состояние двигателя, подвески, пластиковых элементов корпуса и диапазон пробега, например "less then 1000 km") Фактически, такое mini-dimension будет играть роль некого чек листа по выставлению механиком оценки состояния байка. А историю изменений мы будем отслеживать через основную таблицу фактов client_bike_rent. При этом таблица фактов аренды заполняется оценками, учитывая пробег байка на момент возврата в рентал. Иными словами, если для оценки 7 диапазон пробега варьируется от 3000 до 7000 км, и если возвращаемый байк преодолел 7000 км на одометре, то оценка состояния уже не может быть выше 6.
+We add a bike condition key to the `client_bike_rent` fact table (effectively using the condition score field as the key), which references a separate mini-dimension consisting of 10 rows. Each row describes what a condition score (e.g., a 7) physically means. It includes several attributes: engine condition, suspension condition, plastic/bodywork condition, and a mileage band (e.g., "less than 1000 km"). Essentially, this mini-dimension acts as a mechanic's checklist for scoring the bike's technical condition. We track the history of these changes through the main `client_bike_rent` fact table. Note that the rental fact table is populated with scores that take the bike's return mileage into account. Meaning, if a score of 7 dictates a mileage band of 3000 to 7000 km, and the returning bike has crossed 7000 km on the odometer, its condition score can no longer mathematically exceed 6.
 
 | column name                 | data type | description                              |
 |-----------------------------|-----------|------------------------------------------|
-| rental_condition_score (PK) | int       | Ключ уровня технического состояния байка |
-| engine_condition            | text      | Состояние двигателя                      |
-| plastic_condition           | text      | Состояние пластика (внешних элементов)   |
-| suspension_condition        | text      | Состояние подвески                       |
-| mileage_band                | text      | Диапазон пробега                         |
- 
+| rental_condition_score (PK) | int       | Bike technical condition score key       |
+| engine_condition            | text      | Engine condition description             |
+| plastic_condition           | text      | Plastic/bodywork condition description   |
+| suspension_condition        | text      | Suspension condition description         |
+| mileage_band                | text      | Mileage band                             |
 
 ### dim_product
 
- 
- Справочник всех товаров и услуг. Гранулярность - отдельный уникальный товар или услуга. Например, в данном измерении может как строка, содержащая наименование товара (шлем или перчатки), так и наименование услуги (установка ветрозащиты). В справочнике будут как обычные товары (аксессуары), так и запчасти на байки. На основе данного справочника создано несколько представлений view для удобство работы с разными типами товаров и услуг (например, отдельно view products для событий покупок в магазине и view spare parts для пайплайнов поставок).
- 
+The dimension for all products and services. Granularity is one unique product or service. For example, this dimension can contain a row for a physical product (a helmet or gloves) as well as a row for a service (windshield installation). It encompasses regular merchandise (accessories) and bike spare parts. Based on this dimension, we create several subset views for ease of use across different product/service types (e.g., a separate `products` view for retail shop purchases and a `spare parts` view for procurement pipelines).
+
 | column name              | data type | description                                          |
 |--------------------------|-----------|------------------------------------------------------|
-| product_sk (PK)          | text      | Идентификатор товара (суррогатный ключ)              |
-| product_natural_key (NK) | text      | Идентификатор товара (натуральный ключ)              |
-| title                    | text      | Наименование товара                                  |
-| level1_category          | text      | Наименование категории 1 уровня                      |
-| level2_category          | text      | Наименование категории 2 уровня                      |
-| manufactory              | text      | Производитель товара                                 |
-| vendor (FK)              | text      | Ключ поставщика товара                               |
-| is_spare_flag            | boolean   | Флаг, относится ли товар к категории запчастей       |
-| is_tuning_flag           | boolean   | Флаг, относится ли "товар" к категории услуг тюнинга |
-
+| product_sk (PK)          | text      | Product identifier (surrogate key)                   |
+| product_natural_key (NK) | text      | Product identifier (natural key)                     |
+| title                    | text      | Product/Service title                                |
+| level1_category          | text      | Level 1 category name                                |
+| level2_category          | text      | Level 2 category name                                |
+| manufactory              | text      | Product manufacturer                                 |
+| vendor (FK)              | text      | Product vendor key                                   |
+| is_spare_flag            | boolean   | Flag indicating if the item is a spare part          |
+| is_tuning_flag           | boolean   | Flag indicating if the "product" is a tuning service |
 
 ### dim_vendor
 
-
- Справочник поставщиков товаров и запчастей. Гранулярность - отдельный уникальный поставщик.
+The dimension for merchandise and spare parts vendors. Granularity is one unique vendor.
 
 | column name             | data type | description                                           |
 |-------------------------|-----------|-------------------------------------------------------|
-| vendor_sk (PK)          | text      | Идентификатор вендора (поставщика) (суррогатный ключ) |
-| vendor_natural_key (NK) | text      | Идентификатор вендора (поставщика) (натуральный ключ) |
-| vendor_name             | text      | Наименование вендора                                  |
-| is_foreign_flag         | boolean   | Флаг, является ли вендор иностранной компанией        |
-| vendor_score            | int       | Внутренний рейтинг вендора                            |
-| vendor_zip_postal_code  | text      | Почтовый код вендора                                  |
-| vendor_address          | text      | Физический адрес юрлица вендора                       |
-| vendor_mobile           | text      | Телефон или факс компании вендора                     |
-
+| vendor_sk (PK)          | text      | Vendor identifier (surrogate key)                     |
+| vendor_natural_key (NK) | text      | Vendor identifier (natural key)                       |
+| vendor_name             | text      | Vendor name                                           |
+| is_foreign_flag         | boolean   | Flag indicating if the vendor is a foreign company    |
+| vendor_score            | int       | Internal vendor rating score                          |
+| vendor_zip_postal_code  | text      | Vendor zip/postal code                                |
+| vendor_address          | text      | Vendor's physical corporate address                   |
+| vendor_mobile           | text      | Vendor's phone or fax number                          |
 
 ### dim_carrier
 
-
- Справочник перевозчиков. Гранулярность - один уникальный перевозчик. Перевозчики могут быть как внутренними (из числа грузовых пикапов, работающих в нашей компании), так и представителями других компаний (обычно для поставок крупных партий запчастей или товаров из-за границы).
+The carrier (logistics) dimension. Granularity is one unique carrier. Carriers can be internal (company-owned cargo pickup trucks) or external representatives of other transport companies (typically used for delivering large batches of parts or overseas imports).
 
 | column name              | data type | description                                    |
 |--------------------------|-----------|------------------------------------------------|
-| carrier_sk (PK)          | text      | Идентификатор перевозчика (суррогатный ключ)   |
-| carrier_natural_key (NK) | text      | Идентификатор перевозчика (натуральный ключ)   |
-| carrier_name             | text      | Наименование перевозчика                       |
-| is_external_carrier_flag | boolean   | Флаг, является ли перевозчик внешней компанией |
-| carrier_type             | text      | Тип перевозчика                                |
-| carrier_score            | int       | Внутренний рейтинг перевозчика                 |
-| carrier_status           | text      | Текущий статус перевозчика (свободен, занят)   |
-
+| carrier_sk (PK)          | text      | Carrier identifier (surrogate key)             |
+| carrier_natural_key (NK) | text      | Carrier identifier (natural key)               |
+| carrier_name             | text      | Carrier name                                   |
+| is_external_carrier_flag | boolean   | Flag indicating if the carrier is an external co.|
+| carrier_type             | text      | Carrier type (vehicle class)                   |
+| carrier_score            | int       | Internal carrier rating score                  |
+| carrier_status           | text      | Current carrier status (available, busy)       |
 
 ### fct_shop_order
 
- 
- Таблица фактов по событиям покупок товаров и услуг тюнинга в магазине. Тип фактов - транзакционная таблица. Гранулярность - отдельный уникальный чек + позиция товара (то есть чек + уникальный товар).
+The fact table for retail merchandise purchases and tuning services in the shop. Fact type: Transactional table. Granularity is one unique receipt line item (i.e., one receipt + one unique product).
 
-| column name        | data type | description                            |
-|--------------------|-----------|----------------------------------------|
-| shop_order_sk (PK) | text      | Идентификатор позиции в чека (определяет гранулярность) |
-| order_id (DD) | text      | Идентификатор чека (заказа) в магазине |
-| client_sk (FK)     | text      | Идентификатор клиента, внешний ключ    |
-| employee_sk (FK)   | text      | Идентификатор сотрудника, внешний ключ |
-| location_sk (FK)   | text      | Идентификатор локации, внешний ключ    |
-| product_sk (FK)    | text      | Идентификатор товара, внешний ключ     |
-| order_date (FK)    | date      | Дата покупки (ссылка на календарь)     |
-| event_datetime    | timestamp      | Дата и время покупки    |
-| total_amount       | numeric   | Итоговая стоимость позиции             |
-| cnt_products       | int       | Количество товаров в позиции           |
-| discount_amount    | numeric   | Сумма скидки на позицию                |
-| basic_amount       | numeric   | Базовая стоимость позиции              |
-
+| column name        | data type | description                                            |
+|--------------------|-----------|--------------------------------------------------------|
+| shop_order_sk (PK) | text      | Receipt line item identifier (defines granularity)     |
+| order_id (DD)      | text      | Shop receipt (order) identifier                        |
+| client_sk (FK)     | text      | Client identifier, foreign key                         |
+| employee_sk (FK)   | text      | Employee identifier, foreign key                       |
+| location_sk (FK)   | text      | Location identifier, foreign key                       |
+| product_sk (FK)    | text      | Product identifier, foreign key                        |
+| order_date (FK)    | date      | Purchase date (reference to calendar)                  |
+| event_datetime     | timestamp | Purchase date and time                                 |
+| total_amount       | numeric   | Total line item cost                                   |
+| cnt_products       | int       | Quantity of products in the line item                  |
+| discount_amount    | numeric   | Line item discount amount                              |
+| basic_amount       | numeric   | Base line item cost                                    |
 
 ### fct_procurement
 
+The fact table for product and spare parts procurement events from vendors, designed as an accumulating snapshot. Granularity is one shipment identifier + product/part line item. Each shipment pipeline can span several days or weeks, during which the event attributes are progressively populated. For instance, the order creation date is populated first, followed by the actual departure date from the vendor's warehouse, and so on.
 
- Таблица фактов по событиям закупок товаров и запчастей у поставщиков, накопительный снапшот. Гранулярность - идентификатор поставки + позиция товара/запчасти. Каждая поставка может длится несколько дней или даже недель, и в течении этого перида атрибуты события постепенно заполняются. Например, сначала проставляется дата оформления поставки, затем фактическая дата отправки со склада поставщика и так далее.
- 
 | column name                  | data type | description                                                            |
 |------------------------------|-----------|------------------------------------------------------------------------|
-| procurement_sk (PK)        | text      | Идентификатор поставки, первичный ключ, определяет гранулярность                                                |
-| shipment_id (PK) (DD)        | text      | Идентификатор поставки                                                 |
-| product_sk (FK)              | text      | Идентификатор позиции (товара в ней)                                   |
-| vendor_sk(FK)               | text      | Идентификатор поставщика                                               |
-| carrier_sk (FK)              | text      | Идентификатор перевозчика                                              |
-| order_date (FK)              | date      | Дата заключения сделки о поставке                                      |
-| event_timestamp              | timestamp      | Дата и время заключения сделки о поставке                                      |
-| shipment_departure_date (FK) | date      | Фактическая дата начала пайплайна поставки (отправления от поставщика) |
-| shipment_arrival_date (FK)   | date      | Дата прибытия поставки на локацию                                      |
-| arrival_location_sk (FK)     | text      | Идентификатор локации, куда прибыла поставка                           |
-| vendor_invoice_number (DD)   | text      | Идентификатор счета за поставку                                        |
-| payment_check_number (DD)    | text      | Идентификатор чека после оплаты поставки                               |
-| payment_amount               | numeric   | Сумма оплаты за данную позицию в поставке                              |
-| product_quantity             | int       | Количество товаров в позиции                                           |
-
+| procurement_sk (PK)          | text      | Procurement identifier, primary key, defines granularity               |
+| shipment_id (PK) (DD)        | text      | Shipment identifier                                                    |
+| product_sk (FK)              | text      | Product line item identifier                                           |
+| vendor_sk (FK)               | text      | Vendor identifier                                                      |
+| carrier_sk (FK)              | text      | Carrier identifier                                                     |
+| order_date (FK)              | date      | Procurement order agreement date                                       |
+| event_timestamp              | timestamp | Procurement order agreement date and time                              |
+| shipment_departure_date (FK) | date      | Actual start date of the delivery pipeline (departure from vendor)     |
+| shipment_arrival_date (FK)   | date      | Date the shipment arrived at the location                              |
+| arrival_location_sk (FK)     | text      | Identifier of the location receiving the shipment                      |
+| vendor_invoice_number (DD)   | text      | Vendor invoice identifier                                              |
+| payment_check_number (DD)    | text      | Payment receipt identifier                                             |
+| payment_amount               | numeric   | Payment amount for this specific line item                             |
+| product_quantity             | int       | Quantity of products in the line item                                  |
 
 ### fct_repair
 
-
- Таблица фактов (накопительный снапшот) с гранулярностью одного отдельного факта заказа ремонта байка показывает пайплайн ремонта байка, который клиент привез на обслуживание (речь идет именно о любых других байках, не тех, которые сдаются в аренду). В данном случае клиент привозит байк в магазин, где он сможет сразу купить нужные запчасти и затем байк отправляется в мастерскую вместе с запчастями.
+A fact table (accumulating snapshot) with a granularity of one individual bike repair order fact. It tracks the repair pipeline for a bike brought in by an external client for maintenance (this applies strictly to external client bikes, not the rental fleet). In this scenario, the client drops the bike off at the shop, where they can immediately purchase required parts; the bike is then transported to the garage alongside the parts.
 
 | column name                    | data type | description                                                                                       |
 |--------------------------------|-----------|---------------------------------------------------------------------------------------------------|
-| repair_sk (PK)           | text      | Идентификатор пайплайна (первичный ключ, определяет гранулярность) ремонта                                                                   |
-| repair_id (PK) (DD)            | text      | Идентификатор пайплайна ремонта                                                                   |
-| order_id (DD)                  | text      | Идентификатор чека, в котором клиент купил нужны для ремонта запчасти (может быть Null)           |
-| employee_sk (FK)               | text      | Идентификатор сотрудника, принимавшего байк клиента в магазине                                    |
-| client_sk (FK)                 | text      | Идентификатор клиента                                                                             |
-| carrier_sk (FK)                | text      | Идентификатор перевозчика (внутреннего грузового пикапа, на котором байк доставляют в мастерскую) |
-| bike_name                      | text      | Название модели байка                                                                             |
-| location_shop_sk (FK)          | text      | Идентификатор локации магазина                                                                    |
-| location_garage_sk (FK)        | text      | Идентификатор локации мастерской, куда в итоге отвезут байк на ремонт                             |
-| transportation_start_date (FK) | date      | Дата транспортировки байка из магазина в мастерскую                                               |
-| transportation_end_date (FK)   | date      | Дата транспортировки байка из мастерской в магазин                                                |
-| repair_start_date (FK)         | date      | Фактическая дата начала ремонта байка                                                             |
-| repair_end_date (FK)           | date      | Фактическая дата окончания ремонта байка                                                          |
-| invoice_total_amount           | numeric   | Итоговая стоимость ремонта                                                                        |
-| invoice_discount_amount        | numeric   | Сумма скидки, предоставленной клиенту                                                             |
-| event_datetime        | timestamp   | Дата и время регистрации события                                                              |
-
+| repair_sk (PK)                 | text      | Repair pipeline identifier (primary key, defines granularity)                                     |
+| repair_id (PK) (DD)            | text      | Repair pipeline identifier                                                                        |
+| order_id (DD)                  | text      | Identifier of the receipt used to purchase required repair parts (can be Null)                    |
+| employee_sk (FK)               | text      | Identifier of the employee who received the client's bike at the shop                             |
+| client_sk (FK)                 | text      | Client identifier                                                                                 |
+| carrier_sk (FK)                | text      | Carrier identifier (the internal cargo truck transporting the bike to the garage)                 |
+| bike_name                      | text      | Bike model name                                                                                   |
+| location_shop_sk (FK)          | text      | Shop location identifier                                                                          |
+| location_garage_sk (FK)        | text      | Garage location identifier where the bike is ultimately repaired                                  |
+| transportation_start_date (FK) | date      | Date the bike was transported from the shop to the garage                                         |
+| transportation_end_date (FK)   | date      | Date the bike was transported from the garage back to the shop                                    |
+| repair_start_date (FK)         | date      | Actual repair start date                                                                          |
+| repair_end_date (FK)           | date      | Actual repair completion date                                                                     |
+| invoice_total_amount           | numeric   | Total repair cost                                                                                 |
+| invoice_discount_amount        | numeric   | Discount amount provided to the client                                                            |
+| event_datetime                 | timestamp | Date and time the event was registered                                                            |
 
 ### fct_service_events
 
-
-Таблица фактов (транзакционная таблица) с гранулярность одного факта выезда механика к клиенту. Данные здесь показывают факты выезда механиков из-за возникающих технических проблем с байками, таких как спущенное колесов, разрядившийся аккумулятор и т.п.
+A fact table (transactional table) with a granularity of one mechanic field dispatch fact. This data captures instances when mechanics are dispatched to clients due to emergent technical issues on the road, such as flat tires, dead batteries, etc.
 
 | column name                | data type | description                                                     |
 |----------------------------|-----------|-----------------------------------------------------------------|
-| service_event_sk (PK) | text      | Идентификатор события, первичный ключ, определяет гранулярность                 |
-| service_event_id (PK) (DD) | text      | Идентификатор события выезда механика к клиенту                 |
-| rental_id (FK)             | text      | Идентификатор текущей аренды, в рамках которой происходит выезд |
-| client_sk (FK)             | text      | Идентификатор клиента                                           |
-| bike_sk (FK)               | text      | Идентификатор байка                                             |
-| event_date (FK)            | date      | Дата события                                                    |
-| employee_sk (FK)           | text      | Идентификатор механика                                          |
-| issue_category             | text      | Категория технической проблемы                                  |
-| resolution_action          | text      | Результат решения                                               |
-| service_cost_usd           | numeric   | Стоимость выезда и решения проблемы                             |
-| client_fault_flag          | boolean   | Флаг, была ли проблема по вине клиента                          |
-| event_datetime          | timestamp   | Дата и время события                          |
-
+| service_event_sk (PK)      | text      | Event identifier, primary key, defines granularity              |
+| service_event_id (PK) (DD) | text      | Mechanic dispatch event identifier                              |
+| rental_id (FK)             | text      | Identifier of the active rental triggering the dispatch         |
+| client_sk (FK)             | text      | Client identifier                                               |
+| bike_sk (FK)               | text      | Bike identifier                                                 |
+| event_date (FK)            | date      | Event date                                                      |
+| employee_sk (FK)           | text      | Mechanic identifier                                             |
+| issue_category             | text      | Technical issue category                                        |
+| resolution_action          | text      | Resolution outcome                                              |
+| service_cost_usd           | numeric   | Cost of the dispatch and issue resolution                       |
+| client_fault_flag          | boolean   | Flag indicating if the issue was caused by client negligence    |
+| event_datetime             | timestamp | Event date and time                                             |
 
 ### fct_inventory_snapshot
 
-
-Витрина по доступности (остаткам) товаров в мастерских и магазинах. Гранулярность витрины - товар + локация + неделя (периодический снапшот). В конце каждой недели витрина пополняется новым снимком, который включает фактическое количество товаров, также флаг того, есть ли хотя бы 1 доступный (свободный товар). Например, в одной мастерской в начале недели было два двигателя для Honda Click, но в течении недели привезли байк на замену двигателя. Двигатель будут менять на этой неделе и на следующей (этот процесс требует времени), но один из двигателей будет как бы на холде, забронированным, а значит доступных двигателей остается только один на конец недели. Помимо этого в конце недели будет фиксироваться факт того, заказан ли уже новый двигатель и предполагаемая дата поставки новой партии запчастей.
+A data mart tracking product availability (stock balances) across garages and shops. The granularity is product + location + week (periodic snapshot). At the end of each week, the table is appended with a new snapshot capturing the actual product quantities and a flag indicating whether at least one unit is available (free). For example, a garage might start the week with two Honda Click engines, but during the week, a bike is brought in for an engine swap. The swap will take this week and the next (as it's a lengthy process), but one engine is placed on hold/reserved, meaning only one engine remains available at the end of the week. Furthermore, the end-of-week snapshot logs whether a replacement engine has already been ordered and the planned delivery date for the new batch.
 
 | column name           | data type | description                                                            |
 |-----------------------|-----------|------------------------------------------------------------------------|
-| inventory_snapshot_sk (PK)             | text      | Уникальный идентификатор снимка                                                     |
-| snapshot_date_key             | text      | Ключ даты снимка                                    |
-| week_year             | text      | Номер недели - год                                                     |
-| product_sk (FK)       | text      | Идентификатор товара                                                   |
-| location_sk (FK)      | text      | Идентификатор локации (мастерская или магазин)                         |
-| product_quantity      | int       | Количество товара на конец недели                                      |
-| available_flag        | boolean   | Есть ли хотя бы один свободный (доступный) товар                       |
-| isin_shipment_flag    | boolean   | Флаг, показывающий, заказан ли уже данный товар на момент конца недели |
-| planned_delivery_date | date      | Предполагаемая дата поставки товара                                    |
+| inventory_snapshot_sk (PK) | text      | Unique snapshot identifier                                             |
+| snapshot_date_key     | text      | Snapshot date key                                                      |
+| week_year             | text      | Week number - Year                                                     |
+| product_sk (FK)       | text      | Product identifier                                                     |
+| location_sk (FK)      | text      | Location identifier (garage or shop)                                   |
+| product_quantity      | int       | Product quantity on hand at the end of the week                        |
+| available_flag        | boolean   | Flag indicating if at least one unit is free (available)               |
+| isin_shipment_flag    | boolean   | Flag indicating if this product is currently on order at week's end    |
+| planned_delivery_date | date      | Planned product delivery date                                          |

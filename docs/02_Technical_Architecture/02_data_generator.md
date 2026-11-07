@@ -1,43 +1,43 @@
-# Эмулятор генерации данных (Data Generator Engine)
+# Data Generator Engine
 
-## Введение
-Данный документ описывает программный комплекс генерации синтетических данных, выступающий в роли комплексной транзакционной системы (OLTP) для нашего стартапа по аренде байков в Бангкоке. 
+## Introduction
+This document describes the synthetic data generation suite, which acts as a comprehensive transactional (OLTP) system for our Bangkok bike rental startup. 
 
-Поскольку на этапе разработки и внедрения DWH реальный поток клиентских транзакций отсутствует, генератор берет на себя роль критически важного источника. Он не просто создает случайные строки, а эмулирует полный жизненный цикл многоуровневого бизнеса со строгим сохранением стейта (состояния автопарка, остатков на складе и открытых аренд) и хронологической консистентностью.
-
----
-
-## 1. Архитектура и компоненты генератора
-
-Генератор написан на Python и спроектирован по принципам модульной микросервисной архитектуры. Ядро системы управляет виртуальными часами, распределяет веса бизнес-процессов и направляет сгенерированные события в абстрактный слой публикации.
-
-### 1.1 Структура модулей
-*   `main.py` — Главный оркестратор симуляции. Управляет глобальным циклом времени, динамически пересчитывает веса вероятностей транзакций в зависимости от сезона и катаклизмов, а также контролирует скорость потока (исторический режим / режим real-time).
-*   `core/state.py` (SimulationState) — Менеджер состояний. Хранит в оперативной памяти и сериализует в JSON (`generator_state.json`) всю актуальную информацию о бизнесе: инкрементальные счетчики ID, реестр клиентов, занятые/свободные байки, текущий пробег, складские остатки и незавершенные ремонты.
-*   `core/publisher.py` (EventPublisher) — Абстрактный издатель событий. Поддерживает два режима работы: `kafka` (отправка в Redpanda с сериализацией в UTF-8 JSON) и `pandas` (локальное накопление в память для отладочного экспорта в CSV).
-*   `core/world_context.py` (WorldContext) — Движок контекста мира. Реализует органический рост стартапа, климатическую сезонность Бангкока (высокий, жаркий и дождливый сезоны) и расписание «Черных лебедей» (наводнения, логистические кризисы, фестивали, аномальная жара).
-*   **API-модули бизнес-доменов (`modules/`):**
-    *   `rent_api.py` — Управление клиентами (SCD2 профили), бронированием, выдачей и возвратом байков (с учетом непрерывного продления аренд).
-    *   `garage_api.py` — Выездной сервис механиков (`fct_service_events`) и приемка/выдача личных байков клиентов в ремонт (`fct_repair`).
-    *   `shop_api.py` — Розничные продажи экипировки, аксессуаров и услуг тюнинга в магазинах (`fct_shop_order`).
-    *   `hr_api.py` — Кадровые перестановки, найм, переводы и увольнения сотрудников (`dim_employee`, SCD2).
-    *   `inventory_api.py` — Управление складскими остатками, автоматический запуск закупок при падении запасов (`fct_procurement`) и еженедельные снимки (`fct_inventory_snapshot`).
+Since there is no real flow of client transactions during the DWH development and implementation phase, the generator takes on the role of a mission-critical source. It doesn't merely produce random rows; it emulates the full lifecycle of a multi-tiered business, strictly preserving state (fleet condition, warehouse inventory, and open rentals) and chronological consistency.
 
 ---
 
-## 2. Ключевые инженерные особенности
+## 1. Generator Architecture and Components
 
-### 2.1 Машина времени и историческая симуляция (Time Travel)
-Генератор поддерживает два режима работы:
-1.  **Исторический режим (`HIST`):** При старте система устанавливает виртуальную точку отсчета (1 марта 2024 года). На каждом тике метод `advance_time()` сдвигает часы вперед на 1–10 часов (шаг динамически сжимается в пиковые сезоны и растягивается во время штормов). Это позволяет за несколько минут сгенерировать более чем двухлетнюю историю транзакций.
-2.  **Режим реального времени (`LIVE`):** После того как виртуальные часы догоняют системное время сервера, симулятор переходит в реалтайм-режим, отправляя события с интервалом от 2 до 5 секунд.
+The generator is written in Python and designed using modular microservice architecture principles. The core engine manages a virtual clock, distributes business process weights, and routes generated events to an abstract publisher layer.
 
-### 2.2 Сезонность и симуляция «Черных лебедей»
-Для имитации реального поведения бизнеса `WorldContext` на каждом шаге рассчитывает общий коэффициент интенсивности трафика (`total_traffic_mult`), состоящий из трех компонент:
-*   **Органический рост:** Плавный тренд развития компании от `0.65x` на старте до `1.75x` к концу 2026 года.
-*   **Климатическая сезонность:** Учет туристического сезона в Бангкоке (ноябрь–февраль дают прирост трафика, а сезон дождей июня–октября снижает активность поездок).
-*   **Катаклизмы и промо-акции:** Детерминированное расписание аномалий. Например, во время фестиваля Сонгкран (апрель) в разы растет спрос на аренду байков и защитную экипировку, а во время тропических штормов (`monsoon_flood`) резко падают бронирования, но взлетают вызовы аварийных механиков и ремонты.
+### 1.1 Module Structure
+*   `main.py` — The main simulation orchestrator. It controls the global time loop, dynamically recalculates transaction probability weights based on seasons and cataclysms, and governs the flow rate (historical vs. real-time mode).
+*   `core/state.py` (SimulationState) — The state manager. It stores in RAM and serializes to JSON (`generator_state.json`) all up-to-date business information: incremental ID counters, the client registry, busy/free bikes, current mileage, inventory balances, and open repairs.
+*   `core/publisher.py` (EventPublisher) — An abstract event publisher. It supports two operational modes: `kafka` (sending to Redpanda with UTF-8 JSON serialization) and `pandas` (local memory accumulation for CSV debugging exports).
+*   `core/world_context.py` (WorldContext) — The world context engine. It implements the organic growth of the startup, Bangkok's climate seasonality (high, hot, and rainy seasons), and the schedule of "Black Swans" (floods, logistics crises, festivals, heatwaves).
+*   **Business Domain API Modules (`modules/`):**
+    *   `rent_api.py` — Manages clients (SCD2 profiles), bookings, and the dispense/return of bikes (accounting for continuous rental extensions).
+    *   `garage_api.py` — Mechanic field services (`fct_service_events`) and the drop-off/pickup of personal client bikes for repair (`fct_repair`).
+    *   `shop_api.py` — Retail sales of gear, accessories, and tuning services in stores (`fct_shop_order`).
+    *   `hr_api.py` — HR operations: hiring, transfers, and employee terminations (`dim_employee`, SCD2).
+    *   `inventory_api.py` — Inventory management, automatic procurement triggering when stock drops (`fct_procurement`), and weekly snapshots (`fct_inventory_snapshot`).
 
-### 2.3 Контроль целостности и отказоустойчивость
-*   **Инкрементальные ID и Стейт:** Все сущности (клиенты, аренды, заказы, закупки) получают уникальные инкрементальные идентификаторы. Сохранение слепка в `generator_state.json` гарантирует, что при перезапуске системы парки байков и накопленный пробег не теряются.
-*   **Ролевые допуски сотрудников:** Модули проверяют операционные допуски персонала (например, наличие флага `can_sell_retail_flg` для продавцов или `can_field_service_flg` для выездных механиков) перед генерацией транзакций, обеспечивая стопроцентную консистентность с таблицами фактов в dbt.
+---
+
+## 2. Key Engineering Features
+
+### 2.1 Time Machine and Historical Simulation (Time Travel)
+The generator supports two operational modes:
+1.  **Historical Mode (`HIST`):** Upon startup, the system sets a virtual starting point (March 1, 2024). On every tick, the `advance_time()` method shifts the clock forward by 1–10 hours (the step dynamically compresses during peak seasons and stretches during storms). This makes it possible to generate over two years of transaction history in just a few minutes.
+2.  **Real-Time Mode (`LIVE`):** Once the virtual clock catches up to the server's system time, the simulator switches to real-time mode, emitting events at intervals of 2 to 5 seconds.
+
+### 2.2 Seasonality and "Black Swan" Simulation
+To imitate real business behavior, the `WorldContext` calculates an overall traffic intensity coefficient (`total_traffic_mult`) at each step, comprising three components:
+*   **Organic Growth:** A smooth company growth trend, scaling from `0.65x` at launch to `1.75x` by the end of 2026.
+*   **Climate Seasonality:** Accounts for Bangkok's tourist season (November–February drives traffic up, while the June–October rainy season reduces ride activity).
+*   **Cataclysms and Promos:** A deterministic schedule of anomalies. For example, during the Songkran festival (April), demand for bike rentals and protective gear skyrockets, whereas during tropical storms (`monsoon_flood`), bookings plummet while emergency mechanic dispatches and repairs surge.
+
+### 2.3 Integrity Control and Fault Tolerance
+*   **Incremental IDs and State:** All entities (clients, rentals, orders, procurements) receive unique incremental identifiers. Saving a snapshot to `generator_state.json` guarantees that if the system restarts, the bike fleet and accumulated mileage are not lost.
+*   **Employee Role-Based Access Controls:** Modules verify the operational permissions of the staff (e.g., checking for the `can_sell_retail_flg` flag for cashiers or `can_field_service_flg` for mobile mechanics) before generating transactions, ensuring 100% consistency with the dbt fact tables.

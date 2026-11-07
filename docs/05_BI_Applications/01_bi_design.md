@@ -1,31 +1,31 @@
-# Дизайн BI-приложений и парадигмы агрегации (BI Applications Design)
+# BI Applications Design & Aggregation Paradigms
 
-Наш подход к слою визуализации и BI (Business Intelligence) строится на принципе минимизации сложной логики на стороне конечного инструмента (Tableau). Вся тяжелая математика, расчет сегментов и метрик выполняется на уровне базы данных средствами dbt в специальной схеме `aggregations`. Это гарантирует единую версию правды, строгий контроль версий кода (Git) и возможность легкой миграции на другой BI-инструмент в будущем.
+Our approach to the visualization and BI (Business Intelligence) layer is built on the principle of minimizing complex logic on the client-side tool (Tableau). All heavy mathematical computations, segment calculations, and metric derivations are executed at the database level via dbt within a dedicated `aggregations` schema. This guarantees a single source of truth, rigorous version control of the logic (Git), and the flexibility to seamlessly migrate to another BI tool in the future.
 
-Все агрегации в хранилище логически разделены на 4 бизнес-домена:
-1.  **Клиентские метрики (Customer Intelligence):** Фокус на поведении, LTV, когортах и сегментации.
-2.  **Операционная эффективность (Asset & Operations Management):** Утилизация автопарка, загрузка мастерских, логистика ремонтов.
-3.  **Коммерческая аналитика (Retail & Revenue Performance):** Структура продаж магазина, эластичность спроса, маржинальность запчастей.
-4.  **Производительность команды (Workforce & HR Analytics):** Оценка работы механиков, продавцов, текучесть кадров.
+All aggregations in the warehouse are logically partitioned into 4 business domains:
+1.  **Customer Intelligence:** Focuses on behavior, LTV, cohorts, and segmentation.
+2.  **Asset & Operations Management:** Focuses on fleet utilization, workshop load, and repair logistics.
+3.  **Retail & Revenue Performance:** Focuses on shop sales structure, demand elasticity, and spare parts margins.
+4.  **Workforce & HR Analytics:** Focuses on mechanic/salesperson performance evaluation and staff turnover.
 
-В рамках каждого домена мы реализуем две парадигмы построения витрин: "витрина-песочница" и "витрина-отчетность".
+Within each domain, we implement two data mart design paradigms: the "Sandbox Mart" and the "Reporting Mart."
 
-## Парадигма 1: "Витрина-песочница" (Sandbox Mart)
-Это базовая витрина домена с максимальным уровнем агрегированной гранулярности, при котором еще не появляются неаддитивные метрики (например, агрегация на уровне `клиент + месяц`). 
-*   **Назначение:** Предназначена для исследовательского анализа (Exploratory Data Analysis). Бизнес-пользователи и аналитики могут подключать эту витрину как единый источник в Tableau (или Excel) для ad-hoc запросов, фильтрации и поиска инсайтов.
-*   **Особенности:** Метрики в этой витрине аддитивны (сумма продаж, количество аренд), что позволяет BI-инструменту корректно сворачивать их на уровень года или всей компании. Подсчет уникальных сущностей (например, уникальных клиентов) также работает без искажений, так как гранулярность сохраняет ID клиента.
+## Paradigm 1: "Sandbox Mart"
+This is the foundational mart for a domain, featuring the maximum level of aggregated granularity before non-additive metrics appear (e.g., aggregating at the `client + month` level).
+*   **Purpose:** Designed for Exploratory Data Analysis (EDA). Business users and analysts can connect this mart as a single data source in Tableau (or Excel) for ad-hoc querying, filtering, and insight discovery.
+*   **Key Feature:** Metrics within this mart are strictly additive (e.g., sum of sales, count of rentals). This allows the BI tool to accurately roll them up to a yearly or company-wide level without mathematical distortion. Counting unique entities (e.g., distinct clients) also functions flawlessly, as the granularity preserves the client ID.
 
-## Парадигма 2: "Витрина-отчетность" (Reporting Mart)
-Это максимально агрегированные витрины (например, до уровня просто `месяц` или `месяц + сегмент`), созданные под конкретные графики или блоки метрик на фиксированном дашборде.
-*   **Назначение:** Источник данных для регламентной read-only отчетности руководства. 
-*   **Особенности:** В этих витринах предрасчитываются сложные неаддитивные метрики (доли, конверсии, средние значения), которые нельзя просто суммировать. Перенос этой логики в dbt избавляет Tableau от сложных вычислений, ускоряет рендеринг дашборда и позволяет хранить логику расчета ключевых бизнес-показателей (например, `monthly_trouble_free_ratio`) в SQL под версионным контролем. 
+## Paradigm 2: "Reporting Mart"
+These are heavily aggregated data marts (e.g., rolled up to just `month` or `month + segment`), custom-built to power specific charts or metric blocks on a fixed dashboard.
+*   **Purpose:** Serves as the data source for scheduled, read-only executive reporting.
+*   **Key Feature:** These marts pre-calculate complex non-additive metrics (ratios, conversion rates, averages) that cannot be simply summed up by a BI tool. Offloading this logic to dbt relieves Tableau from heavy computations, drastically accelerates dashboard rendering times, and allows us to store the calculation logic for core business KPIs (e.g., `monthly_trouble_free_ratio`) in SQL under version control.
 
-## Ролевые измерения (Role-Playing / Subset Dimensions)
-Для удобства работы в BI-инструменте мы активно используем паттерн Кимбалла — Role-Playing Dimensions в форме Subset Dimensions (подмножеств измерений). 
+## Role-Playing Dimensions (Subset Dimensions)
+To streamline the user experience within the BI tool, we heavily utilize Kimball's Role-Playing Dimensions pattern, specifically in the form of Subset Dimensions.
 
-Вместо того чтобы заставлять аналитика фильтровать огромный справочник локаций (`dim_location`) или сотрудников (`dim_employee`) на стороне Tableau, мы создали логические представления (views) в схеме `aggregations`. Мы реализовали 7 таких измерений. Примеры:
-*   `v_field_mechanic`: Выборка только тех сотрудников, у кого установлен флаг `can_field_service_flg = true`. Ключ переименован в `field_mechanic_sk` для однозначного джоина.
-*   `v_garage_location`: Только локации с мастерскими (`is_garage_flag = true`), ключ `garage_location_sk`.
-*   `v_shop_location`: Только локации с магазинами (`is_shop_flag = true`), ключ `shop_location_sk`.
+Instead of forcing analysts to filter a massive locations table (`dim_location`) or employee roster (`dim_employee`) directly within Tableau, we created logical views inside the `aggregations` schema. We have implemented 7 such dimensions. Examples include:
+*   `v_field_mechanic`: A subset of employees exclusively holding the `can_field_service_flg = true` flag. The key is aliased to `field_mechanic_sk` to ensure unambiguous joins.
+*   `v_garage_location`: A subset of locations physically featuring a workshop (`is_garage_flag = true`), keyed by `garage_location_sk`.
+*   `v_shop_location`: A subset of locations operating a retail store (`is_shop_flag = true`), keyed by `shop_location_sk`.
 
-Этот подход скрывает от бизнес-пользователя техническую сложность базовых измерений, предоставляя готовые, очищенные и переименованные справочники под конкретные бизнес-процессы.
+This approach abstracts the technical complexity of the base dimensions away from the business user, providing them with clean, pre-filtered, and intuitively named reference tables tailored for specific business processes.

@@ -1,55 +1,55 @@
-# Экстракция и загрузка данных (Data Extraction & Load)
+# Data Extraction & Load
 
-## Введение
-Данный документ описывает начальные этапы "ETL-кухни" (согласно архитектуре Кимбалла — Subsystem 3: Extract System). Процесс разделен на два независимых шага, что позволяет отвязать стриминговый сбор данных от пакетной загрузки в аналитическое хранилище. 
+## Introduction
+This document describes the initial stages of our "ETL Kitchen" (in Kimball's architecture terms — Subsystem 3: Extract System). The process is divided into two independent steps, which allows us to decouple streaming data collection from batch loading into the analytical warehouse.
 
-Цель этих этапов — надежно захватить бизнес-события из систем-источников, сохранить их оригинальное состояние (Raw Data) и перенести в операционный слой данных (ODS) для дальнейших трансформаций. 
-
----
-
-## 1. Стриминг и формирование Data Lake (Kafka -> S3)
-
-**Скрипт реализации:** `consumer_s3.py`
-
-Первым этапом является работа Kafka-консьюмера, который выступает мостом между брокером сообщений (Redpanda/Kafka) и слоем Data Lake (S3 / MinIO). Консьюмер работает в режиме непрерывного потока, собирая генерируемые бизнес-события.
-
-### Охват данных
-Скрипт подписывается на пул ключевых бизнес-топиков, покрывающих все аспекты работы стартапа:
-*   `client_app_events` (действия клиентов, бронирования, изменения профиля).
-*   `shop_app_events` (покупки в магазине, заказы тюнинга).
-*   `mechanic_app_events` (выезды механиков, статусы ремонтов).
-*   `hr_app_events` (кадровые перестановки, изменения грейдов).
-*   `inventory_events` (изменения складских остатков).
-
-### Технические особенности реализации
-
-*   **Микро-батчинг и формат хранения:** События не пишутся в S3 по одному. Консьюмер аккумулирует их в памяти и сбрасывает в объектное хранилище при достижении лимита в 50 записей (`BATCH_SIZE = 50`). Данные сохраняются в формате NDJSON (Newline Delimited JSON).
-*   **Партицирование:** Файлы раскладываются в бакете `raw-events` по строгой иерархии: `events/{название_топика}/date=YYYY-MM-DD/batch_{timestamp}.json`. Такая структура (Hive-style partitioning) позволяет в будущем легко подключать инструменты вроде AWS Athena или Trino для прямых SQL-запросов к Data Lake.
-*   **Отказоустойчивость (Graceful Shutdown):** Ключевой особенностью скрипта является перехват системных сигналов операционной системы (`SIGTERM` и `SIGINT`). При остановке контейнера или прерывании процесса консьюмер не «убивается» мгновенно, а вызывает функцию `flush_batch` с флагом `is_emergency=True`. Это гарантирует нулевую потерю данных на границах батчей: остаток буфера экстренно сбрасывается в S3 с суффиксом `_emergency` в имени файла, защищая хранилище от эффекта "осиротевших" событий (например, когда возврат байка сохранился, а его выдача потерялась в памяти остановленного процесса).
+The goal of these stages is to reliably capture business events from source systems, preserve their original state (Raw Data), and transfer them to the Operational Data Store (ODS) layer for subsequent transformations.
 
 ---
 
-## 2. Формирование ODS слоя (S3 -> PostgreSQL)
+## 1. Streaming and Data Lake Formation (Kafka -> S3)
 
-**Скрипт реализации:** `s3_to_postgres.py`
+**Implementation Script:** `consumer_s3.py`
 
-Второй шаг (Extract & Load) оркестрируется через Apache Airflow. Задача этого этапа — забрать сырые файлы из бакета S3 за целевую дату и переложить их в реляционную базу данных (PostgreSQL), формируя бронзовый слой ODS (Operational Data Store).
+The first stage is driven by a Kafka consumer, which acts as a bridge between the message broker (Redpanda/Kafka) and the Data Lake layer (S3 / MinIO). The consumer operates in a continuous streaming mode, ingesting generated business events.
 
-### Архитектура ODS слоя
-В PostgreSQL создается схема `ods_events` с отдельными таблицами под каждый топик (например, `ods_client_events`, `ods_shop_events`). 
-Таблицы имеют минималистичную, полуструктурированную схему:
-*   `event_id` (Primary Key) — уникальный идентификатор события.
-*   `event_type` — тип события (используется далее в dbt для маршрутизации).
-*   `event_timestamp` — бизнес-время события.
-*   `payload` (`JSONB`) — тело события со всеми атрибутами.
-*   `loaded_at` — техническое время загрузки в хранилище.
+### Data Scope
+The script subscribes to a pool of core business topics covering all aspects of the startup's operations:
+*   `client_app_events` (client actions, bookings, profile updates).
+*   `shop_app_events` (retail purchases, tuning orders).
+*   `mechanic_app_events` (field mechanic dispatches, repair statuses).
+*   `hr_app_events` (personnel changes, grade promotions).
+*   `inventory_events` (warehouse stock changes).
 
-Использование бинарного формата `JSONB` для поля `payload` позволяет базе данных "переваривать" любые изменения в структуре входящих событий (Schemaless подход). Если генератор данных добавит новые поля, схема таблицы не сломается, и пайплайн продолжит работу без необходимости выполнять `ALTER TABLE`.
+### Key Technical Features
 
-### Технические особенности реализации
+*   **Micro-batching and Storage Format:** Events are not written to S3 one by one. The consumer accumulates them in memory and flushes them to object storage upon reaching a 50-record limit (`BATCH_SIZE = 50`). Data is saved in NDJSON (Newline Delimited JSON) format.
+*   **Partitioning:** Files are distributed within the `raw-events` bucket following a strict hierarchy: `events/{topic_name}/date=YYYY-MM-DD/batch_{timestamp}.json`. This Hive-style partitioning allows for seamless future integration with tools like AWS Athena or Trino for direct SQL querying over the Data Lake.
+*   **Fault Tolerance (Graceful Shutdown):** A key feature of the script is intercepting OS system signals (`SIGTERM` and `SIGINT`). If the container stops or the process is interrupted, the consumer isn't killed instantly; instead, it triggers the `flush_batch` function with the `is_emergency=True` flag. This guarantees zero data loss at batch boundaries: the remaining buffer is immediately flushed to S3 with an `_emergency` suffix in the filename. This shields the warehouse from "orphaned" events (e.g., when a bike return is saved, but its dispense event is lost in the RAM of a killed process).
 
-*   **Чтение из Data Lake:** Скрипт сканирует S3 по префиксу целевой даты (`date=YYYY-MM-DD`), скачивает файлы, построчно читает NDJSON и подготавливает кортежи для вставки в базу.
-*   **Идемпотентная загрузка (Idempotency):** Это критически важное свойство пайплайна, позволяющее перезапускать загрузку бесконечное количество раз без риска задвоения данных. Реализовано через паттерн предварительной очистки: перед вставкой скрипт выполняет `DELETE FROM ods_events.{table_name} WHERE DATE(event_timestamp) = '{target_date}'`. 
-*   **Разрешение конфликтов (Upsert):** Вставка массива событий выполняется через метод `execute_values` с использованием механизма `INSERT ... ON CONFLICT (event_id) DO NOTHING`. Если событие с таким ID уже существует в базе (например, пришло из соседнего батча или дублировалось на стороне источника), оно будет проигнорировано базой данных на уровне первичного ключа, обеспечивая строгую консистентность ODS-слоя. 
+---
 
-Эта стратегия гарантирует, что сырые данные полностью и корректно перезаписываются в PostgreSQL в рамках одного дня, создавая надежный фундамент для последующих трансформаций в dbt.
+## 2. ODS Layer Formation (S3 -> PostgreSQL)
+
+**Implementation Script:** `s3_to_postgres.py`
+
+The second step (Extract & Load) is orchestrated via Apache Airflow. The objective here is to fetch raw files from the S3 bucket for a target date and load them into a relational database (PostgreSQL), forming the Bronze Operational Data Store (ODS) layer.
+
+### ODS Layer Architecture
+An `ods_events` schema is created in PostgreSQL with dedicated tables for each topic (e.g., `ods_client_events`, `ods_shop_events`). 
+These tables utilize a minimalist, semi-structured schema:
+*   `event_id` (Primary Key) — Unique event identifier.
+*   `event_type` — Event type (subsequently used in dbt for routing).
+*   `event_timestamp` — Business timestamp of the event.
+*   `payload` (`JSONB`) — The event body containing all attributes.
+*   `loaded_at` — Technical timestamp of ingestion into the warehouse.
+
+Using the binary `JSONB` format for the `payload` field allows the database to effortlessly digest any structural changes in incoming events (a Schemaless approach). If the data generator adds new fields, the table schema won't break, and the pipeline will continue running without requiring an emergency `ALTER TABLE`.
+
+### Key Technical Features
+
+*   **Data Lake Extraction:** The script scans S3 using the target date prefix (`date=YYYY-MM-DD`), downloads the files, reads the NDJSON line by line, and prepares tuples for database insertion.
+*   **Idempotent Loading:** This is a mission-critical property of the pipeline, ensuring the load process can be restarted an infinite number of times without risking data duplication. It is implemented via a pre-cleaning pattern: before insertion, the script executes `DELETE FROM ods_events.{table_name} WHERE DATE(event_timestamp) = '{target_date}'`.
+*   **Conflict Resolution (Upsert):** The array of events is inserted via the `execute_values` method utilizing the `INSERT ... ON CONFLICT (event_id) DO NOTHING` mechanism. If an event with the same ID already exists (e.g., arriving from an adjacent batch or duplicated at the source), it is ignored by the database at the Primary Key level, ensuring strict consistency in the ODS layer.
+
+This strategy guarantees that raw data is completely and correctly overwritten in PostgreSQL for a given day, establishing a robust foundation for subsequent dbt transformations.

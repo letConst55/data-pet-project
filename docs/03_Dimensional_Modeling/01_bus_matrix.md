@@ -1,15 +1,15 @@
-# Bus matrix
+# Enterprise Bus Matrix
 
-Матрица корпоративной шины данных (Enterprise Data Warehouse Bus Matrix) служит архитектурным фундаментом для инкрементального построения хранилища данных. Этот инструмент позволяет разбить масштабную задачу интеграции на управляемые этапы, сохраняя при этом единую концепцию. В методологии Кимбалла матрица является ключевым планом, гарантирующим, что разрабатываемые асинхронно витрины в итоге соберутся в согласованную систему.
+The Enterprise Data Warehouse Bus Matrix serves as the architectural foundation for incrementally building a data warehouse. This tool allows us to break down a massive data integration task into manageable phases while maintaining a unified vision. In Kimball's methodology, the matrix is the master plan, ensuring that data marts developed asynchronously will eventually snap together into a cohesive system.
 
-Структура матрицы:
+Matrix Structure:
 
- - Строки (Бизнес-процессы): Отражают ключевые операционные события компании (выдача байка, заказ запчастей, ремонт), а не организационную структуру или иерархию отделов. Каждый процесс в конечном итоге транслируется в таблицу фактов.   
- - Колонки (Согласованные измерения): Представляют собой единые корпоративные справочники (conformed dimensions), такие как Дата, Клиент, Локация или Байк.   
- - Пересечения (Ячейки): Отмеченные ячейки визуализируют связи, явно указывая, какие измерения применимы для фильтрации и агрегации фактов конкретного бизнес-процесса. 
+- **Rows (Business Processes):** Reflect the core operational events of the company (e.g., bike dispense, parts ordering, repairs), rather than the organizational structure or departmental hierarchy. Each process ultimately translates into a fact table.
+- **Columns (Conformed Dimensions):** Represent the unified enterprise reference data (conformed dimensions), such as Date, Client, Location, or Bike.
+- **Intersections (Cells):** The marked cells visualize the relationships, explicitly indicating which dimensions apply for filtering and aggregating the facts of a specific business process.
 
-Матрица обеспечивает возможность гибкой Agile-разработки DWH. Реализуя систему строка за строкой, команда опирается на переиспользуемые, созданные один раз общие измерения. Это не только сокращает цикл разработки новых витрин, но и позволяет бизнес-пользователям выполнять кросс-процессный анализ (drill-across) — бесшовно объединять метрики из разных бизнес-процессов в одном отчете, опираясь на идентичные атрибуты справочников.
+The matrix enables an agile DWH development approach. By implementing the system row by row, the team relies on reusable, build-once conformed dimensions. This not only shortens the development cycle for new data marts but also empowers business users to perform cross-process analysis (drill-across) — seamlessly joining metrics from different business processes in a single report, relying on identical dimension attributes.
 
-После долгого процесса анализа и обдумывания потенциальных процессов мы получили следующий график:
+After an extensive process of analyzing and outlining potential processes, we arrived at the following matrix:
 
 ![Bus matrix](bus_matrix.jpeg)

@@ -1,59 +1,55 @@
-# В чем суть?
+# Project Overview
 
-Опишем основные бизнес процессы нашего стартапа с точки зрения моделирования данных. Итак, бизнес представляет из себя крупный сервис по аренде байков (скутеров) в Бангкоке, а также включает в себя полноценный магазин, тюнинг отдел и мастерскую, которая занимается обслуживанием как байков, сдаваемых в аренду, так и любых других байков, привозимых клиентами на ремонт и обслуживание. Таким образом, компания состоит из трех крупных отделов:
+Let's outline the core business processes of our startup from a data modeling perspective. The business operates as a large-scale bike (scooter) rental service in Bangkok, but it also features a fully-fledged retail shop, a tuning department, and a garage (workshop) that services both the rental fleet and external client bikes brought in for repair and maintenance. Thus, the company consists of three major departments:
 
- - **Магазин**
- - **Мастерская (Garage)**
- - **Аренда**
+- **Shop**
+- **Garage (Workshop)**
+- **Rental**
 
-Все три отдела пересекаются между собой и прямо или косвенно влияют на эффективность друг друга, а значит нуждаются в такой системе организации данных, которая стала бы своего рода клеем, скрепляющим все отделы в один большой и эффективный механизм.
+All three departments overlap and directly or indirectly impact each other's efficiency. Therefore, they require a robust data organization system to act as the "glue" binding all units into one large, efficient mechanism.
 
-Рассмотрим каждый отдел более детально.
-
-![](images/image1.png)
-
-## Отдел "Магазин"
-
-Данный отдел включает в себя сам магазин, в котором клиенты могут покупать различные аксессуары и запчасти для байков, а также тюнинг подразделение, которое оказывает услуги по установке купленных аксессуаров и косметическому ремонту (не требующего значительного вмешательства в конструкцию байка). Магазины можно представить, как физически отдельные помещения, куда клиенты могут приехать за покупками.
-
-Отдел магазин напрямую взаимодействует с отделом "Мастерская (Garage)", поскольку именно отдел "Магазин" является входной точкой при закупке новых байков и запчастей для них. Отдел "Магазин" отвечает за своевременную закупку запчастей / байков и последующую их поставку (и при необходимости принимает возврат) в мастерскую и точки аренды. Скажем, если мастерской нужен новый двигатель на Honda Click, то механики делают запрос к коллегам из отдела "Магазин", которые уже в свою очередь начинают процесс закупки нужного списка запчастей. Аналогично коллеги из отдела "Аренда" могут запросить у "Магазина" закупку новой партии байков (на основе аналитики спроса и сезонности).
-
-Также у клиента есть опция приехать в магазин и оформить полноценный ремонт своего собственного байка. Допустим, клиент приезжает на своем байке и хочет сделать полное обслуживание. Он покупает новые запчасти и другие аксессуары в магазине и оставляет байк в тюнинг отделе. Далее коллеги "магазина" связываются с коллегами из "мастерской" и отправляют им байк клиента для осуществления ремонта. После завершения работ, коллеги из отдела Мастерской отправляют байк обратно в магазин.
+Let's examine each department in more detail.
 
 
-В отделе "Магазин" происходят следующие бизнес процессы:
+## "Shop" Department
 
- - **Транзакции покупок**. События покупок товаров клиентами с гранулярностью до отдельной позиции в чеке. 
- - **Услуги тюнинг отдела**. События по установке купленных запчастей на байк клиента. Например, установка заднего кофра на Honda ADV 160. 
- - **Услуги по ремонту собственных байков клиентов**. В данном случае речь идет о пайплайне ремонта байка клиента. Этот пайплайн включает в себя покупку нужных запчастей клиентом (при необходимости) и последующую отправку байка в мастерскую, откуда после завершения работ байк будет снова отправлен в магазин и выдан клиенту. 
- - **Факты поставки запчастей или байков**. Здесь отражается полный пайплайн процесса закупок, взаимодействие с поставщиками и транспортными компаниями. Перемещения же запчастей между магазином и мастерской осуществляется посредством собственных грузовых пикапов компании (эти перемещения мы не будем отображать в модели данных из-за сложности реализации).
+This department includes the physical retail store where clients can purchase various bike accessories and spare parts. It also houses a tuning unit that provides installation services for purchased accessories and handles cosmetic repairs (which do not require significant structural modifications to the bike). The shops function as distinct physical locations that clients can visit to make purchases.
 
+The Shop department interacts directly with the Garage department because the Shop serves as the entry point for purchasing new bikes and spare parts. The Shop is responsible for the timely procurement of inventory and its subsequent delivery (as well as handling returns, if necessary) to the garages and rental spots. For instance, if the garage needs a new engine for a Honda Click, the mechanics submit a request to the Shop team, who then initiate the procurement pipeline for the required parts. Similarly, the Rental department can request the Shop to purchase a new batch of bikes based on demand analytics and seasonality.
 
-## Отдел "Мастерская (Garage)"
+Clients also have the option to visit the shop and request a comprehensive repair service for their personal bikes. Suppose a client arrives on their own bike and wants full maintenance. They purchase new spare parts and accessories in the shop and leave the bike with the tuning department. The Shop team then contacts the Garage team and transfers the client's bike for repairs. Once the work is completed, the Garage team sends the bike back to the shop, where it is handed over to the client.
 
-В этом подразделении происходит ремонт и регламентное обслуживание байков, которые сдаются в аренду, а также из отдела Магазин сюда присылают любые другие байки на ремонт. Данный отдел полностью изолирован от клиентов, иными словами, клиенты никак не взаимодействуют с локациями, где расположены мастерские (точнее сказать, локации, в которых располагаются только мастерские). В случае технической неисправности байка во время аренды клиент сперва звонит менеджерам в отдел "Аренда", которые в свою очередь связываются с механиками из мастерской для выезда кого-либо из них на место к клиенту. 
+The following business processes take place within the Shop department:
 
-Также отдел Мастерской выступает в роли склада запчастей и временного хранения байков, которые не помещаются в пунктах аренды. Такими байками могут быть новые байки, которые еще не поставлены на учет в местном транспортном департаменте (байки без номеров) или байки, ждущие ремонта пока доставляются новые запчасти. Это необходимо для того, чтобы не захламлять точки аренды, где место сильно ограничено.
+- **Purchase transactions**: Client purchase events captured down to the granularity of individual receipt line items.
+- **Tuning department services**: Events related to installing purchased parts on a client's bike (e.g., installing a rear top box on a Honda ADV 160).
+- **Personal bike repair services**: This refers to the external repair pipeline for a client's own bike. The pipeline spans from the client purchasing the necessary parts (if needed) to transferring the bike to the garage, and finally returning the finished bike to the shop for client pickup.
+- **Parts or bikes procurement facts**: This covers the complete procurement pipeline, including interactions with vendors and carriers. (Note: The physical movement of parts between the shop and the garage is handled by the company's own pickup trucks; we will exclude these internal transfers from the data model due to their implementation complexity).
 
-Бизнес процессы здесь следующие:
+## "Garage" Department
 
-- **Регламентное обслуживание байков**. Речь идет о ведении календаря обслуживания байков, который логично относится именно к данному отделу. Разумеется, сами работы по замене масла, фильтров и т.п. производятся в мастерской. 
-- **Выезд механиков к клиенту во время аренды**. Здесь имеет место быть процесс, когда клиенту нужна помощь с решением какой-либо технической проблемы и механик лично приезжает на указанную локацию, например, для замены спущенного колеса или зарядки аккумулятора.
-- **Учет складских запасов запчастей**. В этом процессе очень важно участие мастерской, так как коллеги из "магазина" делают закупки запчастей, основываясь на запасах запчастей в мастерских. Запасы могут варьироваться в зависимости от качества, от частоты использования инструментов, случайных повреждений и т.п. Только механики могут точно сказать, что именно нужно для каждого байка.
+This unit handles the scheduled maintenance and repair of the rental bike fleet, as well as any external client bikes forwarded from the Shop. This department operates entirely behind the scenes; clients do not interact with garage-only locations. In the event of a technical issue during a rental, the client first calls the Rental support team, who then contact the garage mechanics to dispatch someone to the client's location.
 
-## Отдел "Аренда"
+The Garage also serves as a spare parts warehouse and temporary storage facility for bikes that don't fit at the rental locations. These might be brand-new bikes awaiting local transport department registration (bikes without license plates) or bikes waiting for ordered parts to arrive before repairs can begin. This is crucial to prevent clutter at the rental spots, where physical space is highly limited.
 
-Подразделение аренды занимается непосредственно управлением процесса выдачи и возврата байков клиентам, а также фиксации их технического состояния при возврате. Также в отделе аренды клиенты могут получать консультации по особенностям управления каждым байком и даже какие-либо туристические рекомендации по главным тревел маршрутам. Отдел аренды также занимается клиентской поддержкой и принимает звонки с заявками на выезд механиков к клиенту для решения технических проблем.
+The business processes here include:
 
-Отдел "Аренды" может взаимодействовать с отделом "Магазина" для консультации по вопросу закупок новых байков, шлемов и экипировки. Мы выделяем следующие бизнес процессы:
+- **Scheduled bike maintenance**: This involves managing a maintenance calendar, which logically falls under this department's purview. Naturally, the physical work (oil changes, filter replacements, etc.) is performed in the garage.
+- **Mechanic field service dispatches**: This process is triggered when a client needs on-the-road assistance with a technical issue, and a mechanic personally travels to the specified location (e.g., to fix a flat tire or jump-start a dead battery).
+- **Spare parts inventory tracking**: The garage plays a critical role here, as the Shop relies on the garage's current stock levels to make procurement decisions. Inventory levels fluctuate based on part quality, tool usage frequency, and accidental damage. Only the mechanics can accurately specify what is currently needed for the fleet.
 
-- **Выдача байка**. Процесс выдачи байка клиенту с фиксацией технического состояния байка и фактической датой и стоимостью аренды. Если в течении срока аренды клиент хочет поменять байк, то для контроля и правильного сбора данных производится полный процесс возврата текущего байка и заведение нового факта аренды. Клиент также должен забронивать новый байк в личном кабинете приложения, завершив текущую аренду.
-- **Возврат байка**. Факт возврата байка с фиксацией его технического состояния.
-- **Бронирование байка в приложении**. Исключительно на стороне клиента. Бронирование включает в себя выбор байка и периода аренды.
+## "Rental" Department
 
+The Rental division directly manages the bike dispense and return processes, ensuring technical conditions are accurately logged upon return. Furthermore, clients can consult with rental agents regarding the handling characteristics of specific bikes and receive recommendations for popular tourist routes. The Rental department also manages customer support, fielding calls and logging tickets for mechanic field dispatches to resolve technical problems.
 
-## Bus matrix
+The Rental department may consult with the Shop regarding the procurement of new bikes, helmets, and gear. We highlight the following key business processes:
 
-Для определения того, какие измерения будут пересекать каждый из бизнес процессов крайне важно создать так называемый Bus matrix. Эта схема помогает ясно увидеть, как именно пересекаются различные отделы бизнеса между собой и на какие измерения нужно обратить больше внимания. Здесь на строках мы располагаем бизнес процессы, а на колонки разворачиваем потенциальные измерения, фактически, бизнес активы.
+- **Bike dispense**: The process of handing a bike over to a client, which includes logging its technical condition and setting the rental start date and cost. If a client requests a bike swap during their rental period, strict data collection rules dictate a complete return process for the current bike and the creation of a new rental fact. The client must also book the replacement bike in the app after closing the current rental.
+- **Bike return**: The fact of a bike being returned, capturing its final technical condition.
+- **App booking**: This occurs exclusively on the client side. Booking involves selecting a bike model and specifying the rental period.
+
+## Enterprise Bus Matrix
+
+To determine which dimensions will intersect with each business process, it is vital to construct an Enterprise Data Warehouse Bus Matrix. This schema provides a clear visualization of how different business departments overlap and which dimensions demand the most engineering focus. In this matrix, business processes are mapped as rows, while potential dimensions (essentially our business assets) are expanded across the columns.
 
 ![Bus matrix](bus_matrix.jpeg)

@@ -1,66 +1,66 @@
-# Что представляет из себя проект?
+# What is this project all about?
 
-Данный проект является открытой песочницей и призван наглядно продемонстрировать, как бы выглядил процесс имплементаци полного дата пайплайна в небольшом, но быстро развивающимся стартапе. В рамках проекта мы подразумеваем, что наш вымышленный бизнес не имеет вообще никакой ETL кухни для интеграции данных, а значит нам придется пройти весь путь от сбора сырых событий из клиентского приложения до построения готовых агрегированных витрин и дашбордов для аналитики. При этом мы будем придерживаться основных стандартов индустрии, а в качестве ключевой философской парадигмы будем основываться на следующей замечательной цитате:
+This project is an open sandbox designed to clearly demonstrate what the implementation process of a full data pipeline would look like in a small but fast-growing startup. Within this project, we assume that our fictional business has absolutely no "ETL kitchen" for data integration, which means we have to walk the entire path from collecting raw events from a client app to building ready-made aggregated data marts and analytics dashboards. In doing so, we will adhere to core industry standards, and as our key philosophical paradigm, we will rely on the following great quote:
 
  - There is no reason to tolerate an unstructured approach. 
 
-Действительно, любая комплексная задача требует тщательного планирования и подготовки, чтобы мы и будем стараться подчеркивать в данном проекте.
+Indeed, any complex task requires careful planning and preparation, which is exactly what we will try to emphasize in this project.
 
-Итак, давайте предположим, что мы имеем дело с развивающимся стартапом под названием Top bikes, который предоставляет услуги аренды байков (мотоциклов) в Бангкоке, а также имеет сеть магазинов аксессуаров и мотозапчастей. Наша задача - создать надежную и маштабируемую систему, которая позволит собирать и анализировать сырые данные, превращая их затем в полноценную бизнес стратегию. В качестве отправной точки у нас есть гипотетическое мобильное приложение для клиентов и другие мастер системы, из которых поступают данные о чеках в магазине, поставках товаров и прочее.
+So, let's assume we are dealing with a growing startup called Top Bikes, which provides bike (scooter) rental services in Bangkok, and also operates a chain of accessory and motorcycle spare parts shops. Our task is to create a reliable and scalable system capable of collecting and analyzing raw data, ultimately transforming it into a full-fledged business strategy. As our starting point, we have a hypothetical mobile app for clients and other master systems generating data on shop receipts, goods procurement, and more.
 
 ![](docs/images/adv_350.png)
 
-# Планирование и стратегия
+# Planning and Strategy
 
-Чтобы не утонуть в многообразии инструментов и не запутаться в определенни конечного результата, необходимо составить четкий план по реализации такой масштабной задачи. И такой план так или иначе будет соответствовать следующей схеме (Kimball Lifecycle diagram):
+To avoid drowning in a sea of tools and losing sight of the final deliverable, we need a clear plan for executing such a massive task. And this plan will, one way or another, align with the following framework (Kimball Lifecycle diagram):
 
 ![](docs/images/Kimball_Lifecycle_diagram.jpeg)
 
-Далее мы будем двигаться шаг за шагом по каждому блоку диаграммы, углубляясь в каждый из этапов. Можно сказать, что данная схема представляет собой самую первую вернеуровневую декомпозицию проекта интеграции данных в компанию. 
+Next, we will move step-by-step through each block of the diagram, diving deep into every stage. You could say this schema represents the very first, high-level decomposition of integrating a data project into a company. 
 
-## Структура документации (Kimball Lifecycle)
+## Documentation Structure (Kimball Lifecycle)
 
-Документация проекта выстроена в строгом соответствии с жизненным циклом Кимбалла, который мы показали выше (Kimball Lifecycle) и разделена на 6 логических блоков:
+The project documentation is structured strictly in accordance with the Kimball Lifecycle shown above and is divided into 6 logical blocks:
 
-* **[01. Сбор бизнес-требований и планирование (Business Requirements & Planning)](https://github.com/letConst55/data-pet-project/tree/main/docs/01_Business_Requirements_and_Planning)**
-  Описание бизнес-модели стартапа по аренде байков, интервью со стейкхолдерами и определение целевых KPI.
-* **[02. Техническая архитектура (Technical Architecture)](https://github.com/letConst55/data-pet-project/tree/main/docs/02_Technical_Architecture)**
-  Обоснование выбора технологического стека (Redpanda, MinIO, PostgreSQL, dbt, Airflow) и обзор эмулятора генерации исходных событий.
-* **[03. Многомерное моделирование (Dimensional Modeling)](https://github.com/letConst55/data-pet-project/tree/main/docs/03_Dimensional_Modeling)**
-  Матрица корпоративной шины данных (Bus Matrix), проектирование логической модели (схема "Звезда") и стратегия физического развертывания.
-* **[04. ETL-кухня (ETL Kitchen & Data Quality)](https://github.com/letConst55/data-pet-project/tree/main/docs/04_ETL_Kitchen)**
-  Реализация ELT-пайплайнов (Kafka -> S3 -> PostgreSQL -> dbt), проекция на 34 подсистемы Кимбалла и встроенная система тестов качества данных с выводом аудита в Grafana.
-* **[05. BI-приложения (BI Applications)](https://github.com/letConst55/data-pet-project/tree/main/docs/05_BI_Applications)**
-  Проектирование слоя предвычисленных агрегаций и спецификации для аналитических дашбордов (Customer Intelligence, Fleet Utilization).
-* **[06. Развертывание и эксплуатация (Deployment & Operations)](https://github.com/letConst55/data-pet-project/tree/main/docs/06_Deployment_and_Operations)**
-  Оркестрация ELT-процессов через Apache Airflow и Bash-скрипты автоматизации для управления жизненным циклом инфраструктуры (start/stop pipeline).
+* **[01. Business Requirements & Planning](https://github.com/letConst55/data-pet-project/tree/main/docs/01_Business_Requirements_and_Planning)**
+  Description of the bike rental startup's business model, stakeholder interviews, and target KPI definition.
+* **[02. Technical Architecture](https://github.com/letConst55/data-pet-project/tree/main/docs/02_Technical_Architecture)**
+  Justification of the tech stack choice (Redpanda, MinIO, PostgreSQL, dbt, Airflow) and an overview of the raw event generator emulator.
+* **[03. Dimensional Modeling](https://github.com/letConst55/data-pet-project/tree/main/docs/03_Dimensional_Modeling)**
+  Enterprise Data Warehouse Bus Matrix, logical model design (Star Schema), and physical deployment strategy.
+* **[04. ETL Kitchen & Data Quality](https://github.com/letConst55/data-pet-project/tree/main/docs/04_ETL_Kitchen)**
+  Implementation of ELT pipelines (Kafka -> S3 -> PostgreSQL -> dbt), mapping to Kimball's 34 subsystems, and a built-in data quality testing framework with audit logs pushed to Grafana.
+* **[05. BI Applications](https://github.com/letConst55/data-pet-project/tree/main/docs/05_BI_Applications)**
+  Design of the pre-calculated aggregation layer and specifications for analytical dashboards (Customer Intelligence, Fleet Utilization).
+* **[06. Deployment & Operations](https://github.com/letConst55/data-pet-project/tree/main/docs/06_Deployment_and_Operations)**
+  Orchestration of ELT processes via Apache Airflow and Bash automation scripts for infrastructure lifecycle management (start/stop pipeline).
 
 
-### *Доступ к сервисам*
+### *Service Access*
 
-- Чтобы все включить 
+- To start everything up:
 
 `./start_pipeline.sh`
 
-- После прогрузки истории можно остановить фоновые процессы
+- Once the history is loaded, you can stop the background processes:
 
 `./freeze_dwh.sh`
 
-- Чтобы выключить
+- To shut everything down:
 
 `./stop_pipeline.sh`
 
-Креды для MiniO админки (http://localhost:9001/)
+MinIO Admin credentials (http://localhost:9001/):
 
- - логин: minioadmin
- - пароль: miniopassword
+ - login: minioadmin
+ - password: miniopassword
 
-Airflow http://localhost:8080/
+Airflow (http://localhost:8080/):
 
- - логин: admin
- - пароль: 1234
+ - login: admin
+ - password: 1234
 
-Grafana http://localhost:3000/
+Grafana (http://localhost:3000/):
 
- - логин: admin
- - пароль: 1234
+ - login: admin
+ - password: 1234

@@ -1,51 +1,51 @@
-# Витрины слоя агрегации (Aggregation Layer Models)
+# Aggregation Layer Models
 
-В данном документе приведено техническое описание витрин слоя `aggregations`. На текущий момент задокументирован первый блок — **Клиентские метрики (Customer Intelligence)**, реализованный согласно описанным ранее парадигмам "Песочницы" и "Отчетности".
+This document provides technical documentation for the data marts residing in the `aggregations` schema. Currently, the first block is documented — **Customer Intelligence**, implemented according to the previously outlined "Sandbox" and "Reporting" paradigms.
 
-## 1. stats_by_clients (Витрина-песочница)
-Базовая витрина домена клиентской аналитики. Гранулярность: `Отчетный месяц + Клиент` (каждый клиент имеет запись для каждого месяца, начиная со своей первой активности). Это идеальный источник для ad-hoc аналитики в Tableau, так как содержит и текущие (MTD), и накопительные (Lifetime) метрики клиента, а также расчет его сегмента на конец конкретного месяца.
+## 1. stats_by_clients (Sandbox Mart)
+The foundational data mart for the customer analytics domain. Granularity: `Reporting Month + Client` (every client has a record for every month, starting from their first activity). This is the optimal source for ad-hoc analytics in Tableau, as it contains both Month-to-Date (MTD) and cumulative (Lifetime) client metrics, alongside their computed segment status at the end of that specific month.
 
-| Поле | Тип данных | Описание |
+| Column Name | Data Type | Description |
 | :--- | :--- | :--- |
-| `report_month` | `date` | Месяц отчетности (1-е число месяца) |
-| `client_natural_key` | `text` | Натуральный ключ клиента |
-| `loyalty_segment_at_month` | `text` | Сегмент лояльности (new_customer, loyal_customer, vip_customer, danger_customer) |
-| `rider_profile_segment_at_month` | `text` | Профиль райдера (Beginner, City_rider, Traveller_rider, Pro_rider) |
-| `mtd_rentals` | `int` | Количество аренд в текущем месяце |
-| `mtd_successful_rentals` | `int` | Аренды без штрафов, выездов механика и поломок за месяц |
-| `mtd_rental_amount` | `numeric` | Сумма выручки от аренды за месяц |
-| `mtd_shop_amount` | `numeric` | Сумма выручки с покупок в магазине за месяц |
-| `mtd_repair_amount` | `numeric` | Сумма выручки с платных ремонтов за месяц |
-| `mtd_sum_rental_mileage` | `int` | Суммарный пробег клиента за месяц |
-| `lifetime_rentals` | `int` | Накопительное количество аренд с момента первого касания |
-| `lifetime_total_amount` | `numeric` | Кумулятивный LTV (Lifetime Value) на конец месяца |
-| `trouble_free_days_ratio` | `numeric` | Доля беспроблемных аренд за всю историю клиента |
+| `report_month` | `date` | Reporting month (the 1st day of the month) |
+| `client_natural_key` | `text` | Client natural key |
+| `loyalty_segment_at_month` | `text` | Loyalty segment (new_customer, loyal_customer, vip_customer, danger_customer) |
+| `rider_profile_segment_at_month` | `text` | Rider profile (Beginner, City_rider, Traveller_rider, Pro_rider) |
+| `mtd_rentals` | `int` | Count of rentals in the current month |
+| `mtd_successful_rentals` | `int` | Count of trouble-free rentals (no penalties, breakdowns, or mechanic dispatches) in the month |
+| `mtd_rental_amount` | `numeric` | Total rental revenue generated in the month |
+| `mtd_shop_amount` | `numeric` | Total retail shop revenue generated in the month |
+| `mtd_repair_amount` | `numeric` | Total paid repair revenue generated in the month |
+| `mtd_sum_rental_mileage` | `int` | Total cumulative mileage driven by the client in the month |
+| `lifetime_rentals` | `int` | Cumulative count of rentals since the client's first touchpoint |
+| `lifetime_total_amount` | `numeric` | Cumulative Lifetime Value (LTV) as of the end of the month |
+| `trouble_free_days_ratio` | `numeric` | The ratio of trouble-free rental days across the client's entire history |
 
-*(Примечание: в витрине также присутствуют демографические данные `gender`, `nationality` и детали первой аренды `first_rent_bike`)*.
+*(Note: The mart also includes demographic data such as `gender`, `nationality`, and details regarding the client's `first_rent_bike`)*.
 
-## 2. agg_monthly_client_kpis (Витрина-отчетность)
-Максимально агрегированная витрина для высокоуровневого дашборда руководства (Executive Dashboard). Гранулярность: `Отчетный месяц`. Фильтрует только активных клиентов в заданном месяце и предрасчитывает сложные макро-показатели.
+## 2. agg_monthly_client_kpis (Reporting Mart)
+A highly aggregated data mart tailored for high-level Executive Dashboards. Granularity: `Reporting Month`. This mart filters for clients who were actively engaged during the given month and pre-calculates complex macro-indicators.
 
-| Поле | Тип данных | Описание |
+| Column Name | Data Type | Description |
 | :--- | :--- | :--- |
-| `report_month` | `date` | Месяц отчетности |
-| `total_active_clients` | `int` | Общее количество уникальных активных клиентов в месяце |
-| `new_clients_count` | `int` | Количество новых клиентов в данном месяце |
-| `total_monthly_revenue` | `numeric` | Итоговая выручка (аренда + магазин + сервис) |
-| `avg_active_client_ltv` | `numeric` | Средний исторический LTV среди активных в этом месяце клиентов |
-| `monthly_trouble_free_ratio` | `numeric` | North Star Metric: Доля беспроблемных аренд именно в этом месяце |
+| `report_month` | `date` | Reporting month |
+| `total_active_clients` | `int` | Total count of unique active clients in the month |
+| `new_clients_count` | `int` | Count of newly acquired clients in the month |
+| `total_monthly_revenue` | `numeric` | Total combined revenue (rentals + shop + service) |
+| `avg_active_client_ltv` | `numeric` | Average historical LTV among the clients active in this specific month |
+| `monthly_trouble_free_ratio` | `numeric` | North Star Metric: The ratio of trouble-free rentals strictly within this month |
 
-## 3. agg_monthly_client_segments (Витрина-отчетность)
-Витрина, подготовленная специально для графиков структуры клиентской базы (например, 100% Stacked Bar Charts) в Tableau. Гранулярность: `Месяц + Профиль райдера + Сегмент лояльности + Национальность`.
+## 3. agg_monthly_client_segments (Reporting Mart)
+A data mart specifically engineered to power client base structure charts (e.g., 100% Stacked Bar Charts) in Tableau. Granularity: `Month + Rider Profile + Loyalty Segment + Nationality`.
 
-| Поле | Тип данных | Описание |
+| Column Name | Data Type | Description |
 | :--- | :--- | :--- |
-| `report_month` | `date` | Месяц отчетности |
-| `rider_profile_segment_at_month` | `text` | Срез по профилю райдера |
-| `loyalty_segment_at_month` | `text` | Срез по статусу лояльности |
-| `nationality` | `text` | Срез по национальности |
-| `unique_clients_count` | `int` | Размер сегмента (количество уникальных клиентов) |
-| `sum_rental_amount` | `numeric` | Выручка сегмента от аренды (для анализа структуры) |
-| `sum_shop_amount` | `numeric` | Выручка сегмента от покупок в магазине |
-| `segment_trouble_free_ratio` | `numeric` | Доля беспроблемных аренд внутри сегмента |
-| `avg_trip_mileage` | `numeric` | Средний пробег за поездку внутри сегмента (показатель износа) |
+| `report_month` | `date` | Reporting month |
+| `rider_profile_segment_at_month` | `text` | Sliced by rider profile |
+| `loyalty_segment_at_month` | `text` | Sliced by loyalty status |
+| `nationality` | `text` | Sliced by nationality |
+| `unique_clients_count` | `int` | Segment size (count of unique clients) |
+| `sum_rental_amount` | `numeric` | Segment rental revenue (used for structure composition analysis) |
+| `sum_shop_amount` | `numeric` | Segment retail shop revenue |
+| `segment_trouble_free_ratio` | `numeric` | The ratio of trouble-free rentals within the specific segment |
+| `avg_trip_mileage` | `numeric` | Average trip mileage within the segment (a proxy for equipment wear and tear) |
