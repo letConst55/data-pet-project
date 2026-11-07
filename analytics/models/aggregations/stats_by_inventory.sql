@@ -5,8 +5,8 @@
     )
 }}
 
--- 1. Агрегируем еженедельные снимки остатков (fct_inventory_snapshot) до уровня Месяц + Товар + Локация.
--- Поскольку снапшот снимается каждое воскресенье по всем физическим товарам и магазинам, он служит идеальным хребтом (Spine).
+-- 1. Aggregate weekly inventory snapshots (fct_inventory_snapshot) to the Month + Product + Location level.
+-- Since a snapshot is taken every Sunday for all physical products and shops, it serves as an ideal Spine.
 with snapshot_monthly as (
     select
         date_trunc('month', s.snapshot_date_key)::date as report_month,
@@ -22,7 +22,7 @@ with snapshot_monthly as (
     group by 1, 2, 3
 ),
 
--- 2. Продажи физических товаров в розничном магазине (списание со склада)
+-- 2. Sales of physical goods in retail stores (stock deduction)
 shop_sales_monthly as (
     select
         date_trunc('month', o.order_date)::date as event_month,
@@ -36,7 +36,7 @@ shop_sales_monthly as (
     group by 1, 2, 3
 ),
 
--- 3. Закупки и логистика поставок (пополнение склада и этапы Lead Time)
+-- 3. Procurements and supply logistics (stock replenishment and Lead Time stages)
 procurement_monthly as (
     select
         date_trunc('month', pr.order_date)::date as event_month,
@@ -64,7 +64,7 @@ select
     l.location_natural_key::text as location_natural_key,
     l.title::text as location_title,
 
-    -- Метрики состояния запасов
+    -- Inventory condition metrics
     sm.weekly_snapshots_cnt::int as weekly_snapshots_cnt,
     sm.avg_stock_qty::numeric as avg_stock_qty,
     sm.min_stock_qty::int as min_stock_qty,
@@ -76,21 +76,21 @@ select
         4
     )::numeric as out_of_stock_rate,
 
-    -- Метрики расхода (розничные продажи)
+    -- Outflow metrics (retail sales)
     coalesce(sh.mtd_sold_qty, 0)::int as mtd_sold_qty,
     coalesce(sh.mtd_sales_revenue, 0)::numeric as mtd_sales_revenue,
 
-    -- Метрики пополнения (закупки у поставщиков)
+    -- Inflow metrics (procurements from suppliers)
     coalesce(pr.mtd_shipments_cnt, 0)::int as mtd_shipments_cnt,
     coalesce(pr.mtd_procured_qty, 0)::int as mtd_procured_qty,
     coalesce(pr.mtd_procurement_spend, 0)::numeric as mtd_procurement_spend,
 
-    -- Анатомия сроков доставки (Lead Time)
+    -- Lead Time anatomy
     pr.avg_vendor_processing_days::numeric as avg_vendor_processing_days,
     pr.avg_carrier_transit_days::numeric as avg_carrier_transit_days,
     pr.avg_procurement_lead_time_days::numeric as avg_procurement_lead_time_days,
 
-    -- Коэффициент оборачиваемости запасов за месяц (Inventory Turnover Ratio)
+    -- Monthly Inventory Turnover Ratio
     case
         when sm.avg_stock_qty > 0 then round(coalesce(sh.mtd_sold_qty, 0)::decimal / sm.avg_stock_qty, 4)
         else null

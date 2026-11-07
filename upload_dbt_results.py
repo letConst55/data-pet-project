@@ -11,16 +11,15 @@ def get_db_connection():
 
 def parse_and_upload():
     if not os.path.exists(RESULTS_FILE):
-        print(f"Файл {RESULTS_FILE} не найден.")
         return
 
     with open(RESULTS_FILE, 'r') as f:
         run_results = json.load(f)
 
-    # Проверяем, есть ли результаты тестов или моделей
+    # Checking results
     is_dbt_run = any(res.get('unique_id', '').startswith(('test.', 'model.')) for res in run_results.get('results', []))
     if not is_dbt_run:
-        print("В файле нет результатов моделей или тестов.")
+        print("There is nothing..(")
         return
 
     run_started_at = run_results['metadata']['generated_at']
@@ -36,7 +35,7 @@ def parse_and_upload():
         status = result['status']
         execution_time = result.get('execution_time', 0.0)
 
-        # Парсим ТЕСТЫ
+        # Tests parsing
         if unique_id.startswith('test.'):
             test_name = unique_id.split('.')[-1]
             failures = result.get('failures', 0)
@@ -46,7 +45,7 @@ def parse_and_upload():
             """, (run_id, test_name, status, failures, execution_time, run_started_at))
             tests_count += 1
             
-        # Парсим МОДЕЛИ (витрины)
+        # Models parsing
         elif unique_id.startswith('model.'):
             model_name = unique_id.split('.')[-1]
             cursor.execute("""
@@ -58,7 +57,6 @@ def parse_and_upload():
     conn.commit()
     cursor.close()
     conn.close()
-    print(f"✅ Загружено: моделей - {models_count}, тестов - {tests_count}")
 
 if __name__ == "__main__":
     parse_and_upload()

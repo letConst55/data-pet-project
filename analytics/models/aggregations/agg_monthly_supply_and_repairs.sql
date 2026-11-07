@@ -5,7 +5,7 @@
     )
 }}
 
--- 1. Складские метрики и поставки в разрезе локаций магазинов
+-- 1. Inventory metrics and supplies broken down by shop locations
 with location_supply as (
     select
         report_month,
@@ -27,20 +27,20 @@ with location_supply as (
     group by 1, 2, 3
 ),
 
--- 2. Анатомия времени внешнего ремонта (fct_repair) по локации магазина приемки
+-- 2. External repair time anatomy (fct_repair) by drop-off shop location
 location_repairs as (
     select
         date_trunc('month', r.transportation_start_date)::date as report_month,
         l.location_natural_key,
         count(r.repair_id) as completed_repairs_cnt,
         sum(r.invoice_total_amount) as repair_revenue_usd,
-        -- Этап 1: Ожидание и транспортировка из магазина в гараж
+        -- Stage 1: Wait time and transportation from the shop to the garage
         round(avg(r.repair_start_date - r.transportation_start_date), 2) as avg_inbound_transport_days,
-        -- Этап 2: Непосредственно ремонт в мастерской (узкое место при нехватке запчастей)
+        -- Stage 2: Direct work in the workshop (the bottleneck when facing parts shortages)
         round(avg(r.repair_end_date - r.repair_start_date), 2) as avg_active_repair_days,
-        -- Этап 3: Обратная транспортировка из гаража в магазин
+        -- Stage 3: Return transportation from the garage back to the shop
         round(avg(r.transportation_end_date - r.repair_end_date), 2) as avg_outbound_transport_days,
-        -- Полный цикл ремонта (Lead Time)
+        -- Full repair cycle (Lead Time)
         round(avg(r.transportation_end_date - r.transportation_start_date), 2) as avg_total_repair_lead_time_days
     from {{ ref('fct_repair') }} r
     inner join {{ ref('dim_location') }} l on r.location_shop_sk = l.location_sk
@@ -53,20 +53,20 @@ select
     s.location_natural_key::text as location_natural_key,
     s.location_title::text as location_title,
 
-    -- Метрики склада и оборачиваемости
+    -- Inventory and turnover metrics
     s.avg_location_stock_qty::numeric as avg_location_stock_qty,
     s.location_out_of_stock_rate::numeric as location_out_of_stock_rate,
     s.avg_location_turnover_ratio::numeric as avg_location_turnover_ratio,
     s.total_sold_qty::int as total_sold_qty,
 
-    -- Метрики закупок и этапов доставки
+    -- Procurement and delivery stage metrics
     s.total_procured_qty::int as total_procured_qty,
     s.total_procurement_spend::numeric as total_procurement_spend,
     s.avg_vendor_processing_days::numeric as avg_vendor_processing_days,
     s.avg_carrier_transit_days::numeric as avg_carrier_transit_days,
     s.avg_procurement_lead_time_days::numeric as avg_procurement_lead_time_days,
 
-    -- Метрики узких мест ремонта (Repair Bottlenecks)
+    -- Repair bottleneck metrics
     coalesce(r.completed_repairs_cnt, 0)::int as completed_repairs_cnt,
     coalesce(r.repair_revenue_usd, 0)::numeric as repair_revenue_usd,
     r.avg_inbound_transport_days::numeric as avg_inbound_transport_days,

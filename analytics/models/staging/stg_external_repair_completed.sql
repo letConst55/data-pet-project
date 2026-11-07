@@ -10,7 +10,7 @@ renamed as (
         event_timestamp,
         (payload->>'repair_id')::varchar as repair_id,
         (payload->>'order_id')::varchar as order_id,
-        (payload->>'employee_id')::varchar as employee_id,
+        (payload->>'employee_id')::varchar as employee_id, 
         (payload->>'client_id')::varchar as client_id,
         (payload->>'carrier_id')::varchar as carrier_id,
         (payload->>'bike_name')::varchar as bike_name,

@@ -11,14 +11,14 @@ with source as (
 
 final as (
     select
-        -- Технические поля пайплайна
+        -- technical fields
         '{{ invocation_id }}'::varchar as dataflow_id,
         current_timestamp as dataflow_dttm,
 
-        -- Первичный ключ мини-измерения (оценка от 1 до 10)
+        -- Primary key
         rental_condition_score::int as rental_condition_score,
 
-        -- Атрибуты состояния узлов по регламенту
+        -- Technical status attributes according to the protocol
         engine_condition::varchar as engine_condition,
         plastic_condition::varchar as plastic_condition,
         suspension_condition::varchar as suspension_condition,

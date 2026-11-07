@@ -1,4 +1,4 @@
--- Инкрементальная версия
+-- Incremental version
 
 {{
     config(
@@ -16,7 +16,7 @@ with new_events as (
         where event_timestamp > (select max(row_effective_date) from {{ this }})
         {% endif %}
 ),
--- Дедуплицируем новую пачку событий
+-- Deduplicated chain
 deduped_new_events as (
     select distinct on (client_id, event_timestamp)
         client_id as client_natural_key,
@@ -37,8 +37,8 @@ deduped_new_events as (
     from new_events
     order by client_id, event_timestamp, loaded_at desc
 ),
--- Берем из УЖЕ существующей витрины dim_clients ({{ this }}) только открытые записи 
--- и ТОЛЬКО по тем клиентам, которые пришли в новой пачке событий
+-- We select only the active records from the existing `dim_clients` view (`{{ this }}`).
+-- and ONLY for those clients who appeared in the new batch of events
 {% if is_incremental() %}
 existing_active_records as (
     select
@@ -63,7 +63,7 @@ existing_active_records as (
     and client_natural_key in (select distinct client_natural_key from deduped_new_events)
 ),
 {% endif %}
--- Объединяем открытые старые записи и новые события, чтобы сшить цепочку версий
+-- We combine existing historical records with new events to tie together a chain of versions.
 combined_records as (
     select * from deduped_new_events
     {% if is_incremental() %}
@@ -71,7 +71,7 @@ combined_records as (
     select * from existing_active_records
     {% endif %}
 ),
--- Считаем LEAD() только по затронутым клиентам
+-- We calculate LEAD() only for the affected clients.
 scd2_calculated as (
     select
         *,
@@ -84,8 +84,6 @@ final_ as (
     select
         '{{ invocation_id }}'::varchar as dataflow_id,
         current_timestamp as dataflow_dttm,
-        -- У старой записи этот хэш совпадет с тем, что уже в таблице -> сработает UPDATE
-        -- У новой записи хэш будет новым -> сработает INSERT
         md5(client_natural_key || '_' || row_effective_date::varchar) as client_sk,
         client_natural_key,
         full_name,

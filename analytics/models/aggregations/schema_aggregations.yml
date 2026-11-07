@@ -4,7 +4,7 @@ models:
   - name: stats_by_clients
     columns:
       - name: client_natural_key
-        description: "Натуральный бизнес-ключ клиента"
+        description: "Natural business key of the client"
         tests:
           - not_null
       - name: report_month
@@ -15,8 +15,9 @@ models:
           combination_of_columns:
             - client_natural_key
             - report_month
+
   - name: agg_monthly_client_kpis
-    description: "Витрина-отчетность: ежемесячные макро-показатели бизнеса (KPI) для дашборда Tableau."
+    description: "Reporting Mart: monthly macro business indicators (KPIs) for the Tableau dashboard."
     columns:
       - name: report_month
         tests:
@@ -29,7 +30,7 @@ models:
               max_value: 1
 
   - name: agg_monthly_client_segments
-    description: "Витрина-отчетность: срезы выручки и качества по сегментам клиентов и национальностям."
+    description: "Reporting Mart: revenue and quality slices by client segments and nationalities."
     columns:
       - name: report_month
         tests:
@@ -41,8 +42,9 @@ models:
             - rider_profile_segment_at_month
             - loyalty_segment_at_month
             - nationality
+
   - name: stats_by_bikes
-    description: "Витрина-песочница: помесячная утилизация, износ, пробег и окупаемость каждого байка."
+    description: "Sandbox Mart: monthly utilization, wear, mileage, and ROI for each bike."
     columns:
       - name: report_month
         tests:
@@ -67,7 +69,7 @@ models:
             - bike_natural_key
 
   - name: stats_by_inventory
-    description: "Витрина-песочница: помесячный баланс складских остатков, продаж, закупок и оборачиваемости."
+    description: "Sandbox Mart: monthly balance of warehouse inventory, sales, procurements, and turnover."
     columns:
       - name: report_month
         tests:
@@ -91,7 +93,7 @@ models:
             - location_natural_key
 
   - name: agg_monthly_ops_kpis
-    description: "Витрина-отчетность: верхнеуровневые ежемесячные KPI операционной эффективности."
+    description: "Reporting Mart: top-level monthly KPIs for operational efficiency."
     columns:
       - name: report_month
         tests:
@@ -109,7 +111,7 @@ models:
               max_value: 1
 
   - name: agg_monthly_fleet_utilization
-    description: "Витрина-отчетность: утилизация, техническое состояние и ROI в разрезе моделей байков."
+    description: "Reporting Mart: utilization, technical condition, and ROI broken down by bike models."
     columns:
       - name: report_month
         tests:
@@ -128,7 +130,7 @@ models:
             - bike_title
 
   - name: agg_monthly_supply_and_repairs
-    description: "Витрина-отчетность: анализ узких мест в ремонтах (Lead Time) и цепочке поставок по локациям."
+    description: "Reporting Mart: analysis of repair bottlenecks (Lead Time) and supply chain by location."
     columns:
       - name: report_month
         tests:

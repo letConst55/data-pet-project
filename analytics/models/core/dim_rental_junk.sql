@@ -5,14 +5,14 @@
     )
 }}
 
--- Задаем два возможных состояния для флага
+-- We define two possible states for the flag
 with boolean_values as (
     select true as flag_value
     union all
     select false as flag_value
 ),
 
--- Генерируем все 16 возможных комбинаций через декартово произведение
+-- We generate all 16 possible combinations using a Cartesian product
 combinations as (
     select
         h.flag_value as helmet_damage_flag,
@@ -27,11 +27,11 @@ combinations as (
 
 final as (
     select
-        -- Технические поля пайплайна
+        -- technical fields
         '{{ invocation_id }}'::varchar as dataflow_id,
         current_timestamp as dataflow_dttm,
         
-        -- Суррогатный первичный ключ комбинации флагов (PK)
+        -- Surrogate primary key of flag combinations (PK)
         {{ dbt_utils.generate_surrogate_key([
             'helmet_damage_flag',
             'field_service_flag',
@@ -39,17 +39,16 @@ final as (
             'bike_exchange_flag'
         ]) }} as rental_junk_sk,
         
-        -- Атрибуты мусорного измерения
+        -- Junk attributes
         helmet_damage_flag,
         field_service_flag,
         rent_extend_flag,
         bike_exchange_flag,
         
-        -- Опционально: можно добавить текстовое описание комбинации для удобства в BI
         case 
             when helmet_damage_flag or field_service_flag or bike_exchange_flag 
-            then 'Проблемный возврат' 
-            else 'Стандартный возврат' 
+            then 'Problematic return' 
+            else 'Normal return' 
         end as return_status_category
         
     from combinations

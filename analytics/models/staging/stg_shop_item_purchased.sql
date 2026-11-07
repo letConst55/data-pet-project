@@ -9,18 +9,18 @@ renamed as (
         event_id,
         event_timestamp,
         
-        -- Идентификаторы
+        -- ID
         (payload->>'order_id')::varchar as order_id,
         (payload->>'client_id')::varchar as client_id,
         (payload->>'employee_id')::varchar as employee_id,
         (payload->>'location_id')::varchar as location_id,
         (payload->>'product_id')::varchar as product_id,
         
-        -- Даты и время
+        -- Date time
         (payload->>'order_date')::date as order_date,
         (payload->>'order_datetime')::timestamp as order_datetime,
         
-        -- Финансовые показатели и количества
+        -- Financial metrics and quantities
         (payload->>'cnt_products')::integer as cnt_products,
         (payload->>'basic_amount')::numeric(10, 2) as basic_amount,
         (payload->>'discount_amount')::numeric(10, 2) as discount_amount,

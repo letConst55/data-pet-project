@@ -8,8 +8,8 @@ class GarageAPI:
     def __init__(self, sim_state, publisher, locations_list, carriers_list, bike_models_list, shop_locations_list):
         self.state_mgr = sim_state
         self.publisher = publisher
-        self.LOCATIONS = locations_list           # Гаражи (для ремонта и выездов)
-        self.SHOP_LOCATIONS = shop_locations_list # Магазины (для приемки)
+        self.LOCATIONS = locations_list           # Garages (for repairs and field services)
+        self.SHOP_LOCATIONS = shop_locations_list # Shops (for drop-offs)
         self.CARRIERS = carriers_list
         self.BIKE_MODELS = bike_models_list
         
@@ -26,7 +26,7 @@ class GarageAPI:
         print(f"[{mode_tag} | {event_dt.isoformat()[:16]}] [{topic}] {event_type} -> {entity_key}", flush=True)
 
     def perform_field_service(self):
-        """Выезд механика к клиенту по аренде (fct_service_events)"""
+        """Mechanic dispatch to a rental client (fct_service_events)"""
         active_rentals = self.state_mgr.state["rentals"]["active"]
         if not active_rentals:
             return
@@ -47,7 +47,7 @@ class GarageAPI:
         issues = ["dead_battery", "flat_tire", "engine_check", "lost_key"]
         resolutions = ["fixed_on_site", "bike_replaced", "towed_to_shop"]
 
-        # Специфика поломок и стоимости выезда в зависимости от погодных аномалий
+        # Breakdown specifics and dispatch costs depending on weather anomalies
         if event == "monsoon_flood":
             issue_cat = random.choices(issues, weights=[35, 10, 50, 5], k=1)[0]
             res_action = random.choices(resolutions, weights=[15, 35, 50], k=1)[0]
@@ -86,7 +86,7 @@ class GarageAPI:
         self._send('mechanic_app_events', 'field_service_performed', payload)
 
     def accept_external_repair(self):
-        """Клиент сдает свой личный байк в ремонт через магазин"""
+        """Client drops off their personal bike for repair via a shop"""
         clients_dict = self.state_mgr.state["clients"]
         if not clients_dict or not self.CARRIERS:
             return
@@ -97,7 +97,7 @@ class GarageAPI:
         ctx = self.state_mgr.get_world_context()
         event = ctx["event_code"]
         
-        # В кризис поставок и наводнение сроки транспортировки и ремонта растягиваются
+        # During a supply chain crisis and floods, transportation and repair times are extended
         if event in ("supply_chain_crisis", "monsoon_flood"):
             transport_start = event_dt + timedelta(hours=random.randint(12, 48))
             repair_start = transport_start + timedelta(hours=random.randint(6, 24))
@@ -128,7 +128,7 @@ class GarageAPI:
         self.state_mgr.state["active_repairs"].append(repair_ctx)
 
     def finish_external_repair(self):
-        """Завершение ремонта личного байка клиента (fct_repair)"""
+        """Completion of a client's personal bike repair (fct_repair)"""
         active_repairs = self.state_mgr.state.get("active_repairs", [])
         if not active_repairs:
             return
@@ -145,7 +145,7 @@ class GarageAPI:
         ctx = self.state_mgr.get_world_context()
         event = ctx["event_code"]
 
-        # При сложных ремонтах после шторма или дефицита запчастей средний чек выше
+        # For complex repairs following a storm or parts shortage, the average check is higher
         if event in ("monsoon_flood", "supply_chain_crisis"):
             invoice_total = round(random.uniform(140.0, 650.0), 2)
             invoice_discount = random.choice([0.0, 0.0, 10.0])

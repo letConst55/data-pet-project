@@ -9,7 +9,7 @@ import warnings
 
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
-# 1. Настройки S3
+# 1. S3
 s3_client = boto3.client('s3',
     endpoint_url='http://localhost:9000',
     aws_access_key_id='minioadmin',
@@ -23,7 +23,7 @@ try:
 except Exception:
     pass
 
-# 2. Подписка
+# 2. kafka topics
 TARGET_TOPICS = [
     'hr_app_events', 'client_app_events', 
     'mechanic_app_events', 'shop_app_events', 'inventory_events'
@@ -38,14 +38,14 @@ consumer = KafkaConsumer(
     group_id='s3_data_lake_writer'
 )
 
-print(f"🎧 Консьюмер запущен. Слушаем топики: {', '.join(TARGET_TOPICS)}...")
+print(f"Consumer started. Listening to topics.: {', '.join(TARGET_TOPICS)}...")
 
 batch = []
 BATCH_SIZE = 500
 batch_counter = 0
 
 def flush_batch(batch_to_flush, is_emergency=False):
-    """Отправляет батч в S3 с гарантированно уникальным именем файла."""
+    """Sends a batch to S3 with a guaranteed unique filename."""
     global batch_counter
     if not batch_to_flush:
         return
@@ -67,11 +67,10 @@ def flush_batch(batch_to_flush, is_emergency=False):
         ndjson_data = "\n".join([json.dumps(record) for record in t_events])
         
         s3_client.put_object(Bucket=bucket_name, Key=file_key, Body=ndjson_data)
-        print(f"{'🚨 Экстренно' if is_emergency else '✅'} сохранен файл {file_key} (Событий: {len(t_events)})", flush=True)
+        print(f"{'urgently' if is_emergency else '✅'} file is saved {file_key} (Events: {len(t_events)})", flush=True)
 
 def handle_shutdown(signum, frame):
-    """Перехватчик сигналов (SIGTERM/SIGINT) для безопасного завершения."""
-    print(f"\n🛑 Сигнал остановки ({signum}). Сохранение последних {len(batch)} событий из буфера...", flush=True)
+    """Signal interceptor (SIGTERM/SIGINT) for graceful shutdown."""
     flush_batch(batch, is_emergency=True)
     consumer.close()
     sys.exit(0)
@@ -79,12 +78,12 @@ def handle_shutdown(signum, frame):
 signal.signal(signal.SIGTERM, handle_shutdown)
 signal.signal(signal.SIGINT, handle_shutdown)
 
-# 3. Основной цикл с автосбросом при паузах потока (> 1 сек)
+# 3. Main loop with auto-reset during stream pauses (> 1 sec)
 while True:
     msg_pack = consumer.poll(timeout_ms=1000)
     
     if not msg_pack:
-        # Если генератор перешел в LIVE режим или взял паузу, сразу сбрасываем хвост в S3
+        # If the generator switches to LIVE mode or pauses, immediately drop the tail into S3.
         if batch:
             flush_batch(batch)
             batch.clear()
@@ -96,7 +95,6 @@ while True:
                 "topic": message.topic,
                 "data": message.value
             })
-            #print(f"[{message.topic}] Получено: {message.value.get('event_type')}", flush=True)
             
             if len(batch) >= BATCH_SIZE:
                 flush_batch(batch)

@@ -2,21 +2,21 @@ version: 2
 
 models:
   - name: dim_client
-    description: "Измерение клиентов со стратегией обновления SCD Type 2"
+    description: "Client dimension with SCD Type 2 update strategy"
     columns:
       - name: client_sk
-        description: "Суррогатный первичный ключ версии клиента (PK)"
+        description: "Surrogate primary key of the client version (PK)"
         tests:
-          # Уникальность и отсутствие NULL для суррогатного ключа по всей витрине
+          # Uniqueness and no-NULL constraint for the surrogate key across the entire mart
           - unique
           - not_null
 
       - name: client_natural_key
-        description: "Натуральный бизнес-ключ клиента (NK)"
+        description: "Natural business key of the client (NK)"
         tests:
           - not_null
-          # Для среза current_row_indicator = true натуральный ключ обязан быть уникальным
-          # (это гарантирует, что число строк = числу уникальных NK = числу уникальных PK в активном срезе)
+          # For the slice where current_row_indicator = true, the natural key must be unique
+          # (this guarantees that row count = unique NK count = unique PK count in the active slice)
           - unique:
               name: unique_active_client_natural_key
               config:
@@ -33,11 +33,12 @@ models:
       - name: current_row_indicator
         tests:
           - not_null
+
   - name: dim_calendar
-    description: "Ролевое измерение календаря (SCD Type 0) с праздниками и сезонами Таиланда"
+    description: "Role-playing calendar dimension (SCD Type 0) featuring Thai holidays and seasons"
     columns:
       - name: date
-        description: "Первичный ключ календаря (гранулярность 1 день)"
+        description: "Calendar primary key (1 day granularity)"
         tests:
           - unique
           - not_null
@@ -50,29 +51,30 @@ models:
       - name: is_holiday_flg
         tests:
           - not_null
+
   - name: dim_bike
-    description: "Измерение парка байков (SCD Type 1)"
+    description: "Bike fleet dimension (SCD Type 1)"
     columns:
       - name: bike_sk
-        description: "Суррогатный первичный ключ байка (PK)"
+        description: "Surrogate primary key of the bike (PK)"
         tests:
           - unique
           - not_null
 
       - name: bike_natural_key
-        description: "Натуральный бизнес-ключ байка (NK)"
+        description: "Natural business key of the bike (NK)"
         tests:
           - unique
           - not_null
 
       - name: win_number
-        description: "Уникальный VIN-номер рамы байка"
+        description: "Unique VIN number of the bike frame"
         tests:
           - unique
           - not_null
 
       - name: plate_number
-        description: "Государственный регистрационный номер"
+        description: "State license plate number"
         tests:
           - unique
           - not_null
@@ -80,11 +82,12 @@ models:
       - name: usb_charging_availability
         tests:
           - not_null
+
   - name: dim_bike_condition
-    description: "Мини-измерение (SCD Type 4) регламента оценки технического состояния байка"
+    description: "Mini-dimension (SCD Type 4) for the bike technical condition evaluation standard"
     columns:
       - name: rental_condition_score
-        description: "Первичный ключ — балл состояния байка от 1 до 10 (PK)"
+        description: "Primary key — bike condition score from 1 to 10 (PK)"
         tests:
           - unique
           - not_null
@@ -107,17 +110,18 @@ models:
       - name: mileage_band
         tests:
           - not_null
+
   - name: dim_location
-    description: "Согласованное ролевое измерение локаций бизнеса (SCD Type 1)"
+    description: "Conformed role-playing dimension for business locations (SCD Type 1)"
     columns:
       - name: location_sk
-        description: "Суррогатный первичный ключ локации (PK)"
+        description: "Surrogate primary key of the location (PK)"
         tests:
           - unique
           - not_null
 
       - name: location_natural_key
-        description: "Натуральный бизнес-ключ локации (NK)"
+        description: "Natural business key of the location (NK)"
         tests:
           - unique
           - not_null
@@ -146,16 +150,17 @@ models:
       - name: is_warehouse_flag
         tests:
           - not_null
+
   - name: dim_product
-    description: "Измерение товаров, запчастей и услуг (SCD Type 1)"
+    description: "Dimension for products, spare parts, and services (SCD Type 1)"
     columns:
       - name: product_sk
-        description: "Суррогатный первичный ключ товара (PK)"
+        description: "Surrogate primary key of the product (PK)"
         tests:
           - unique
           - not_null
       - name: product_natural_key
-        description: "Натуральный бизнес-ключ товара (NK)"
+        description: "Natural business key of the product (NK)"
         tests:
           - unique
           - not_null
@@ -168,16 +173,17 @@ models:
       - name: is_tuning_flag
         tests:
           - not_null
+
   - name: dim_vendor
-    description: "Измерение поставщиков товаров и запчастей (SCD Type 1)"
+    description: "Dimension for suppliers of products and spare parts (SCD Type 1)"
     columns:
       - name: vendor_sk
-        description: "Суррогатный первичный ключ поставщика (PK)"
+        description: "Surrogate primary key of the vendor (PK)"
         tests:
           - unique
           - not_null
       - name: vendor_natural_key
-        description: "Натуральный бизнес-ключ поставщика (NK)"
+        description: "Natural business key of the vendor (NK)"
         tests:
           - unique
           - not_null
@@ -187,16 +193,17 @@ models:
       - name: is_foreign_flag
         tests:
           - not_null
+
   - name: dim_carrier
-    description: "Измерение транспортных компаний и внутренних перевозчиков (SCD Type 1)"
+    description: "Dimension for transport companies and internal carriers (SCD Type 1)"
     columns:
       - name: carrier_sk
-        description: "Суррогатный первичный ключ перевозчика (PK)"
+        description: "Surrogate primary key of the carrier (PK)"
         tests:
           - unique
           - not_null
       - name: carrier_natural_key
-        description: "Натуральный бизнес-ключ перевозчика (NK)"
+        description: "Natural business key of the carrier (NK)"
         tests:
           - unique
           - not_null
@@ -206,20 +213,21 @@ models:
       - name: is_external_carrier_flag
         tests:
           - not_null
+
   - name: dim_employee
-    description: "Измерение сотрудников компании со стратегией SCD Type 2"
+    description: "Company employee dimension with SCD Type 2 strategy"
     columns:
       - name: employee_sk
-        description: "Суррогатный первичный ключ версии сотрудника (PK)"
+        description: "Surrogate primary key of the employee version (PK)"
         tests:
           - unique
           - not_null
       
       - name: employee_natural_key
-        description: "Натуральный бизнес-ключ сотрудника (NK)"
+        description: "Natural business key of the employee (NK)"
         tests:
           - not_null
-          # Проверка уникальности активной записи (current_row_indicator = true)
+          # Checking uniqueness of the active record (current_row_indicator = true)
           - unique:
               name: unique_active_employee_natural_key
               config:
@@ -240,22 +248,23 @@ models:
       - name: current_row_indicator
         tests:
           - not_null
+
   - name: brg_emp_hierarchy
-    description: "Таблица-мост (Closure Table) для разворачивания иерархии подчинения сотрудников"
+    description: "Bridge table (Closure Table) for unrolling the employee reporting hierarchy"
     tests:
-      # Проверка уникальности комбинации руководитель-подчиненный
+      # Checking uniqueness of the manager-subordinate combination
       - dbt_utils.unique_combination_of_columns:
           combination_of_columns:
             - manager_employee_id
             - subordinate_employee_id
     columns:
       - name: manager_employee_id
-        description: "Натуральный бизнес-ключ руководителя (NK)"
+        description: "Natural business key of the manager (NK)"
         tests:
           - not_null
           
       - name: subordinate_employee_id
-        description: "Натуральный бизнес-ключ подчиненного (NK)"
+        description: "Natural business key of the subordinate (NK)"
         tests:
           - not_null
           
@@ -270,176 +279,183 @@ models:
       - name: is_bottom_level_flg
         tests:
           - not_null
+
   - name: fct_client_bike_rent
-    description: "Таблица фактов аренды байков (Accumulating Snapshot)"
+    description: "Bike rental fact table (Accumulating Snapshot)"
     columns:
       - name: rental_id
-        description: "Первичный ключ факта (DD)"
+        description: "Primary key of the fact (DD)"
         tests:
           - unique
           - not_null
       - name: rental_junk_sk
-        description: "FK на dim_rental_junk"
+        description: "FK to dim_rental_junk"
         tests:
           - not_null
       - name: client_sk
-        description: "FK на dim_client (Суррогатный ключ)"
+        description: "FK to dim_client (Surrogate key)"
         tests:
           - not_null
       - name: bike_sk
-        description: "FK на dim_bike (Суррогатный ключ)"
+        description: "FK to dim_bike (Surrogate key)"
         tests:
           - not_null
+
   - name: fct_shop_order
-    description: "Транзакционная таблица фактов по событиям покупок в магазине"
+    description: "Transactional fact table for store purchase events"
     columns:
       - name: shop_order_sk
-        description: "Первичный ключ позиции чека (PK)"
+        description: "Primary key of the receipt item (PK)"
         tests:
           - unique
           - not_null
       - name: order_id
-        description: "Идентификатор чека (Degenerate Dimension)"
+        description: "Receipt ID (Degenerate Dimension)"
         tests:
           - not_null
       - name: client_sk
-        description: "FK на dim_client"
+        description: "FK to dim_client"
         tests:
           - not_null
       - name: employee_sk
-        description: "FK на dim_employee"
+        description: "FK to dim_employee"
         tests:
           - not_null
       - name: location_sk
-        description: "FK на dim_location"
+        description: "FK to dim_location"
         tests:
           - not_null
       - name: product_sk
-        description: "FK на dim_product"
+        description: "FK to dim_product"
         tests:
           - not_null
       - name: total_amount
-        description: "Итоговая стоимость позиции"
+        description: "Final cost of the item"
         tests:
           - not_null
+
   - name: fct_service_events
-    description: "Транзакционная таблица фактов по выездам механиков к клиентам"
+    description: "Transactional fact table for mechanic dispatch events to clients"
     columns:
       - name: service_event_sk
-        description: "Первичный ключ факта (Суррогатный)"
+        description: "Primary key of the fact (Surrogate)"
         tests:
           - unique
           - not_null
       - name: service_event_id
-        description: "Идентификатор события выезда (Degenerate Dimension)"
+        description: "Mechanic dispatch event ID (Degenerate Dimension)"
         tests:
           - unique
           - not_null
       - name: rental_id
-        description: "FK на идентификатор аренды (Degenerate Dimension)"
+        description: "FK to rental ID (Degenerate Dimension)"
         tests:
           - not_null
       - name: client_sk
-        description: "FK на dim_client (Суррогатный ключ)"
+        description: "FK to dim_client (Surrogate key)"
         tests:
           - not_null
       - name: employee_sk
-        description: "FK на dim_employee (Суррогатный ключ механика)"
+        description: "FK to dim_employee (Mechanic surrogate key)"
         tests:
           - not_null
       - name: bike_sk
-        description: "FK на dim_bike (Суррогатный ключ)"
+        description: "FK to dim_bike (Surrogate key)"
         tests:
           - not_null
+
   - name: fct_procurement
-    description: "Накопительный снимок пайплайна поставок товаров и запчастей"
+    description: "Accumulating snapshot of the product and spare parts procurement pipeline"
     columns:
       - name: procurement_sk
-        description: "Первичный ключ позиции в поставке (Суррогатный)"
+        description: "Primary key of the procurement item (Surrogate)"
         tests:
           - unique
           - not_null
       - name: shipment_id
-        description: "Идентификатор поставки (Degenerate Dimension)"
+        description: "Shipment ID (Degenerate Dimension)"
         tests:
           - not_null
       - name: product_sk
-        description: "FK на dim_product"
+        description: "FK to dim_product"
         tests:
           - not_null
       - name: vendor_sk
-        description: "FK на dim_vendor"
+        description: "FK to dim_vendor"
         tests:
           - not_null
       - name: carrier_sk
-        description: "FK на dim_carrier"
+        description: "FK to dim_carrier"
         tests:
           - not_null
       - name: arrival_location_sk
-        description: "FK на dim_location (Склад прибытия)"
+        description: "FK to dim_location (Arrival warehouse)"
         tests:
           - not_null
+
   - name: fct_repair
-    description: "Накопительный снимок пайплайна внешних ремонтов байков клиентов"
+    description: "Accumulating snapshot of the external client bike repair pipeline"
     columns:
       - name: repair_sk
-        description: "Суррогатный первичный ключ факта"
+        description: "Surrogate primary key of the fact"
         tests:
           - unique
           - not_null
       - name: repair_id
-        description: "Идентификатор ремонта (Degenerate Dimension)"
+        description: "Repair ID (Degenerate Dimension)"
         tests:
           - not_null
       - name: client_sk
-        description: "FK на dim_client (Суррогатный ключ)"
+        description: "FK to dim_client (Surrogate key)"
         tests:
           - not_null
       - name: employee_sk
-        description: "FK на dim_employee (Суррогатный ключ)"
+        description: "FK to dim_employee (Surrogate key)"
         tests:
           - not_null
       - name: carrier_sk
-        description: "FK на dim_carrier"
+        description: "FK to dim_carrier"
         tests:
           - not_null
       - name: location_shop_sk
-        description: "FK на dim_location (Локация магазина)"
+        description: "FK to dim_location (Shop location)"
         tests:
           - not_null
       - name: location_garage_sk
-        description: "FK на dim_location (Локация мастерской)"
+        description: "FK to dim_location (Garage location)"
         tests:
           - not_null
+
   - name: fct_inventory_snapshot
-    description: "Периодический снимок (Periodic Snapshot) складских остатков"
+    description: "Periodic Snapshot of warehouse inventory balances"
     columns:
       - name: inventory_snapshot_sk
-        description: "Первичный ключ снимка остатков"
+        description: "Primary key of the inventory snapshot"
         tests:
           - unique
           - not_null
       - name: product_sk
-        description: "FK на dim_product"
+        description: "FK to dim_product"
         tests:
           - not_null
       - name: location_sk
-        description: "FK на dim_location"
+        description: "FK to dim_location"
         tests:
           - not_null
       - name: week_year
-        description: "Календарная неделя снимка (Degenerate Dimension)"
+        description: "Calendar week of the snapshot (Degenerate Dimension)"
         tests:
           - not_null
       - name: product_quantity
-        description: "Количество товара на остатке"
+        description: "Quantity of the product in stock"
         tests:
           - not_null
+
   - name: dim_rental_junk
-    description: "Мусорное измерение (Junk Dimension) для комбинаций флагов аренды"
+    description: "Junk Dimension for combinations of rental flags"
     columns:
       - name: rental_junk_sk
-        description: "Первичный ключ комбинации флагов (PK)"
+        description: "Primary key of the flag combination (PK)"
         tests:
           - unique
           - not_null

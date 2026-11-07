@@ -20,21 +20,21 @@ select
     loyalty_segment_at_month,
     nationality,
     
-    -- Размеры сегмента
+    -- Segment size
     count(client_natural_key) as unique_clients_count,
     
-    -- Структура выручки (для 100% Stacked Bar)
+    -- Revenue mix (for a 100% Stacked Bar chart)
     sum(mtd_rental_amount) as sum_rental_amount,
     sum(mtd_shop_amount) as sum_shop_amount,
     sum(mtd_repair_amount) as sum_repair_amount,
     
-    -- Показатели качества в разрезе
+    -- Quality indicators broken down by segment
     round(
         sum(mtd_successful_rentals)::decimal / nullif(sum(mtd_rentals), 0), 
         4
     ) as segment_trouble_free_ratio,
     
-    -- Физические метрики (износ техники)
+    -- Physical metrics (equipment wear and tear)
     coalesce(round(
         sum(mtd_sum_rental_mileage)::decimal / nullif(sum(mtd_rentals), 0), 
         2

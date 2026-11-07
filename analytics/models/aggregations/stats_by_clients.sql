@@ -5,8 +5,8 @@
     )
 }}
 
--- 1. Создаем "хребет" (Spine): Каждому клиенту генерируем сетку месяцев
--- начиная с даты его первой активности до текущего месяца
+-- 1. Create the "Spine": Generate a grid of months for each client
+-- starting from the date of their first activity up to the current month
 with client_first_touch as (
     select 
         c.client_natural_key,
@@ -26,13 +26,13 @@ calendar_spine as (
         c.client_natural_key,
         date_trunc('month', cal.date)::date as report_month
     from client_first_touch c
-    -- Предполагается, что в dim_calendar есть поле date. 
-    -- Если у тебя ролевое измерение, используй его.
+    -- Assuming dim_calendar has a date field. 
+    -- If using a role-playing dimension, adapt accordingly.
     inner join {{ ref('dim_calendar') }} cal 
         on cal.date >= date_trunc('month', c.first_touch_date)
         and cal.date <= current_date
 ),
--- 2. Подготавливаем базовые факты
+-- 2. Prepare foundational facts
 client_bike_rent_ext as (
     select 
         fbr.bike_sk,
@@ -57,11 +57,11 @@ client_bike_rent_ext as (
     inner join {{ ref('dim_rental_junk') }} jd on jd.rental_junk_sk = fbr.rental_junk_sk 
     inner join {{ ref('dim_bike') }} db on db.bike_sk = fbr.bike_sk
     inner join {{ ref('dim_location') }} ll on ll.location_sk = fbr.location_dis_id 
-    -- Здесь получается связь многие-ко-многим поэтому убираем джойн
+    -- Removed join due to a many-to-many relationship issue
     --left join {{ ref('fct_service_events') }} se on se.rental_id = fbr.rental_id 
     where fbr.fact_end_date is not null
 ),
--- 3. Агрегируем метрики по месяцам
+-- 3. Aggregate metrics by month
 rental_metrics as (
     select 
         client_natural_key,
@@ -112,7 +112,7 @@ first_client_experience as (
     group by 1
 ),
 client_attributes as (
-    -- Берем актуальный профиль клиента
+    -- Get the current client profile
     select 
         dc.client_natural_key,
         dc.drive_license_verified,
@@ -128,7 +128,7 @@ client_attributes as (
     left join first_client_experience fce on fce.client_natural_key = dc.client_natural_key
     where current_row_indicator = true
 ),
--- 4. Джойним агрегаты на календарный хребет и считаем кумулятивные (накопительные) итоги
+-- 4. Join aggregates onto the calendar spine and calculate cumulative (Lifetime/YTD) totals
 monthly_rollup as (
     select 
         spine.report_month,
@@ -142,7 +142,7 @@ monthly_rollup as (
         cl.first_rent_bike_cc,
         cl.first_rent_dis_location,
         cl.first_rental_result,
-        -- Метрики за текущий месяц (MTD - Month to Date)
+        -- Month-to-Date (MTD) metrics
         coalesce(rm.mtd_rentals, 0) as mtd_rentals,
         coalesce(rm.mtd_successful_rentals, 0) as mtd_successful_rentals,
         coalesce(rm.mtd_unique_bike_models_rented, 0) as mtd_unique_bike_models_rented,
@@ -151,12 +151,12 @@ monthly_rollup as (
         coalesce(rpm.mtd_repair_amount, 0) as mtd_repair_amount,
         coalesce(rm.mtd_avg_rental_mileage, 0) as mtd_avg_rental_mileage,
         coalesce(rm.mtd_sum_rental_mileage, 0) as mtd_sum_rental_mileage,
-        -- Кумулятивные метрики (YTD / Lifetime) на конец отчетного месяца
+        -- Cumulative metrics at the end of the reporting month
         sum(coalesce(rm.mtd_rentals, 0)) over (partition by spine.client_natural_key order by spine.report_month) as lifetime_rentals,
         sum(coalesce(rm.mtd_successful_rentals, 0)) over (partition by spine.client_natural_key order by spine.report_month) as lifetime_successful_rentals,
         sum(coalesce(rm.mtd_unique_bike_models_rented, 0)) over (partition by spine.client_natural_key order by spine.report_month) as lifetime_unique_bikes,
         sum(coalesce(rm.mtd_sum_rental_mileage, 0)) over (partition by spine.client_natural_key order by spine.report_month) as lifetime_sum_mileage,
-        -- Кумулятивная выручка (LTV)
+        -- Cumulative revenue (LTV)
         sum(coalesce(rm.mtd_rental_amount, 0) + coalesce(sm.mtd_shop_amount, 0) + coalesce(rpm.mtd_repair_amount, 0)) 
             over (partition by spine.client_natural_key order by spine.report_month) as lifetime_total_amount
     from calendar_spine spine
@@ -165,7 +165,7 @@ monthly_rollup as (
     left join shop_metrics sm on spine.client_natural_key = sm.client_natural_key and spine.report_month = sm.event_month
     left join repair_metrics rpm on spine.client_natural_key = rpm.client_natural_key and spine.report_month = rpm.event_month
 )
--- 5. Финальный расчет сегментов на основе кумулятивных (исторических) данных на тот момент времени
+-- 5. Final segment calculation based on cumulative (historical) data as of that point in time
 select 
     mr.report_month::date as report_month,
     mr.client_natural_key::text as client_natural_key,

@@ -11,7 +11,7 @@ class RentAPI:
         self.BIKES = bikes_list
         self.LOCATIONS = locations_list
         
-        # Инициализация пробега для новых байков
+        # Initialize mileage for new bikes
         for b in self.BIKES:
             if b not in self.state_mgr.state["bikes"]["mileage"]:
                 self.state_mgr.state["bikes"]["mileage"][b] = random.randint(1000, 15000)
@@ -26,7 +26,7 @@ class RentAPI:
         print(f"[{mode_tag} | {event_dt.isoformat()[:16]}] [{topic}] {event_type} -> {entity_key}", flush=True)
 
     def _get_max_score_by_mileage(self, mileage):
-        """Возвращает максимально возможную оценку состояния байка на основе его пробега"""
+        """Returns the maximum possible condition score of the bike based on its mileage"""
         if mileage >= 65000:
             return 1
         elif mileage >= 50000:
@@ -54,14 +54,14 @@ class RentAPI:
         season = ctx["season_code"]
         event = ctx["event_code"]
         
-        # SCD2: обновление существующего клиента
+        # SCD2: Update an existing client
         if clients_dict and random.random() < 0.30:
             client_id = random.choice(list(clients_dict.keys()))
             profile = clients_dict[client_id].copy()
             profile["residential_address"] = fake.address().replace('\n', ', ')
             profile["preferred_payment_method"] = random.choice(["cash", "credit_card", "promptpay", "alipay"])
             
-            # В шторм рейтинг клиентов в среднем немного снижается из-за инцидентов, в промо - растет
+            # During a storm, the client rating drops slightly on average due to incidents, during a promo - it grows
             rating_delta = random.uniform(-0.4, 0.2) if event == "monsoon_flood" else random.uniform(-0.2, 0.3)
             profile["rating_score"] = round(min(5.0, max(1.0, profile["rating_score"] + rating_delta)), 1)
             clients_dict[client_id] = profile
@@ -70,7 +70,7 @@ class RentAPI:
             client_id = f"cl_{self.state_mgr.get_counter('client')}"
             gender = random.choice(["Male", "Female"])
             
-            # В высокий сезон и Сонгкран больше туристов-новичков (стаж 0 лет активирует сегмент Beginner в BI)
+            # High season and Songkran bring more tourist-beginners (0 years of experience triggers the Beginner segment in BI)
             if season == "high_season" or event == "songkran_festival":
                 exp_years = random.choices([0, random.randint(1, 4), random.randint(5, 15)], weights=[30, 42, 28], k=1)[0]
                 nat_weights = [25, 5, 20, 20, 15, 15]
@@ -122,21 +122,21 @@ class RentAPI:
         client_profile = self.state_mgr.state["clients"][client_id]
         exp_years = client_profile.get("driving_experience_years", 1)
 
-        # ШАГ 1: Базовый срок аренды и тариф от водительского стажа клиента
+        # STEP 1: Baseline rental duration and daily rate based on the client's driving experience
         if exp_years == 0:
-            # Новички берут простые скутеры на короткий срок (1-6 дней)
+            # Beginners rent simple scooters for a short period (1-6 days)
             base_days = random.randint(1, 6)
             rental_price_daily = random.choice([15.00, 20.00])
         elif exp_years <= 4:
-            # Городские райдеры и любители берут байк на средний срок (2-12 дней)
+            # City riders and amateurs rent bikes for an average duration (2-12 days)
             base_days = random.randint(2, 12)
             rental_price_daily = random.choice([15.00, 20.00, 25.00])
         else:
-            # Опытные райдеры (5+ лет) берут мощные байки в долгие туры (6-20 дней)
+            # Experienced riders (5+ years) take powerful bikes on long tours (6-20 days)
             base_days = random.randint(6, 20)
             rental_price_daily = random.choice([20.00, 25.00, 30.00])
 
-        # ШАГ 2: Модификатор сезона и катаклизмов (масштабирует базовый срок без его перезаписи)
+        # STEP 2: Season and cataclysm modifier (scales the baseline duration without overriding it)
         if event == "monsoon_flood":
             days_mult = 0.50
             discount_amount = random.choice([0.00, 5.00])
@@ -145,7 +145,7 @@ class RentAPI:
             discount_amount = 5.00
         elif season == "high_season" or event == "songkran_festival":
             days_mult = 1.35
-            rental_price_daily += 5.00  # Сезонная наценка в пик спроса
+            rental_price_daily += 5.00  # Seasonal surcharge during peak demand
             discount_amount = random.choice([0.00, 0.00, 0.00, 5.00])
         elif season == "low_season":
             days_mult = 0.75
@@ -154,7 +154,7 @@ class RentAPI:
             days_mult = 1.00
             discount_amount = random.choice([0.00, 0.00, 5.00])
 
-        # Итоговый срок строго в границах от 1 до 28 дней
+        # The final duration must be strictly within the range of 1 to 28 days
         rental_days = max(1, min(28, int(round(base_days * days_mult))))
         planned_start_date = (booking_dt + timedelta(days=random.randint(0, 5))).date()
         planned_end_date = planned_start_date + timedelta(days=rental_days)
@@ -195,12 +195,12 @@ class RentAPI:
         bike_id = rental_ctx["bike_id"]
         start_mileage = self.state_mgr.state["bikes"]["mileage"][bike_id]
         
-        # Оценка ограничена пробегом
+        # The condition score is constrained by the current mileage
         max_score = self._get_max_score_by_mileage(start_mileage)
         pre_score = random.randint(max(1, max_score - 3), max_score)
 
-        # Если это продление аренды, выдача происходит на той же точке, где байк вернули.
-        # Для обычного бронирования точка выдачи выбирается независимо.
+        # If this is a rental extension, the hand-over takes place at the same location where the bike was returned.
+        # For a standard booking, the hand-over location is selected independently.
         location_dis_id = rental_ctx.get("extension_location_id") or random.choice(self.LOCATIONS)
 
         rental_ctx["fact_start_date"] = fact_start_date
@@ -233,7 +233,7 @@ class RentAPI:
         return_dt = self.state_mgr.state["current_sim_time"]
         fact_end_date = return_dt.date()
 
-        # Защита от возврата в тот же день (чтобы аренда длилась хотя бы 1 день)
+        # Protection against returning the bike on the same day (ensure the rental lasts at least 1 day)
         if fact_end_date <= rental_ctx["fact_start_date"]:
             self.state_mgr.state["rentals"]["active"].append(rental_ctx)
             return
@@ -246,27 +246,27 @@ class RentAPI:
         client_profile = self.state_mgr.state["clients"].get(rental_ctx["client_id"], {})
         exp_years = client_profile.get("driving_experience_years", 1)
 
-        # ШАГ 1: Базовый профиль пробега и аккуратности вождения от стажа клиента
+        # STEP 1: Baseline mileage profile and driving care based on the client's experience
         if exp_years == 0:
-            # Новички (Beginner): короткие поездки, но высокий риск царапин и падений
+            # Beginners: short trips, but high risk of scratches and falls
             base_km_min, base_km_max = 12, 32
             w1, w2, w3 = 48, 34, 18
             h_ok, h_dmg = 84, 16
         elif exp_years <= 4:
-            # Любители (City / Traveller): средний пробег и умеренная аварийность
+            # Amateurs (City / Traveller): average mileage and moderate incident rate
             base_km_min, base_km_max = 22, 55
             w1, w2, w3 = 74, 19, 7
             h_ok, h_dmg = 94, 6
         else:
-            # Профи (Pro_rider, 5+ лет): дальние заезды и минимальный риск повреждений
+            # Pros (Pro_rider, 5+ years): long-distance trips with minimal risk of damage
             base_km_min, base_km_max = 45, 95
             w1, w2, w3 = 90, 8, 2
             h_ok, h_dmg = 98, 2
 
-        # ШАГ 2: Погодные и сезонные модификаторы (накладываются поверх профиля водителя)
+        # STEP 2: Weather and seasonal modifiers (applied on top of the driver profile)
         if event == "monsoon_flood":
             km_mult = 0.45
-            # В наводнение аварийность резко возрастает у всех категорий
+            # Incident rates skyrocket for all categories during a flood
             wear_weights = [max(10, int(w1 * 0.45)), int(w2 * 1.5) + 10, int(w3 * 2.2) + 10]
             helmet_dmg_weights = [max(70, h_ok - 12), h_dmg + 12]
             extend_weights = [95, 5]
@@ -282,7 +282,7 @@ class RentAPI:
             extend_weights = [90, 10]
         elif season == "high_season":
             km_mult = 1.20
-            # В сухую погоду больше успешных поездок (Trouble-Free Ratio выше)
+            # Higher Trouble-Free Ratio during dry weather
             wear_weights = [w1 + 10, max(2, int(w2 * 0.7)), max(1, int(w3 * 0.6))]
             helmet_dmg_weights = [min(99, h_ok + 2), max(1, h_dmg - 2)]
             extend_weights = [78, 22]
@@ -309,7 +309,7 @@ class RentAPI:
         pre_score = rental_ctx["pre_rental_condition_score"]
         wear_drop = random.choices([1, 2, 3], weights=wear_weights, k=1)[0]
         
-        # Итоговая оценка ограничена новым пробегом
+        # The final score is constrained by the new accumulated mileage
         max_post_score = self._get_max_score_by_mileage(end_mileage)
         post_score = min(max(1, pre_score - wear_drop), max_post_score)
 
@@ -344,7 +344,7 @@ class RentAPI:
         }
         self._send('mechanic_app_events', 'bike_returned', payload)
 
-        # Логика непрерывного продления на той же локации
+        # Seamless rental extension logic
         if rent_extend_flag:
             new_rental_id = f"rnt_{self.state_mgr.get_counter('rental')}"
             

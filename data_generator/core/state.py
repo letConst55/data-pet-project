@@ -13,7 +13,7 @@ class SimulationState:
         self._load_state()
 
     def _default_state(self):
-        # Стартуем 1 марта 2024
+        # Get started from 1 march 2024
         return {
             "current_sim_time": datetime(2024, 3, 1, 9, 0, 0, tzinfo=timezone.utc),
             "is_realtime": False,
@@ -40,26 +40,24 @@ class SimulationState:
         }
 
     def get_world_context(self):
-        """Возвращает текущие модификаторы сезонности, роста и катаклизмов"""
+        """Returns the current modifiers for seasonality, growth, and cataclysms"""
         return self.world.get_context(self.state["current_sim_time"])
 
     def advance_time(self, is_pandas_mode=False):
-        """Сдвигает виртуальные часы вперед с учетом сезонности и катаклизмов."""
+        """Advances the virtual clock, accounting for seasonality and cataclysms."""
         now_utc = datetime.now(timezone.utc)
         
         if not self.state["is_realtime"]:
             ctx = self.get_world_context()
             traffic_mult = ctx["total_traffic_mult"]
             
-            # Логируем в консоль начало и окончание катаклизмов / промо-акций
             if ctx["event_code"] != self.last_logged_event_code:
                 self.last_logged_event_code = ctx["event_code"]
                 dt_str = self.state["current_sim_time"].date().isoformat()
-                print(f"\n🌍 [{dt_str}] СМЕНА РЕЖИМА СРЕДЫ: {ctx['event_title']} (Трафик: x{traffic_mult})\n", flush=True)
+                print(f"\n🌍 [{dt_str}] CHANGE OF ENVIRONMENT MODE: {ctx['event_title']} (Traffic: x{traffic_mult})\n", flush=True)
 
-            # Базовый шаг (90..330 минут) делим на коэффициент трафика:
-            # В пик сезона шаг сжимается (~30..110 мин -> много событий в день),
-            # В шторм/несезон растягивается (но не более 600 мин = 10 часов, чтобы не перепрыгнуть воскресенье)
+            # Base gap (90..330 minutes) divide by traffic coef:
+            # At the peak of the season, the interval shrinks. (many events per day),
             base_minutes = random.randint(90, 330)
             scaled_minutes = int(base_minutes / traffic_mult)
             clamped_minutes = max(25, min(600, scaled_minutes))
@@ -70,7 +68,7 @@ class SimulationState:
             else:
                 self.state["current_sim_time"] = now_utc
                 self.state["is_realtime"] = True
-                print("\n🎉 Исторические данные сгенерированы! Переход в режим реального времени...\n", flush=True)
+                print("\n Historical data generated! Switching to real-time mode....\n", flush=True)
         else:
             self.state["current_sim_time"] = now_utc
             
@@ -78,7 +76,7 @@ class SimulationState:
 
 
     def save(self):
-        """Сериализация состояния в JSON."""
+        """Generate JSON state"""
         serializable = {
             "current_sim_time": self.state["current_sim_time"].isoformat(),
             "is_realtime": self.state["is_realtime"],
@@ -101,10 +99,8 @@ class SimulationState:
 
     def _load_state(self):
         if not os.path.exists(self.state_file):
-            print("🆕 Файл состояния не найден. Инициализация новой истории с 1 марта 2024...")
             return
 
-        print(f"♻️ Загрузка сохраненного состояния из {self.state_file}...")
         with open(self.state_file, "r", encoding="utf-8") as f:
             data = json.load(f)
 
@@ -132,7 +128,6 @@ class SimulationState:
 
     def _deserialize_dates(self, obj):
         res = obj.copy()
-        # НОВОЕ: Добавлены поля дат из garage_api
         date_fields = [
             'planned_start_date', 'planned_end_date', 'fact_start_date',
             'transportation_start_date', 'repair_start_date', 'repair_end_date', 'transportation_end_date'
@@ -146,41 +141,40 @@ class SimulationState:
         return res
     
     def get_counter(self, entity_type):
-        """Безопасная генерация инкрементальных ID (автосоздание ключа, если его нет)"""
+        
         if entity_type not in self.state["counters"]:
             self.state["counters"][entity_type] = 1000
         self.state["counters"][entity_type] += 1
         return self.state["counters"][entity_type]
 
     def get_employee(self, req_flag, location_id=None):
-        """Возвращает случайного активного сотрудника с нужным допуском"""
+        """Returns a random active employee with the required clearance level"""
         eligible_local = []
         eligible_anywhere = []
         
         for eid, data in self.state.get("employees", {}).items():
             if not data.get("is_active"): continue
             
-            # Если допуск есть, добавляем в глобальный список
+            # If permission is granted, add to the global list
             if data.get(req_flag):
                 eligible_anywhere.append(eid)
-                # Если локация совпадает, добавляем в локальный
+                # If the location matches, add it to the local one
                 if location_id and data.get("assigned_location_id") == location_id:
                     eligible_local.append(eid)
                     
-        # Приоритет 1: Сотрудник на нужной локации
+        # Priority 1: Employee at the right location
         if eligible_local:
             return random.choice(eligible_local)
             
-        # Приоритет 2: Сотрудник с нужным допуском на любой другой локации (командировка)
+        # Priority 2: An employee with the required clearance at any other location (on a business trip)
         if eligible_anywhere:
             return random.choice(eligible_anywhere)
             
-        # Приоритет 3: Фолбэк на CEO (он всегда инициализируется первым)
+        # Priority 3: Fallback to the CEO (it is always initialized first)
         ceo_list = [eid for eid, data in self.state.get("employees", {}).items() 
                     if data.get("is_active") and data.get("manager_employee_id") is None]
         
         if ceo_list:
             return ceo_list[0]
             
-        # Если вообще никого нет (баг инициализации)
         return "emp_sys_fallback"

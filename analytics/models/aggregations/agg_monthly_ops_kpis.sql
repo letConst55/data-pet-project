@@ -53,7 +53,7 @@ repairs_monthly as (
 select
     f.report_month::date as report_month,
 
-    -- 1. Утилизация и техническое здоровье парка (North Star Операционки)
+    -- 1. Fleet utilization and technical health (Operations North Star)
     f.total_fleet_bikes::int as total_fleet_bikes,
     f.active_bikes_cnt::int as active_bikes_cnt,
     f.total_rented_bike_days::int as total_rented_bike_days,
@@ -64,7 +64,7 @@ select
     )::numeric as fleet_utilization_rate,
     f.avg_fleet_condition_score::numeric as avg_fleet_condition_score,
 
-    -- 2. Полевой сервис и аварийность на дорогах
+    -- 2. Field service and road incident frequency
     f.total_fleet_mileage_km::numeric as total_fleet_mileage_km,
     f.total_field_services_cnt::int as total_field_services_cnt,
     f.total_field_service_cost_usd::numeric as total_field_service_cost_usd,
@@ -73,7 +73,7 @@ select
         2
     )::numeric as field_services_per_1000km,
 
-    -- 3. Складской учет и Цепочка поставок
+    -- 3. Inventory management and Supply Chain
     round(
         i.total_out_of_stock_records::decimal / nullif(i.total_snapshot_records, 0), 
         4
@@ -82,7 +82,7 @@ select
     coalesce(i.total_procurement_spend_usd, 0)::numeric as total_procurement_spend_usd,
     i.avg_procurement_lead_time_days::numeric as avg_procurement_lead_time_days,
 
-    -- 4. Внешние ремонты в мастерских (Lead Time)
+    -- 4. External workshop repairs (Lead Time)
     coalesce(r.external_repairs_cnt, 0)::int as external_repairs_cnt,
     coalesce(r.external_repair_revenue_usd, 0)::numeric as external_repair_revenue_usd,
     r.avg_repair_total_lead_time_days::numeric as avg_repair_total_lead_time_days,

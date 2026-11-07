@@ -8,7 +8,7 @@ renamed as (
     select
         event_id,
         event_timestamp,
-        -- Распаковка JSON payload с явным приведением типов
+        -- Unpacking a JSON payload with explicit type casting
         (payload->>'client_id')::varchar as client_id,
         (payload->>'full_name')::varchar as full_name,
         (payload->>'salutation')::varchar as salutation,

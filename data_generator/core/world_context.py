@@ -2,18 +2,16 @@ from datetime import datetime, timezone
 
 class WorldContext:
     """
-    Движок контекста мира: управляет органическим ростом бизнеса,
-    климатической сезонностью Бангкока и расписанием катаклизмов / промо-акций.
+    World context engine: manages organic business growth,
+    Bangkok’s climatic seasonality, and the schedule of cataclysms / promotional events.
     """
     def __init__(self):
         self.start_dt = datetime(2024, 3, 1, 0, 0, 0, tzinfo=timezone.utc)
         
-        # Детерминированное расписание "Черных лебедей" и маркетинговых кампаний,
-        # чтобы при каждом перезапуске пайплайна на дашбордах читалась четкая история
         self.special_events = [
             {
                 "code": "songkran_festival",
-                "title": "Фестиваль Сонгкран (Тайский Новый год)",
+                "title": "Songkran Festival, my favorite month in Bangkok",
                 "ranges": [
                     ("2024-04-11", "2024-04-17"),
                     ("2025-04-11", "2025-04-17"),
@@ -23,7 +21,7 @@ class WorldContext:
             },
             {
                 "code": "monsoon_flood",
-                "title": "🌊 Тропический шторм и наводнение в Бангкоке",
+                "title": "Storm",
                 "ranges": [
                     ("2024-09-14", "2024-09-28"),
                     ("2025-10-03", "2025-10-18")
@@ -32,7 +30,7 @@ class WorldContext:
             },
             {
                 "code": "grand_promo",
-                "title": "🎉 Масштабная промо-кампания Top Bikes Expo",
+                "title": "Promo campaign Top Bikes Expo",
                 "ranges": [
                     ("2024-12-01", "2024-12-18"),
                     ("2025-11-15", "2025-12-05")
@@ -41,7 +39,7 @@ class WorldContext:
             },
             {
                 "code": "supply_chain_crisis",
-                "title": "🚢 Логистический кризис и задержка судов в порту",
+                "title": "Logistics crisis",
                 "ranges": [
                     ("2025-02-10", "2025-03-15"),
                     ("2026-06-01", "2026-07-05")
@@ -50,7 +48,7 @@ class WorldContext:
             },
             {
                 "code": "extreme_heatwave",
-                "title": "☀️ Аномальная тепловая волна в Бангкоке (+43°C)",
+                "title": "Anomalous heatwave in Bangkok (+43°C)",
                 "ranges": [
                     ("2025-04-20", "2025-05-08"),
                     ("2026-04-19", "2026-05-06")
@@ -60,16 +58,16 @@ class WorldContext:
         ]
 
     def get_growth_multiplier(self, current_dt: datetime) -> float:
-        """Органический рост стартапа: от 0.65x в марте 2024 до ~1.60x к концу 2026 года"""
+        """Organic startup growth: from 0.65x in March 2024 to ~1.60x by the end of 2026"""
         days_since_start = max(0, (current_dt - self.start_dt).days)
-        # За ~1000 дней бизнес плавно вырастает почти в 2.5 раза относительно старта
+        
         growth = 0.65 + (days_since_start / 1000.0) * 0.95
         return round(min(1.75, growth), 3)
 
     def get_season_info(self, current_dt: datetime) -> dict:
-        """Климатическая сезонность Бангкока (согласована с dim_calendar)"""
+        """Climatic seasonality in Bangkok (aligned with dim_calendar)"""
         month = current_dt.month
-        # Выходные дни дают небольшой буст трафика (+15%)
+        # Weekends provide a slight boost in traffic (+15%)
         weekend_boost = 1.15 if current_dt.isoweekday() in (6, 7) else 1.0
 
         if month in (11, 12, 1, 2):
@@ -85,7 +83,6 @@ class WorldContext:
                 "season_mult": round(1.05 * weekend_boost, 3)
             }
         else:
-            # Июнь - Октябрь: Сезон дождей (муссонов)
             return {
                 "season_code": "low_season",
                 "season_name": "Monsoon / Rainy (Low Season)",
@@ -93,7 +90,7 @@ class WorldContext:
             }
 
     def get_active_event(self, current_dt: datetime) -> dict:
-        """Проверяет, действует ли в текущую дату катаклизм или промо-акция"""
+        """Checks whether a cataclysm or promotional event is active on the current date"""
         date_str = current_dt.date().isoformat()
         for event in self.special_events:
             for start_str, end_str in event["ranges"]:
@@ -105,19 +102,18 @@ class WorldContext:
                     }
         return {
             "code": "normal",
-            "title": "Штатный режим работы",
+            "title": "Normal mode",
             "traffic_mult": 1.0
         }
 
     def get_context(self, current_dt: datetime) -> dict:
-        """Возвращает полный слепок состояния среды на текущий момент симуляции"""
+        """Returns a complete snapshot of the environment state at the current moment of the simulation"""
         growth_mult = self.get_growth_multiplier(current_dt)
         season = self.get_season_info(current_dt)
         event = self.get_active_event(current_dt)
 
-        # Итоговый множитель интенсивности потока событий
+        # Final event-stream intensity multiplier
         total_traffic_mult = round(growth_mult * season["season_mult"] * event["traffic_mult"], 3)
-        # Ограничиваем разумными пределами (от 0.25x в шторм на старте до 3.5x на пике)
         total_traffic_mult = max(0.25, min(3.50, total_traffic_mult))
 
         return {

@@ -58,8 +58,11 @@ else
 fi
 
 # 4. Очистка файлов внутри бакетов S3 (MinIO), сохраняя сами бакеты
+#echo "🪣 Очистка сырых файлов из бакетов S3 (MinIO)..."
+#docker exec -i "$MINIO_CONTAINER" sh -c "rm -rf /data/*/* 2>/dev/null"
+
 echo "🪣 Очистка сырых файлов из бакетов S3 (MinIO)..."
-docker exec -i "$MINIO_CONTAINER" sh -c "rm -rf /data/*/* 2>/dev/null"
+rm -rf minio_data/raw-events/*
 
 # 5. Остановка контейнеров (Redpanda очистится автоматически, а папки pg_data и minio_data сохранят структуру)
 echo "📦 Остановка контейнеров Docker..."

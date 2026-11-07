@@ -36,8 +36,8 @@ services:
       MINIO_ROOT_USER: minioadmin
       MINIO_ROOT_PASSWORD: miniopassword
     ports:
-      - "9000:9000" # Порт для API (для Python-скриптов)
-      - "9001:9001" # Порт для Web-интерфейса (браузер)
+      - "9000:9000" 
+      - "9001:9001" 
     volumes:
       - ./minio_data:/data
   grafana:
@@ -49,6 +49,5 @@ services:
       - "3000:3000"
     depends_on:
       - postgres
-    # Добавляем маппинг локальной папки во внутреннюю директорию Графаны
     volumes:
       - ./grafana_data:/var/lib/grafana

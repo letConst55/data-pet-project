@@ -10,7 +10,7 @@ with dummy as (
     select 1
 ),
 {% if is_incremental() %}
--- Ищем аренды, по которым были ЛЮБЫЕ движения со времени последнего запуска
+-- Find rentals with ANY updates since the last run
 changed_rentals as (
     select rental_id from {{ ref('stg_rental_booked') }} 
     where event_timestamp > (select coalesce(max(last_source_timestamp), '1900-01-01'::timestamp) from {{ this }})
@@ -22,7 +22,7 @@ changed_rentals as (
     where event_timestamp > (select coalesce(max(last_source_timestamp), '1900-01-01'::timestamp) from {{ this }})
 ),
 {% endif %}
--- 1. Зарождение пайплайна (Бронирование)
+-- 1. Pipeline start (Booking)
 booked as (
     select 
         * 
@@ -32,7 +32,7 @@ booked as (
     {% endif %}
 ),
 
--- 2. Обновление пайплайна (Выдача)
+-- 2. Pipeline update (Dispense)
 dispensed as (
     select 
         * 
@@ -42,7 +42,7 @@ dispensed as (
     {% endif %}
 ),
 
--- 3. Завершение пайплайна (Возврат)
+-- 3. Pipeline completion (Return)
 returned as (
     select 
         * 
@@ -52,27 +52,27 @@ returned as (
     {% endif %}
 ),
 
--- 4. Сборка таблицы фактов
+-- 4. Fact table assembly
 pipeline as (
     select
-        -- Ключ факта
+        -- Fact Key
         b.rental_id,
         
-        -- FK: Клиент (SCD2 Point-in-Time Lookup)
+        -- FK: Client (SCD2 Point-in-Time Lookup)
         c.client_sk,
         
-        -- FK: Байк (SCD1)
+        -- FK: Bike (SCD1)
         bk.bike_sk,
         
-        -- FK: Локации (SCD1)
+        -- FK: Locations (SCD1)
         ld.location_sk as location_dis_id,
         lr.location_sk as location_return_id,
         
-        -- FK: Сотрудники (SCD2 Point-in-Time Lookup)
+        -- FK: Employees (SCD2 Point-in-Time Lookup)
         emp_d.employee_sk as employee_disp_id,
         emp_r.employee_sk as employee_return_id,
         
-        -- Даты
+        -- Dates
         b.planned_start_date,
         b.planned_end_date,
         d.fact_start_date,
@@ -80,7 +80,7 @@ pipeline as (
         r.fact_end_date,
         r.fact_end_datetime,
         
-        -- Финансы
+        -- Financials
         b.rental_price_daily,
         b.deposit_amount,
         r.deposit_deducted_amount,
@@ -88,23 +88,22 @@ pipeline as (
         b.discount_amount,
         r.total_amount,
         
-        -- Состояние и пробег
+        -- Condition and mileage
         d.actual_start_mileage,
         r.actual_end_mileage,
         d.fuel_start_percent,
         r.fuel_end_percent,
         
-        -- FK: Состояние байка (SCD4 Mini-Dimension, используем само значение как ключ)
+        -- FK: Bike condition (SCD4 Mini-Dimension, using the value itself as a key)
         d.pre_rental_condition_score,
         r.post_rental_condition_score,
         
-        -- Детали аренды
+        -- Rental details
         d.helmets_issued_qty,
 
-
-        -- FK: Мусорное измерение флагов возврата (Junk Dimension)
-        -- Используем coalesce(..., false), так как для еще не возвращенных байков (NULL) 
-        -- мы логически предполагаем отсутствие флагов проблем
+        -- FK: Return flags junk dimension
+        -- We use coalesce(..., false) because for bikes not yet returned (NULL)
+        -- we logically assume no problem flags exist
         {{ dbt_utils.generate_surrogate_key([
             'coalesce(r.helmet_damage_flag, false)',
             'coalesce(r.field_service_flag, false)',
@@ -112,8 +111,8 @@ pipeline as (
             'coalesce(r.bike_exchange_flag, false)'
         ]) }} as rental_junk_sk,
         
-        -- Техническое поле для инкрементальной загрузки: 
-        -- запоминаем максимальный timestamp из всех трех событий пайплайна
+        -- Technical field for incremental load: 
+        -- retaining the maximum timestamp across all three pipeline events
         greatest(
             b.event_timestamp, 
             coalesce(d.event_timestamp, '1900-01-01'::timestamp), 
@@ -122,31 +121,31 @@ pipeline as (
 
     from booked b
     
-    -- Связываем стадии пайплайна
+    -- Joining pipeline stages
     left join dispensed d on b.rental_id = d.rental_id
     left join returned r on b.rental_id = r.rental_id
     
-    -- 1. SCD2 Lookup: Клиент на момент бронирования
+    -- 1. SCD2 Lookup: Client at the time of booking
     left join {{ ref('dim_client') }} c
       on b.client_id = c.client_natural_key
      and b.event_timestamp >= c.row_effective_date
      and b.event_timestamp < c.row_expiration_date
      
-    -- 2. SCD1 Lookup: Байк
+    -- 2. SCD1 Lookup: Bike
     left join {{ ref('dim_bike') }} bk
       on b.bike_id = bk.bike_natural_key
       
-    -- 3. SCD1 Lookup: Локации
+    -- 3. SCD1 Lookup: Locations
     left join {{ ref('dim_location') }} ld on d.location_dis_id = ld.location_natural_key
     left join {{ ref('dim_location') }} lr on r.location_return_id = lr.location_natural_key
     
-    -- 4. SCD2 Lookup: Сотрудник выдачи на момент выдачи
+    -- 4. SCD2 Lookup: Dispensing employee at the time of dispense
     left join {{ ref('dim_employee') }} emp_d
       on d.employee_disp_id = emp_d.employee_natural_key
      and d.event_timestamp >= emp_d.row_effective_date
      and d.event_timestamp < emp_d.row_expiration_date
      
-    -- 5. SCD2 Lookup: Сотрудник возврата на момент возврата
+    -- 5. SCD2 Lookup: Receiving employee at the time of return
     left join {{ ref('dim_employee') }} emp_r
       on r.employee_return_id = emp_r.employee_natural_key
      and r.event_timestamp >= emp_r.row_effective_date

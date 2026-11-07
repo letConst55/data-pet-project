@@ -14,19 +14,19 @@ from modules.inventory_api import InventoryAPI
 
 stop_requested = False
 
-# Определяем абсолютный путь к папке data_generator
+# Define the absolute path to the data_generator folder
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 def handle_shutdown(signum, frame):
     global stop_requested
-    print(f"\n⚠️ Получен сигнал остановки ({signum}). Завершаем текущий шаг и сохраняем состояние...")
+    print(f"\n⚠️ Shutdown signal received ({signum}). Finishing the current step and saving state...")
     stop_requested = True
 
 signal.signal(signal.SIGTERM, handle_shutdown)
 signal.signal(signal.SIGINT, handle_shutdown)
 
 def load_csv_safe(relative_path):
-    """Загружает CSV относительно папки data_generator"""
+    """Loads a CSV file relative to the data_generator folder"""
     filepath = os.path.join(BASE_DIR, relative_path)
     df = pd.read_csv(filepath)
     df.columns = df.columns.str.strip()
@@ -34,47 +34,47 @@ def load_csv_safe(relative_path):
 
 def get_dynamic_weights(ctx):
     """
-    Возвращает динамические веса для 10 действий оркестратора в зависимости от сезона и катаклизмов.
-    Порядок действий:
+    Returns dynamic weights for the 10 orchestrator actions depending on the season and cataclysms.
+    Action order:
     [hr, gen_client, book, dispense, return, field_srv, accept_rep, finish_rep, shop_buy, procurement]
     """
     season = ctx["season_code"]
     event = ctx["event_code"]
 
-    # 1. Базовый профиль по климатическому сезону
+    # 1. Base profile based on climatic season
     if season == "high_season":
-        # Высокий туристический сезон (Ноябрь - Февраль): бум аренд и покупок
+        # High tourist season (November - February): boom in rentals and purchases
         weights = [3, 18, 24, 22, 22, 5, 4, 4, 16, 4]
     elif season == "low_season":
-        # Сезон дождей (Июнь - Октябрь): спад аренд, рост поломок и ремонтов
+        # Monsoon season (June - October): drop in rentals, rise in breakdowns and repairs
         weights = [3, 12, 14, 15, 16, 10, 6, 6, 11, 3]
     else:
-        # Жаркий сезон (Март - Май): эталонный баланс
+        # Hot season (March - May): baseline balance
         weights = [3, 15, 20, 18, 18, 6, 4, 4, 13, 3]
 
-    # 2. Переопределение весов во время катаклизмов и специальных событий
+    # 2. Weight overrides during cataclysms and special events
     if event == "monsoon_flood":
-        # Наводнение: новые брони падают, массовые выезды механиков и возвраты
+        # Flood: new bookings drop, massive mechanic dispatches and returns
         weights = [2, 5, 5, 8, 18, 24, 10, 10, 6, 3]
     elif event == "songkran_festival":
-        # Сонгкран: максимальный спрос на прокат и экипировку
+        # Songkran: peak demand for rentals and riding gear
         weights = [2, 22, 28, 25, 24, 8, 4, 4, 18, 4]
     elif event == "grand_promo":
-        # Промо-кампания: всплеск новых регистраций и продаж в магазине
+        # Promo campaign: surge in new registrations and retail store sales
         weights = [3, 25, 22, 20, 20, 5, 4, 4, 28, 6]
     elif event == "supply_chain_crisis":
-        # Кризис поставок: закупки блокируются (вес = 1), склад пустеет
+        # Supply chain crisis: procurements are blocked (weight = 1), warehouse empties
         weights = [3, 15, 20, 18, 18, 6, 5, 5, 16, 1]
     elif event == "extreme_heatwave":
-        # Аномальная жара: меньше поездок днем, чаще перегрев двигателей
+        # Extreme heatwave: fewer day trips, more frequent engine overheating
         weights = [3, 10, 12, 14, 16, 14, 7, 7, 11, 3]
 
     return weights
 
 def main(mode="pandas", duration_seconds=60):
-    print(f"Запуск оркестратора симуляции (Режим: {mode.upper()})")
+    print(f"Starting the simulation orchestrator (Mode: {mode.upper()})")
     
-    # 1. Загрузка справочников
+    # 1. Loading reference dictionaries
     try:
         df_bikes = load_csv_safe('data/df_bikes.csv')
         BIKES = df_bikes['bike_id'].tolist()
@@ -97,15 +97,15 @@ def main(mode="pandas", duration_seconds=60):
         VENDORS = df_vendors['vendor_id'].tolist()
 
     except Exception as e:
-        print(f"❌ Ошибка загрузки справочников из папки data/: {e}")
+        print(f"❌ Error loading reference dictionaries from the data/ folder: {e}")
         return
 
-    # 2. Инициализация ядра
+    # 2. Core initialization
     state_file_path = os.path.join(BASE_DIR, "generator_state.json")
     sim_state = SimulationState(state_file=state_file_path)
     publisher = EventPublisher(mode=mode)
     
-    # 3. Инициализация модулей 
+    # 3. Module initialization 
     hr_api = HrAPI(sim_state, publisher, LOCATIONS) 
     rent_api = RentAPI(sim_state, publisher, BIKES, RENT_LOCATIONS) 
     garage_api = GarageAPI(sim_state, publisher, GARAGE_LOCATIONS, CARRIERS, BIKE_MODELS, SHOP_LOCATIONS) 
@@ -134,10 +134,10 @@ def main(mode="pandas", duration_seconds=60):
 
         sim_state.advance_time(is_pandas_mode=(mode=="pandas"))
         
-        # Детерминированная проверка еженедельного снапшота (срабатывает 1 раз каждое воскресенье)
+        # Deterministic check for the weekly snapshot (triggers once every Sunday)
         inventory_api.take_weekly_snapshot()
         
-        # Получаем динамические веса для текущего сезона и активного катаклизма/промо
+        # Get dynamic weights for the current season and active cataclysm/promo
         world_ctx = sim_state.get_world_context()
         current_weights = get_dynamic_weights(world_ctx)
         
@@ -149,7 +149,7 @@ def main(mode="pandas", duration_seconds=60):
             publisher.flush()
             sim_state.save()
 
-        # Контроль скорости
+        # Speed control
         if mode == "pandas":
             time.sleep(random.uniform(0.005, 0.02))
         elif not sim_state.state["is_realtime"]:
@@ -160,7 +160,7 @@ def main(mode="pandas", duration_seconds=60):
     sim_state.save()
     publisher.export_to_csv()
     publisher.close()
-    print("✅ Оркестратор успешно остановлен.")
+    print("✅ Orchestrator stopped successfully.")
 
 if __name__ == "__main__":
     main(mode="kafka")

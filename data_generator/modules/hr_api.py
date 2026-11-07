@@ -10,7 +10,7 @@ class HrAPI:
         self.publisher = publisher
         self.LOCATIONS = locations_list
         
-        # Если блок сотрудников пуст (первый запуск), генерируем ядро штата
+        # If the employee block is empty (first run), generate the core staff
         if "employees" not in self.state_mgr.state:
             self.state_mgr.state["employees"] = {}
             
@@ -30,8 +30,8 @@ class HrAPI:
         emp_id = f"emp_{self.state_mgr.get_counter('employee')}"
         gender = random.choice(["Male", "Female"])
         
-        # Сдвигаем время на 1 секунду для каждого события HR,
-        # чтобы гарантировать 100% уникальность event_timestamp для SCD2 окон.
+        # Shift the time by 1 second for each HR event
+        # to ensure 100% uniqueness of event_timestamp for SCD2 windows.
         self.state_mgr.state["current_sim_time"] += timedelta(seconds=1)
         
         payload = {
@@ -56,25 +56,25 @@ class HrAPI:
         return emp_id
 
     def _init_core_staff(self):
-        """Генерация базовой иерархии при старте симуляции"""
+        """Generate the baseline hierarchy at simulation start"""
         ceo_id = self._create_employee("Management", "CEO", "C-Level", None, None, {})
         
         for loc in self.LOCATIONS:
             mgr_id = self._create_employee("Operations", "Location Manager", "Senior", loc, ceo_id, {"dispense": True, "sell": True})
             
-            # Нанимаем механиков на локацию
+            # Hire mechanics for the location
             for _ in range(random.randint(2, 4)):
                 self._create_employee("Garage", "Mechanic", random.choice(["Junior", "Middle"]), loc, mgr_id, 
                                       {"dispense": True, "field": True, "repair": True})
                 
-            # Нанимаем продавцов/кассиров на локацию
+            # Hire sales assistants/cashiers for the location
             for _ in range(random.randint(2, 3)):
                 self._create_employee("Shop", "Sales Assistant", random.choice(["Junior", "Middle"]), loc, mgr_id, 
                                       {"dispense": True, "sell": True})
         self.publisher.flush()
 
     def _get_location_manager(self, loc):
-        """Находит активного Location Manager для указанной локации (с фолбэком на CEO)"""
+        """Finds an active Location Manager for the specified location (with fallback to CEO)"""
         employees = self.state_mgr.state["employees"]
         for eid, data in employees.items():
             if (data.get("is_active") 
@@ -82,17 +82,17 @@ class HrAPI:
                 and data.get("assigned_location_id") == loc):
                 return eid
                 
-        # Фолбэк на CEO, если менеджер локации не найден
+        # Fallback to CEO if the location manager is not found
         for eid, data in employees.items():
             if data.get("is_active") and data.get("manager_employee_id") is None:
                 return eid
         return None
 
     def manage_hr_events(self):
-        """Динамические события SCD2: найм, перевод, увольнение (только для линейного персонала)"""
+        """Dynamic SCD2 events: hiring, transferring, firing (for line staff only)"""
         employees = self.state_mgr.state["employees"]
         
-        # Выбираем только активных линейных сотрудников, чтобы не разрушить каркас иерархии (CEO -> Location Manager)
+        # Select only active line employees to prevent breaking the hierarchy framework (CEO -> Location Manager)
         active_line_emps = [
             eid for eid, data in employees.items()
             if data.get("is_active") and data.get("position_title") in ("Mechanic", "Sales Assistant")
@@ -102,7 +102,7 @@ class HrAPI:
 
         action = random.choices(["hire", "transfer", "fire"], weights=[40, 50, 10])[0]
 
-        # Защита от вымывания штата: если линейных сотрудников меньше 25, вместо увольнения делаем перевод
+        # Protection against staff depletion: if line employees drop below 25, perform a transfer instead of a termination
         if action == "fire" and len(active_line_emps) <= 25:
             action = "transfer"
 
@@ -121,14 +121,14 @@ class HrAPI:
             emp_id = random.choice(active_line_emps)
             emp = employees[emp_id].copy()
             
-            # Выбираем новую локацию (отличную от текущей, если локаций больше одной)
+            # Select a new location (different from the current one, if more than one location exists)
             other_locs = [l for l in self.LOCATIONS if l != emp.get("assigned_location_id")]
             new_loc = random.choice(other_locs) if other_locs else emp.get("assigned_location_id")
             
             emp["assigned_location_id"] = new_loc
             emp["manager_employee_id"] = self._get_location_manager(new_loc)
             
-            # Вероятность повышения грейда при переводе
+            # Probability of a grade promotion during transfer
             if emp["grade_level"] == "Junior" and random.random() < 0.4:
                 emp["grade_level"] = "Middle"
             elif emp["grade_level"] == "Middle" and random.random() < 0.2:

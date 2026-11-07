@@ -14,7 +14,6 @@ with new_events as (
     {% endif %}
 ),
 
--- Дедуплицируем новую пачку событий
 deduped_new_events as (
     select distinct on (employee_id, event_timestamp)
         employee_id as employee_natural_key,
@@ -37,8 +36,6 @@ deduped_new_events as (
 ),
 
 {% if is_incremental() %}
--- Берем из УЖЕ существующей витрины dim_employee только открытые записи 
--- и ТОЛЬКО по тем сотрудникам, которые пришли в новой пачке событий
 existing_active_records as (
     select
         employee_natural_key,
@@ -62,7 +59,7 @@ existing_active_records as (
 ),
 {% endif %}
 
--- Объединяем открытые старые записи и новые события
+-- Combining existing historical records with new events
 combined_records as (
     select * from deduped_new_events
     {% if is_incremental() %}
@@ -71,7 +68,7 @@ combined_records as (
     {% endif %}
 ),
 
--- Считаем LEAD() только по затронутым сотрудникам
+-- We calculate LEAD() only for the affected employees
 scd2_calculated as (
     select
         *,
@@ -87,13 +84,13 @@ final as (
         '{{ invocation_id }}'::varchar as dataflow_id,
         current_timestamp as dataflow_dttm,
 
-        -- Суррогатный ключ (PK) - хэш от натурального ключа и даты начала версии
+        -- Surrogate primary key (PK)
         md5(employee_natural_key || '_' || row_effective_date::varchar) as employee_sk,
         
-        -- Натуральный ключ (NK)
+        -- Natural key (NK)
         employee_natural_key,
 
-        -- Атрибуты сотрудника
+        -- Employee attributes
         full_name,
         phone,
         email,
@@ -101,16 +98,15 @@ final as (
         grade_level,
         department,
         assigned_location_id,
-        manager_employee_id, -- Указатель на босса (натуральный ключ)
-        is_active_flg,       -- Флаг того, работает ли сотрудник сейчас
+        manager_employee_id, 
+        is_active_flg,       
         
-        -- Операционные допуски
         can_dispense_return_flg,
         can_field_service_flg,
         can_workshop_repair_flg,
         can_sell_retail_flg,
 
-        -- Поля историчности SCD2
+        -- SCD2 technical attributes
         row_effective_date,
         coalesce(next_event_timestamp, '9999-12-31 23:59:59'::timestamp) as row_expiration_date,
         case 

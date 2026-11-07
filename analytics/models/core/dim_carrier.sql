@@ -6,23 +6,23 @@
 }}
 
 with source as (
-    -- Обращаемся к загруженному seed-файлу
+    -- seed file
     select * from {{ ref('df_carriers') }}
 ),
 
 final as (
     select
-        -- Технические поля пайплайна
+        -- technical fields
         '{{ invocation_id }}'::varchar as dataflow_id,
         current_timestamp as dataflow_dttm,
 
-        -- Суррогатный первичный ключ (PK) по схеме
+        -- Surrogate primary key (PK)
         {{ dbt_utils.generate_surrogate_key(['carrier_id']) }} as carrier_sk,
         
-        -- Натуральный бизнес-ключ (NK)
+        -- Natural key (NK)
         carrier_id as carrier_natural_key,
 
-        -- Атрибуты перевозчика
+        -- Carrier attributes
         carrier_name,
         is_external_carrier_flag,
         carrier_type,

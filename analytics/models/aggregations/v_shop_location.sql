@@ -6,7 +6,7 @@
 }}
 
 select
-    location_sk as shop_location_sk, -- Ролевой ключ
+    location_sk as shop_location_sk, -- Role key
     location_natural_key,
     title,
     full_address,

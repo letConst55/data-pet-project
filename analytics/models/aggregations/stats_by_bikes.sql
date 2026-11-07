@@ -5,7 +5,7 @@
     )
 }}
 
--- 1. Определяем границы истории по фактам аренды
+-- 1. Define the historical boundaries based on rental facts
 with date_bounds as (
     select
         coalesce(date_trunc('month', min(fact_start_date))::date, '2024-03-01'::date) as min_month,
@@ -13,7 +13,7 @@ with date_bounds as (
     from {{ ref('fct_client_bike_rent') }}
 ),
 
--- 2. Формируем календарный хребет (Spine): каждый байк x каждый месяц
+-- 2. Build the calendar spine: each bike x each month
 calendar_months as (
     select 
         distinct
@@ -41,8 +41,8 @@ bike_spine as (
     cross join {{ ref('dim_bike') }} b
 ),
 
--- 3. Точный расчет дней в аренде внутри каждого месяца (разворачиваем интервалы по дням, 
--- чтобы переходящие через месяц аренды не давали утилизацию > 100%)
+-- 3. Accurate calculation of rented days within each month (unrolling intervals by day, 
+-- to prevent month-spanning rentals from yielding > 100% utilization)
 bike_active_days as (
     select
         fbr.bike_sk,
@@ -59,7 +59,7 @@ bike_active_days as (
     group by 1, 2
 ),
 
--- 4. Финансовые и технические метрики завершенных аренд по месяцу возврата
+-- 4. Financial and technical metrics for completed rentals by return month
 rental_monthly_metrics as (
     select
         fbr.bike_sk,
@@ -75,7 +75,7 @@ rental_monthly_metrics as (
     group by 1, 2
 ),
 
--- 5. Выездной сервис и затраты на полевой ремонт по каждому байку
+-- 5. Field service dispatches and field repair costs for each bike
 service_monthly_metrics as (
     select
         se.bike_sk,
@@ -88,7 +88,7 @@ service_monthly_metrics as (
     group by 1, 2
 ),
 
--- 6. Собираем плоскую таблицу и считаем кумулятивные показатели жизни байка
+-- 6. Assemble the flat table and calculate cumulative metrics of the bike's lifecycle
 monthly_rollup as (
     select
         s.report_month,
@@ -101,20 +101,20 @@ monthly_rollup as (
         s.engine_volume_cc,
         s.procurement_price,
 
-        -- MTD метрики использования
+        -- MTD usage metrics
         least(s.days_in_month, coalesce(bad.mtd_rented_days, 0)) as mtd_rented_days,
         coalesce(rm.mtd_completed_rentals, 0) as mtd_completed_rentals,
         coalesce(rm.mtd_mileage, 0) as mtd_mileage,
         coalesce(rm.mtd_rental_revenue, 0) as mtd_rental_revenue,
         coalesce(rm.mtd_penalty_amount, 0) as mtd_penalty_amount,
 
-        -- MTD метрики поломок и сервиса
+        -- MTD breakdown and service metrics
         coalesce(sm.mtd_field_services, 0) as mtd_field_services,
         coalesce(sm.mtd_towed_events, 0) as mtd_towed_events,
         coalesce(sm.mtd_tech_wear_incidents, 0) as mtd_tech_wear_incidents,
         coalesce(sm.mtd_service_cost_usd, 0) as mtd_service_cost_usd,
 
-        -- Кумулятивные показатели с момента ввода байка в эксплуатацию
+        -- Cumulative metrics since the bike was commissioned
         sum(least(s.days_in_month, coalesce(bad.mtd_rented_days, 0))) over (
             partition by s.bike_natural_key order by s.report_month
         ) as lifetime_rented_days,
@@ -179,15 +179,15 @@ select
     lifetime_rental_revenue::numeric as lifetime_rental_revenue,
     lifetime_service_cost_usd::numeric as lifetime_service_cost_usd,
 
-    -- Окупаемость байка (ROI): отношение накопленной чистой операционной прибыли к цене закупки байка
-    -- (примечание: procurement_price в справочнике в батах, поэтому для долларового эквивалента делим на курс ~35 THB/USD)
+    -- Bike ROI: ratio of cumulative net operating income to the bike purchase price
+    -- (Note: procurement_price in the dictionary is in THB, so we divide by the exchange rate ~35 THB/USD)
     round(
         (lifetime_rental_revenue - lifetime_service_cost_usd)::decimal 
         / nullif(procurement_price / 35.0, 0), 
         4
     )::numeric as lifetime_roi_ratio,
 
-    -- Операционный статус состояния байка
+    -- Operational fleet health status
     case
         when end_of_month_condition_score >= 8 then 'Optimal (Score 8-10)'
         when end_of_month_condition_score >= 5 then 'Standard Wear (Score 5-7)'

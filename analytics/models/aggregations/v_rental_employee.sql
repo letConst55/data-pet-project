@@ -6,7 +6,7 @@
 }}
 
 select
-    employee_sk as rental_employee_sk, -- Специфичный ролевой ключ
+    employee_sk as rental_employee_sk, -- Role key
     employee_natural_key,
     full_name,
     phone,

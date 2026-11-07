@@ -14,12 +14,12 @@ class EventPublisher:
         
         if self.mode == "kafka":
             if KafkaProducer is None:
-                raise ImportError("❌ Библиотека kafka-python не установлена.")
+                raise ImportError("The kafka-python library is not installed.")
             self.producer = KafkaProducer(
                 bootstrap_servers=bootstrap_servers,
                 value_serializer=lambda v: json.dumps(v).encode('utf-8')
             )
-            print("✅ Успешно подключено к Redpanda (Kafka)")
+            print("✅ Successfully connected to Redpanda (Kafka)")
 
     def publish(self, topic, event_type, payload, event_dt, event_id):
         timestamp_str = event_dt.isoformat()
@@ -57,7 +57,6 @@ class EventPublisher:
     def export_to_csv(self):
         if self.mode != "pandas":
             return
-        print("\n💾 Формирование CSV файлов...")
         for event_type, rows in self.pandas_store.items():
             if rows:
                 df = pd.DataFrame(rows)

@@ -5,9 +5,9 @@
     )
 }}
 
--- Ключевое слово RECURSIVE обязательно для работы с иерархией в PostgreSQL
+-- The RECURSIVE keyword is required for working with hierarchies in PostgreSQL.
 with recursive active_employees as (
-    -- Берем только актуальный срез работающих сотрудников
+    -- We take only the current snapshot of active employees.
     select
         employee_natural_key,
         manager_employee_id
@@ -16,9 +16,9 @@ with recursive active_employees as (
       and is_active_flg = true
 ),
 
--- Рекурсивный CTE для разворачивания дерева (транзитивное замыкание)
+-- Recursive CTE for traversing a tree (transitive closure)
 hierarchy_paths as (
-    -- Базовый случай: каждый сотрудник подчиняется самому себе (уровень 0)
+    -- Base case: each employee reports to themselves (level 0)
     select
         employee_natural_key as manager_employee_id,
         employee_natural_key as subordinate_employee_id,
@@ -27,7 +27,7 @@ hierarchy_paths as (
     
     union all
     
-    -- Рекурсивный шаг: спускаемся вниз по дереву подчинения
+    -- Recursive step: descend the hierarchy tree
     select
         p.manager_employee_id,
         e.employee_natural_key as subordinate_employee_id,
@@ -37,14 +37,14 @@ hierarchy_paths as (
       on p.subordinate_employee_id = e.manager_employee_id
 ),
 
--- Определяем верхушку иерархии (CEO и те, у кого нет начальника)
+-- Identifying the top of the hierarchy
 top_levels as (
     select employee_natural_key
     from active_employees
     where manager_employee_id is null
 ),
 
--- Определяем линейный персонал (листья дерева - те, у кого нет подчиненных)
+-- Identify the bottom-level personnel (the leaves of the tree—those who have no subordinates)
 bottom_levels as (
     select employee_natural_key
     from active_employees
@@ -57,19 +57,19 @@ bottom_levels as (
 
 final as (
     select
-        -- Технические поля
+        -- technical fields
         '{{ invocation_id }}'::varchar as dataflow_id,
         current_timestamp as dataflow_dttm,
 
-        -- Ключи
+        -- keys
         h.manager_employee_id,
         h.subordinate_employee_id,
         h.hierarchy_depth,
         
-        -- Флаг: является ли менеджер в этой связке сотрудником высшего звена (CEO)
+        -- Flag: whether the manager in this relationship is a top-level executive (CEO)
         case when t.employee_natural_key is not null then true else false end as is_top_level_flg,
         
-        -- Флаг: является ли подчиненный в этой связке линейным сотрудником (без своих подчиненных)
+        -- Flag: indicates whether the subordinate in this relationship is an individual contributor (i.e., has no subordinates of their own)
         case when b.employee_natural_key is not null then true else false end as is_bottom_level_flg
         
     from hierarchy_paths h

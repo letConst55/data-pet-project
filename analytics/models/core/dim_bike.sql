@@ -6,23 +6,22 @@
 }}
 
 with source as (
-    -- Обращаемся к загруженному seed-файлу
     select * from {{ ref('df_bikes') }}
 ),
 
 final as (
     select
-        -- Технические поля пайплайна
+        -- technical fields
         '{{ invocation_id }}'::varchar as dataflow_id,
         current_timestamp as dataflow_dttm,
 
-        -- Суррогатный первичный ключ (PK) по схеме
+        -- Surrogate primary key (PK)
         {{ dbt_utils.generate_surrogate_key(['bike_id']) }} as bike_sk,
         
-        -- Натуральный бизнес-ключ (NK)
+        -- Natural key (NK)
         bike_id::text as bike_natural_key,
 
-        -- Атрибуты байка
+        -- Bike attributes
         "WIN_number" as win_number,
         plate_number,
         title,

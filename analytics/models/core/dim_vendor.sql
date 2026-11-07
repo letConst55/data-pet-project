@@ -6,23 +6,23 @@
 }}
 
 with source as (
-    -- Обращаемся к загруженному seed-файлу
+    -- seeeeeeeeeeeeed file
     select * from {{ ref('df_vendors') }}
 ),
 
 final as (
     select
-        -- Технические поля пайплайна
+        -- technical fields
         '{{ invocation_id }}'::varchar as dataflow_id,
         current_timestamp as dataflow_dttm,
 
-        -- Суррогатный первичный ключ (PK) 
+        -- Surrogate primary key (PK)
         {{ dbt_utils.generate_surrogate_key(['vendor_id']) }} as vendor_sk,
         
-        -- Натуральный бизнес-ключ (NK)
+        -- Natural key (NK)
         vendor_id as vendor_natural_key,
 
-        -- Атрибуты вендоров
+        -- Vendor attributes
         vendor_name,
         is_foreign_flag,
         vendor_score,

@@ -9,12 +9,12 @@ renamed as (
         event_id,
         event_timestamp,
         
-        -- Ключи
+        -- Keys
         (payload->>'week_year')::varchar as week_year,
         (payload->>'product_id')::varchar as product_id,
         (payload->>'location_id')::varchar as location_id,
         
-        -- Показатели запасов
+        -- Inventory indicators
         (payload->>'product_quantity')::integer as product_quantity,
         (payload->>'available_flag')::boolean as available_flag,
         (payload->>'isin_shipment_flag')::boolean as isin_shipment_flag,

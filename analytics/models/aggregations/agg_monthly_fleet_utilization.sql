@@ -11,10 +11,10 @@ select
     bike_type::text as bike_type,
     bike_title::text as bike_title,
 
-    -- Размер парка модели
+    -- Model fleet size
     count(distinct bike_natural_key)::int as bikes_in_model_cnt,
 
-    -- Утилизация времени
+    -- Time utilization
     sum(mtd_rented_days)::int as sum_rented_days,
     sum(mtd_idle_days)::int as sum_idle_days,
     sum(days_in_month)::int as sum_available_days,
@@ -23,12 +23,12 @@ select
         4
     )::numeric as model_utilization_rate,
 
-    -- Пробег и техническое состояние
+    -- Mileage and technical condition
     sum(mtd_mileage)::numeric as sum_monthly_mileage_km,
     round(avg(current_odometer_km), 0)::numeric as avg_odometer_km,
     round(avg(end_of_month_condition_score), 2)::numeric as avg_condition_score,
 
-    -- Нагрузка на сервис и экономика модели
+    -- Service workload and model economics
     sum(mtd_field_services)::int as sum_field_services,
     sum(mtd_rental_revenue)::numeric as sum_rental_revenue,
     sum(mtd_service_cost_usd)::numeric as sum_service_cost_usd,

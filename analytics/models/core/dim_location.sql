@@ -11,17 +11,17 @@ with source as (
 
 final as (
     select
-        -- Технические поля пайплайна
+        -- technical fields
         '{{ invocation_id }}'::varchar as dataflow_id,
         current_timestamp as dataflow_dttm,
 
-        -- Суррогатный первичный ключ локации (PK)
+        -- Surrogate primary key (PK)
         {{ dbt_utils.generate_surrogate_key(['location_id']) }} as location_sk,
 
-        -- Натуральный бизнес-ключ локации (NK)
+        -- Natural key (NK)
         location_id::varchar as location_natural_key,
 
-        -- Атрибуты локации
+        -- Location attributes
         title::varchar as title,
         full_address::varchar as full_address,
         post_index::varchar as post_index,

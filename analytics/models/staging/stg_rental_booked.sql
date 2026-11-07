@@ -9,7 +9,7 @@ renamed as (
         event_id,
         event_timestamp,
         (payload->>'rental_id')::varchar as rental_id,
-        (payload->>'client_id')::varchar as client_id,
+        (payload->>'client_id')::varchar as client_id, 
         (payload->>'bike_id')::varchar as bike_id,
         (payload->>'location_id')::varchar as location_id,
         (payload->>'planned_start_date')::date as planned_start_date,

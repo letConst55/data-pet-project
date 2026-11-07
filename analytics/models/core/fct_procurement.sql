@@ -10,12 +10,12 @@ with new_procurements_raw as (
     select * from {{ ref('stg_inventory_procurement_created') }}
     
     {% if is_incremental() %}
-        -- Забираем только новые или обновленные события поставки
+        -- Extracting only new or updated supply events
         where event_timestamp > (select coalesce(max(event_timestamp), '1900-01-01'::timestamp) from {{ this }})
     {% endif %}
 ),
 
--- Дедупликация (оставляем самую свежую версию пайплайна для каждой позиции в поставке)
+-- Deduplication (keeping the freshest pipeline version for each item in the shipment)
 new_procurements as (
     select distinct on (shipment_id, product_id)
         *
@@ -25,11 +25,11 @@ new_procurements as (
 
 final as (
     select
-        -- Технические поля
+        -- Technical fields
         '{{ invocation_id }}'::varchar as dataflow_id,
         current_timestamp as dataflow_dttm,
         
-        -- Суррогатный первичный ключ факта (PK)
+        -- Surrogate primary key for the fact (PK)
         {{ dbt_utils.generate_surrogate_key(['p.shipment_id', 'prod.product_sk']) }} as procurement_sk,
 
         -- Degenerate Dimensions (DD)
@@ -37,27 +37,27 @@ final as (
         p.vendor_invoice_number,
         p.payment_check_number,
 
-        -- Внешние ключи (все справочники SCD1, поэтому простой JOIN без дат)
+        -- Foreign keys (all dimensions are SCD1, so simple JOINs without dates)
         prod.product_sk,
         v.vendor_sk,
         c.carrier_sk,
         l.location_sk as arrival_location_sk,
 
-        -- Даты пайплайна поставки
+        -- Procurement pipeline dates
         p.order_date,
         p.shipment_departure_date,
         p.shipment_arrival_date,
         
-        -- Техническое поле для инкремента
+        -- Technical field for the incremental load
         p.event_timestamp,
 
-        -- Факты (Метрики)
+        -- Facts (Metrics)
         p.product_quantity,
         p.payment_amount
 
     from new_procurements p
     
-    -- Лукапы SCD1
+    -- SCD1 Lookups
     left join {{ ref('dim_product') }} prod 
       on p.product_id = prod.product_natural_key
       
@@ -71,7 +71,7 @@ final as (
       on p.arrival_location_id = l.location_natural_key
 )
 
--- Временно отсекаем возможные битые ссылки (Unknown Members)
+-- Temporarily filtering out potential broken links (Unknown Members)
 select * from final
 --where product_sk is not null 
   --and vendor_sk is not null

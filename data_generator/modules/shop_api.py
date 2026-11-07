@@ -41,14 +41,13 @@ class ShopAPI:
         else:
             client_id = random.choice(list(clients_dict.keys()))
 
-
         order_id = f"ord_{self.state_mgr.get_counter('order')}"
         event_dt = self.state_mgr.state["current_sim_time"]
         location_id = random.choice(self.LOCATIONS)
         
         employee_id = self.state_mgr.get_employee("can_sell_retail_flg", location_id)
 
-        # Размер корзины и щедрость скидок реагируют на промо-кампании и сезонность
+        # Basket size and discount generosity respond to promo campaigns and seasonality
         if event == "grand_promo":
             basket_weights = [25, 45, 30]
             discount_prob = 0.80
@@ -79,7 +78,7 @@ class ShopAPI:
         basket = random.sample(self.PRODUCTS, k=num_items)
 
         for item in basket:
-            # Для услуг тюнинга количество строго равно 1 (контракт теста fct_shop_order_business_logic)
+            # For tuning services, the quantity is strictly 1 (fct_shop_order_business_logic test contract)
             cnt = random.randint(1, max_item_qty) if not item["is_tuning"] else 1
             basic_amount = round(item["price"] * cnt, 2)
             discount = round(basic_amount * discount_rate, 2) if random.random() < discount_prob else 0.0

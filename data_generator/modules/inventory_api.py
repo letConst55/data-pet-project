@@ -12,7 +12,7 @@ class InventoryAPI:
         self.VENDORS = vendors_list
         self.CARRIERS = carriers_list
         
-        # Оставляем только физические товары (исключаем услуги тюнинга)
+        # Keep only physical products (exclude tuning services)
         self.PHYSICAL_PRODUCTS = []
         self.PRODUCT_META = {}
         
@@ -22,7 +22,7 @@ class InventoryAPI:
                 prod_id = p["product_id"]
                 self.PHYSICAL_PRODUCTS.append(p)
                 
-                # Привязываем товар к его реальному вендору из dim_product.csv
+                # Bind the product to its actual vendor from dim_product.csv
                 raw_vendor = p.get("vendor")
                 valid_vendor = raw_vendor if raw_vendor in self.VENDORS else random.choice(self.VENDORS)
                 
@@ -34,7 +34,7 @@ class InventoryAPI:
         if "inventory" not in self.state_mgr.state:
             self.state_mgr.state["inventory"] = {}
             
-        # Завозим стартовые остатки на локации
+        # Deliver starting inventory to locations
         if not self.state_mgr.state["inventory"]:
             self._init_starting_inventory()
 
@@ -48,7 +48,7 @@ class InventoryAPI:
         print(f"[{mode_tag} | {event_dt.isoformat()[:16]}] [{topic}] {event_type} -> {entity_key}", flush=True)
 
     def _init_starting_inventory(self):
-        """Заполняем склад начальными запасами"""
+        """Populate the warehouse with initial stock"""
         for prod in self.PHYSICAL_PRODUCTS:
             prod_id = prod["product_id"]
             self.state_mgr.state["inventory"][prod_id] = {}
@@ -56,14 +56,14 @@ class InventoryAPI:
                 self.state_mgr.state["inventory"][prod_id][loc] = random.randint(10, 50)
 
     def perform_procurement(self):
-        """Закупка товаров (fct_procurement) - восполняем запасы с учетом логистической обстановки"""
+        """Product procurement (fct_procurement) - replenish inventory taking into account the logistics situation"""
         event_dt = self.state_mgr.state["current_sim_time"]
         ctx = self.state_mgr.get_world_context()
         season = ctx["season_code"]
         event = ctx["event_code"]
         inv = self.state_mgr.state["inventory"]
         
-        # В высокий сезон и промо закупаем проактивно при остатке < 15
+        # During the high season and promos, purchase proactively when stock < 15
         restock_threshold = 15 if (season == "high_season" or event == "grand_promo") else 10
 
         needs_restock = []
@@ -78,7 +78,7 @@ class InventoryAPI:
         shipment_id = f"shp_{self.state_mgr.get_counter('procurement')}"
         carrier_id = random.choice(self.CARRIERS)
         
-        # В период логистического кризиса увеличиваются сроки доставки и стоимость фрахта (+25%)
+        # During a supply chain crisis, delivery times and freight costs increase (+25%)
         if event == "supply_chain_crisis":
             departure_dt = event_dt + timedelta(days=random.randint(3, 7))
             arrival_dt = departure_dt + timedelta(days=random.randint(10, 21))
@@ -126,16 +126,16 @@ class InventoryAPI:
             self._send('inventory_events', 'procurement_created', payload)
 
     def take_weekly_snapshot(self):
-        """Еженедельный срез складских остатков (fct_inventory_snapshot)"""
+        """Weekly snapshot of warehouse inventory (fct_inventory_snapshot)"""
         event_dt = self.state_mgr.state["current_sim_time"]
         
-        # Снапшот делаем только раз в неделю по воскресеньям (isoweekday == 7)
+        # Take the snapshot only once a week on Sundays (isoweekday == 7)
         if event_dt.isoweekday() != 7:
             return
             
         week_year = f"{event_dt.isocalendar()[1]}-{event_dt.year}"
         
-        # Защита от дублей: если уже делали снапшот на этой неделе, выходим
+        # Duplicate protection: if a snapshot has already been taken this week, exit
         last_snapshot = self.state_mgr.state.get("last_snapshot_week")
         if last_snapshot == week_year:
             return
@@ -161,4 +161,4 @@ class InventoryAPI:
                 self.publisher.publish('inventory_events', 'inventory_snapshot_taken', payload, event_dt, event_id)
                 count_rows += 1
                 
-        print(f"[SNAP | {event_dt.date().isoformat()}] [inventory_events] Снят еженедельный срез остатков ({week_year}, позиций: {count_rows})", flush=True)
+        print(f"[SNAP | {event_dt.date().isoformat()}] [inventory_events] Weekly inventory snapshot taken ({week_year}, items: {count_rows})", flush=True)

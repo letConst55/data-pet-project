@@ -8,14 +8,14 @@ renamed as (
     select
         event_id,
         event_timestamp,
-        (payload->>'service_event_id')::varchar as service_event_id, -- Новое (PK)
+        (payload->>'service_event_id')::varchar as service_event_id, 
         (payload->>'rental_id')::varchar as rental_id,
         (payload->>'client_id')::varchar as client_id,
         (payload->>'bike_id')::varchar as bike_id,
         (payload->>'location_id')::varchar as location_id,
         (payload->>'event_date')::date as event_date,
-        (payload->>'event_datetime')::timestamp as event_datetime, -- Новое
-        (payload->>'employee_id')::varchar as employee_id,         -- Изменено
+        (payload->>'event_datetime')::timestamp as event_datetime, 
+        (payload->>'employee_id')::varchar as employee_id,         
         (payload->>'issue_category')::varchar as issue_category,
         (payload->>'resolution_action')::varchar as resolution_action,
         (payload->>'service_cost_usd')::numeric(10, 2) as service_cost_usd,
