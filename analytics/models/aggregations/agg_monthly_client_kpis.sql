@@ -38,7 +38,13 @@ select
     round(
         sum(mtd_successful_rentals)::decimal / nullif(sum(mtd_rentals), 0), 
         4
-    ) as monthly_trouble_free_ratio
+    ) as monthly_trouble_free_ratio,
+
+    round(
+        count(case when mtd_rentals > 0 and (mtd_shop_amount > 0 or mtd_repair_amount > 0) then client_natural_key end)::decimal 
+        / nullif(count(case when mtd_rentals > 0 then client_natural_key end), 0), 
+        4
+    ) as cross_sell_penetration_rate
 
 from active_clients
 group by 1
