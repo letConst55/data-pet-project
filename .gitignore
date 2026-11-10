@@ -34,3 +34,4 @@ sample_*.csv
 .env
 notes.md
 .vscode/
+test_viz.ipynb
