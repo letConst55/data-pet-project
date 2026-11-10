@@ -7,33 +7,33 @@ Hash: SHA512
   "signedByOrg": "grafana",
   "signedByOrgName": "Grafana Labs",
   "plugin": "grafana-postgresql-datasource",
-  "version": "13.0.6",
-  "time": 1793208766771,
+  "version": "13.0.7",
+  "time": 1793810439379,
   "keyId": "7e4d0c6a708866e7",
   "files": {
     "README.md": "81880bcd86dc72f6bd848ae81d8860ee2dc6666bfa4cdd28e0d5523871032efa",
-    "sql-query-editor.js.map": "fda272462d83ab3d447c1a33ed08c2ccb9f64ad231b17507ac2334014adc5ef7",
-    "CHANGELOG.md": "1a9c15421887a7fa4069401b81d8a5faa08e4c7ec0668184f25ad0399c69fdf8",
-    "sql-query-editor.js": "a3441a562a3ca2f94851319f7ea8ff5e4aa4ffeae1d55dc78f6d61019313ff86",
-    "plugin.json": "34fbeb8487b3aef33db405c91f8da95eeef2fc24bbcdb631eec260b3a0a5fe72",
-    "module.js": "1e29bd968f680ad65e697a0e165b9e0e20b81d947612a6de65e090f13bbbd441",
+    "sql-query-editor.js.map": "91a8cc5bb30e9aac2f9073a8763366385441112a77350c6a5cce23978dc8e2b3",
+    "CHANGELOG.md": "998e643a82cfc8b4ad039e319cced73718e2cc9eb60561d0942c737b813719be",
+    "sql-query-editor.js": "d5996bb20283adc3976f3025c869b84aa7a153f167aa52ecabfa029d76d87abe",
+    "plugin.json": "6052201674237447470f22e224dfb8b867a1c956eca91b7787cb63fc03163ddf",
+    "module.js": "e646370fcaa596d07178e9da8c69920fce57e93311153400a7f2f93529b2a5c4",
     "img/postgresql_logo.svg": "dc3100e92744f29bb331dbd00ea4a1da6aa603aaa726b994a47a1cf80f3387be",
     "LICENSE": "8486a10c4393cee1c25392769ddd3b2d6c242d6ec7928e1414efff7dfb2f07ef",
-    "go_plugin_build_manifest": "b3386a7458df8dec5055723de0a42618037c1789284cbd2b6128204bb55dd75c",
-    "module.js.LICENSE.txt": "5f8c7a54980853e89db8f42f29cf29c65704398d93e72eeddc2bad0b21813c62",
+    "go_plugin_build_manifest": "c93ce3632d25b9c87922b1302389edc2fad06f3adb5e44a481ebba6be10bec85",
+    "module.js.LICENSE.txt": "ceb170eaa80002312bc3298e0d068917b8249823f83efd809135cd8c94672d6a",
     "156.js.map": "38afa08f2f4d44f8b6bf07f1b4dd3736cf0465e68b503105e4580b291970fd32",
     "156.js": "1768faa0b5deb4aa791e429bb8d43fafdfd6666ea068740b429f51e5bceb6f2a",
-    "gpx_grafana_postgresql_datasource_linux_arm64": "f93859bab81fb82db6091ae10ee81a0fd8ec852d7e4bcb57b5d0186b356e39ef",
-    "module.js.map": "b09ea15667ca3131e28b8a5da950af0a397ed41454bda8b3ea31c45ccf7f884a"
+    "gpx_grafana_postgresql_datasource_linux_arm64": "f2367257ecad485f582fcb0391857bbda94d02d21b42fe62e7d3bdd37fc93622",
+    "module.js.map": "690549afc0e0c74bb096ba82d21cd6ba21e38601bb2e964fa28979d36a088109"
   }
 }
 -----BEGIN PGP SIGNATURE-----
 
-wsA9BAETCgBtBYJq4jG+CRB+TQxqcIhm50UUAAAAAAAcACBzYWx0QG5vdGF0
-aW9ucy5vcGVucGdwanMub3JnM0VKnWA+iGTxmjLHiAyfQaBK+IlwEEKY9G2k
-HINdeD8WIQTzOyW2kQdOhGNlcPN+TQxqcIhm5wAACHICCK+5e3i4w/nALnTI
-Zq5c3B8kZXkZPHIEaD2mhkvua+8sy/Wz+rfJYmFCgvkC4P6sUieD9NX6jaqv
-1jXHbVfOGLJ0Agduf4UjNq17MaRd2G1Hpmw77j/7aKo37mioqypSJc/G5utz
-JBfDqKEzkeCKO/lJk7qm7NVVCixa/boYsUneQXWtyQ==
-=0A1/
+wsA/BAETCgBtBYJq62AHCRB+TQxqcIhm50UUAAAAAAAcACBzYWx0QG5vdGF0
+aW9ucy5vcGVucGdwanMub3Jnbbj3NWcvF9Ywb07M/B1XosRLh0sjeyoI3d9D
+yqBI9F4WIQTzOyW2kQdOhGNlcPN+TQxqcIhm5wAAcikCCQGWclKQgJ7CsrQ5
+8wcCGIyJx5dtw7rFcXr7EA+rbvNygbyCUBfk3zNZdzgNkIxGIye1IpGZhjXw
+wCLtmZnbHrivoAIJAd4gGHmG9s/psu0Vs3wfYgcNcOW1wuFdrKZJ1TJamyM2
+VVrKCXHRQcFwvg9C14R3pvh0otbE7GWclqluCkDFpnrO
+=PGdj
 -----END PGP SIGNATURE-----

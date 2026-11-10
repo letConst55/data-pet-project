@@ -23,7 +23,7 @@ models:
         tests:
           - unique
           - not_null
-      - name: monthly_trouble_free_ratio
+      - name: trouble_free_ratio
         tests:
           - dbt_utils.accepted_range:
               min_value: 0
