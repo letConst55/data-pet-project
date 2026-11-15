@@ -7,40 +7,40 @@ Hash: SHA512
   "signedByOrg": "grafana",
   "signedByOrgName": "Grafana Labs",
   "plugin": "grafana-advisor-app",
-  "version": "1.1.2",
-  "time": 1793892467674,
+  "version": "1.1.3",
+  "time": 1794387565583,
   "keyId": "7e4d0c6a708866e7",
   "files": {
-    "184.js": "b5ec47ecb044437a3500b335445fe11624c807f7cfe86b435b92df33d43df13a",
+    "184.js": "ba008eefa0a38360f166475146d502f09f9461fababd51bdd4f16daba6dd1fd0",
     "README.md": "37773c6e7a931779fda9959d233ccb0c38cf8c9996b5a04e741e7533aacbef9b",
     "663.js.map": "ca812109d496d4eedbfa25f5e05d4c2b2c070934aeb5a29525603202a7f7bee0",
     "663.js": "e27a57ca77cd2752700aca9a7e1c34a2b4775b587f68e33c640625695ff06995",
-    "CHANGELOG.md": "8d4918f14d0c860eb9dd9f618322b13d6d00fa1b0e8535c5646b56b0edffe230",
-    "locales/en-US/grafana-advisor-app.json": "d06902c958d8fe5557dd0e9ffacf410e1693024ebff448d968591eaf7cea2638",
-    "locales/es-ES/grafana-advisor-app.json": "17582a929b49d7f1690717eea254d0225bf07b95965968c7cfe1e2aec40ee961",
-    "locales/de-DE/grafana-advisor-app.json": "1a85f6666482b243bc0176c949c340e2b6a43dbba647c3652a638f708014f1ff",
-    "plugin.json": "106a0266581a7ac947c5fb1c01b6b77c19d6f69630538b62c39e5e0ff69b69c3",
-    "module.js": "7ba3ea96ae96e244c5ad65ccd1e02b14e1033dc792af035b9c7c837af825240c",
+    "CHANGELOG.md": "389d9cfc7c09844a2e4e7dadc06004dd9f2be71ef02fd3f95152a2758710537b",
+    "locales/en-US/grafana-advisor-app.json": "29468587fe641a241c9d7968dfbfc0922e56c0626409fb4e200227f13538388b",
+    "locales/es-ES/grafana-advisor-app.json": "3ffa2ce562bd5eaae062c3c96b3e4184036233ccd9e219509e81ee4cb57bb06e",
+    "locales/de-DE/grafana-advisor-app.json": "347fd63a1b419fc77dc17d8eefe961096c23dad0b549d024a0c95290ce809c93",
+    "plugin.json": "905ed1125d10a9b1ea906faaaee566bcff839c05856d37b3911d782209b7eff3",
+    "module.js": "2137c25a6ba774bf8214bf9323992563ed348bf92cf4f0681f2c8a92894fed2e",
     "img/logo.svg": "102e3e85fcbdc626417bfbdb8aaac9d9b34a900f43f7fce48dc4c929e04c9adb",
-    "199.js.map": "27edf395ae4e267a9d77ebc8587dafaa770e615c6b372f0df30e454899f62f77",
-    "867.js": "244711aee1441a3e40f2c0b51ca466a14f87c6f9be8ea9cbf82f217f51b6b982",
-    "199.js": "bd7274059299420fc29cc83fb0154aa695bc42377293ad395b59619f9b188e50",
+    "199.js.map": "2dba3f91d73800c59845b580e3284ff83fee9855646495dad8e5f8469e243bc5",
+    "867.js": "ca823cd34826d64e5ef3e5b60f27d8c374a2589aa12ca1d1fac548a1e4523cab",
+    "199.js": "104f96fec274e541175c45fc074fbb934bc89a5d0302bc2ddf9ab5d5afb86c4a",
     "LICENSE": "8486a10c4393cee1c25392769ddd3b2d6c242d6ec7928e1414efff7dfb2f07ef",
     "156.js.map": "57c97258e5783b5189f4a5e83a99c8c32098056ea0be3ad89913569ded64a22d",
     "156.js": "4a813c6cafba7a569cc92b85b0b91368c272d06ce0a3f004d105f28dda2d1794",
-    "593.js": "24f976fd985a5cf25f21388efe8c2d62df301719b1ee9e977e36ca298587a91f",
+    "593.js": "10c552416f1e9bfaede31a47f31dd459979a75881d1746b2cd14689d206083ca",
     "462.js.map": "8d2cb77046490ab325504ffb3d0dbc46895b0f67c02a581debe61eb45499ddd6",
-    "module.js.map": "4286efb96fd2d0aa2b58441be7d3bd68ff31475e4a5fcb426f3fc98402f7cbdf",
+    "module.js.map": "fc39a755da36e2794d372baa92ad1598c26984d298c4ebbd3421f4691e12670f",
     "462.js": "f20327a04463bf8fa5e6e0723b3e32b974a9c240b05bf710e4feba699eed380f"
   }
 }
 -----BEGIN PGP SIGNATURE-----
 
-wsA+BAETCgBtBYJq7KBzCRB+TQxqcIhm50UUAAAAAAAcACBzYWx0QG5vdGF0
-aW9ucy5vcGVucGdwanMub3JnAMiiixfvq3hwkawR82QpeuD9o5wA2SANQpvX
-CXYCn9wWIQTzOyW2kQdOhGNlcPN+TQxqcIhm5wAAaVICBR/45FWkK5+XI9p8
-5Xqo4/GI7vG5TnKM/j/wWnaNwxmGKycPawRAUOi7NnG7BkXyIfsLZuNvc91a
-hihRTpaYIpmrAgkB68SPQdRubTVCZtHYNa2sNJU/KcOw7s6kBrKaLEhB8gyv
-qEU9NqkBhN7fL7o7N3wFn//gMmbcgUsDc+z3/Oc0t4Q=
-=Z2Np
+wsA+BAETCgBtBYJq9C5tCRB+TQxqcIhm50UUAAAAAAAcACBzYWx0QG5vdGF0
+aW9ucy5vcGVucGdwanMub3JnNNw8cJqLj+FxVfBqeM0vq697ZBi9MNZY1PJW
+UgdeHE0WIQTzOyW2kQdOhGNlcPN+TQxqcIhm5wAAm4YCCQHTNP6x37bKYRAK
+cyxRfRwFa9xLav7FysY6bcyjAyZdTCfhNgLVt+qCkI80OF/51rRfhsV0Haim
+sTSCv+8snFNfGQII+UmuNWbbkPKT1NCss9XWUxOwROVuJzVllk1TxucgYk2W
+Ap7ZE+0pPcLtkYoxkdfQJtlZ56U7n4plSGnDzl+sRyI=
+=QKVH
 -----END PGP SIGNATURE-----

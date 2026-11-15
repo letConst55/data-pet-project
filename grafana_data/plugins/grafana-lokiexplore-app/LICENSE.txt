@@ -8,3 +8,8 @@
  * @repository github:le0pard/re2js
  * @license MIT
  */
+
+/*!
+* tabbable 6.4.0
+* @license MIT, https://github.com/focus-trap/tabbable/blob/master/LICENSE
+*/

@@ -15,9 +15,9 @@
     },
     "executable": "gpx_grafana_cloudmonitoring_datasource",
     "info": {
-        "updated": "2026-10-21",
+        "updated": "2026-11-11",
         "description": "Data source for Google's monitoring service (formerly named Stackdriver)",
-        "version": "12.6.4",
+        "version": "12.6.7",
         "logos": {
             "small": "img/cloud_monitoring_logo.svg",
             "large": "img/cloud_monitoring_logo.svg"

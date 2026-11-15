@@ -64,3 +64,7 @@ Grafana (http://localhost:3000/):
 
  - login: admin
  - password: 1234
+
+Streamlit (http://localhost:8501)
+
+ - to launch `streamlit run streamlit/app.py`
