@@ -7,7 +7,7 @@ from plotly.subplots import make_subplots
 from datetime import datetime
 
 # ==============================================================================
-# НАСТРОЙКА СТРАНИЦЫ И SESSION STATE
+# SESSION STATE SET UP
 # ==============================================================================
 st.set_page_config(
     page_title="Top Bikes Bangkok — Operations & Commercial Dashboard",
@@ -16,7 +16,6 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Инициализация состояний в сессии для каждого блока отдельно
 if "db_connected" not in st.session_state:
     st.session_state.db_connected = False
 if "conn_message" not in st.session_state:
@@ -26,7 +25,7 @@ for i in range(1, 7):
         st.session_state[f"show_block_{i}"] = False
 
 # ==============================================================================
-# САЙДБАР (СЛЕВА): БЛОК ПОДКЛЮЧЕНИЯ К БАЗЕ ДАННЫХ
+# Data base connection
 # ==============================================================================
 with st.sidebar:
     st.header("🔌 Database Connection")
@@ -63,7 +62,7 @@ with st.sidebar:
             st.error(msg_text)
 
 # ==============================================================================
-# ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ДЛЯ РАБОТЫ С БД
+# additional functions
 # ==============================================================================
 def get_db_config():
     return {
@@ -75,7 +74,7 @@ def get_db_config():
     }
 
 def get_table_schema(cur, table_name):
-    """Автоматический поиск схемы таблицы в БД"""
+    
     cur.execute("""
         SELECT table_schema 
         FROM information_schema.tables 
@@ -89,15 +88,13 @@ def get_table_schema(cur, table_name):
 
 @st.cache_data(ttl=60, show_spinner=False)
 def fetch_block_1_kpis(db_config):
-    """Загрузка показателей для Блока 1 (Карточки KPI)"""
+    
     with psycopg2.connect(**db_config) as conn:
         with conn.cursor() as cur:
-            # 1. Общее количество локаций бизнеса (всех типов)
             schema_loc = get_table_schema(cur, "dim_location")
             cur.execute(f"SELECT COUNT(DISTINCT location_natural_key) FROM {schema_loc}.dim_location;")
             total_locations = cur.fetchone()[0]
 
-            # 2. Общее количество байков и доля в эксплуатации (по последнему полному месяцу)
             schema_ops = get_table_schema(cur, "agg_monthly_ops_kpis")
             cur.execute(f"""
                 SELECT report_month, total_fleet_bikes, active_bikes_cnt, fleet_utilization_rate
@@ -118,7 +115,6 @@ def fetch_block_1_kpis(db_config):
             report_month, total_bikes, active_bikes, util_rate = ops_row
             active_bikes_share = (active_bikes / total_bikes * 100.0) if total_bikes else 0.0
 
-            # 3. Общее количество актуальных сотрудников (за исключением CEO)
             schema_emp = get_table_schema(cur, "dim_employee")
             cur.execute(f"""
                 SELECT COUNT(DISTINCT employee_natural_key)
@@ -130,7 +126,6 @@ def fetch_block_1_kpis(db_config):
             """)
             total_employees_no_ceo = cur.fetchone()[0]
 
-            # 4. Общее количество уникальных наименований товаров в справочнике dim_product
             schema_prod = get_table_schema(cur, "dim_product")
             cur.execute(f"""
                 SELECT 
@@ -156,7 +151,7 @@ def fetch_block_1_kpis(db_config):
 
 @st.cache_data(ttl=60, show_spinner=False)
 def load_clean_mart(db_config, table_name):
-    """Загрузка любой ежемесячной витрины с отсечением незавершенного последнего месяца"""
+    
     with psycopg2.connect(**db_config) as conn:
         with conn.cursor() as cur:
             schema = get_table_schema(cur, table_name)
@@ -169,10 +164,9 @@ def load_clean_mart(db_config, table_name):
     return df.sort_values('report_month').reset_index(drop=True)
 
 # ==============================================================================
-# ФУНКЦИИ ПОСТРОЕНИЯ ГРАФИКОВ БЛОКОВ 2, 3 И 4 (PLOTLY)
+# PLOTLY functions
 # ==============================================================================
 def get_common_chart_layout(title_text, show_x_grid=True):
-    """Единый чистый шаблон верстки для графиков (легенда снизу, без наложений)"""
     return dict(
         title=dict(
             text=f"<b>{title_text}</b>",
@@ -199,7 +193,6 @@ def get_common_chart_layout(title_text, show_x_grid=True):
     )
 
 def add_ops_event_bands(fig):
-    """Добавляет вертикальные зоны погодных и логистических катаклизмов на график Plotly"""
     events = [
         ("2024-09-01", "2024-10-01", "rgba(231, 76, 60, 0.16)", "🌊 Monsoon Flood", True),
         ("2025-10-01", "2025-11-01", "rgba(231, 76, 60, 0.16)", "🌊 Monsoon Flood", False),
@@ -223,7 +216,6 @@ def add_ops_event_bands(fig):
             ))
 
 def build_block_2_figures(df_ops):
-    """Блок 2: Утилизация автопарка и Выездной сервис"""
     # 1. North Star: Fleet Utilization Rate (%)
     fig1 = go.Figure()
     util_pct = df_ops['fleet_utilization_rate'] * 100
@@ -284,7 +276,6 @@ def build_block_2_figures(df_ops):
     return fig1, fig2
 
 def build_block_3_figures(df_ops):
-    """Блок 3: Lead Time цепочек и Оборачиваемость склада"""
     # 3. Lead Time: Procurement vs External Repairs (days)
     fig3 = go.Figure()
     fig3.add_trace(go.Scatter(
@@ -360,7 +351,6 @@ def build_block_3_figures(df_ops):
     return fig3, fig4
 
 def build_block_4_figures(df_fleet, df_bikes):
-    """Блок 4: Средний Lifetime ROI по классам байков и Эволюция технического состояния парка"""
     # 1. Average Lifetime ROI by Bike Class (на актуальном закрытом месяце)
     latest_month = df_fleet['report_month'].max()
     latest_fleet = df_fleet[df_fleet['report_month'] == latest_month]
@@ -385,7 +375,7 @@ def build_block_4_figures(df_fleet, df_bikes):
         hovertemplate="Class: <b>%{x}</b><br>Avg ROI: %{y:.1f}%<extra></extra>",
         showlegend=False
     ))
-    # Порог окупаемости 100% (добавляем как линию в легенду)
+    
     fig_roi.add_hline(
         y=100,
         line_dash="dash",
@@ -410,7 +400,7 @@ def build_block_4_figures(df_fleet, df_bikes):
     )
     fig_roi.update_xaxes(title_text="Bike Class (bike_type)", tickangle=0)
 
-    # 2. Эволюция технического состояния парка по месяцам (100% Stacked Area по fleet_health_status)
+    # 2. 100% Stacked Area по fleet_health_status
     health_order = [
         'Optimal (Score 8-10)', 
         'Standard Wear (Score 5-7)', 
@@ -454,8 +444,8 @@ def build_block_4_figures(df_fleet, df_bikes):
     return fig_roi, fig_health
 
 def build_block_5_figures(df_sup):
-    """Блок 5: Анатомия «Бутылочных горлышек» в ремонтах (fct_repair) и поставках (fct_procurement)"""
-    # 1. Декомпозиция времени ремонта по месяцам (Inbound Transport + Active Workshop + Outbound Transport)
+    
+    # 1. Inbound Transport + Active Workshop + Outbound Transport
     rep_valid = df_sup[df_sup['completed_repairs_cnt'] > 0].copy()
     rep_records = []
     for month, grp in rep_valid.groupby('report_month'):
@@ -491,7 +481,7 @@ def build_block_5_figures(df_sup):
     )
     fig_rep.update_xaxes(title_text="Reporting Month", type="category", tickangle=-35)
 
-    # 2. Декомпозиция времени закупки по локациям (Vendor Processing vs Carrier Transit)
+    # 2. Vendor Processing vs Carrier Transit
     proc_valid = df_sup[df_sup['total_procured_qty'] > 0].copy()
     proc_records = []
     for loc, grp in proc_valid.groupby('location_title'):
@@ -539,8 +529,7 @@ def build_block_5_figures(df_sup):
 
 
 def build_block_6_figures(df_inv, df_bikes):
-    """Блок 6: Оборачиваемость подкатегорий товаров и Bubble-матрица эффективности моделей байков"""
-    # 1. Среднемесячная оборачиваемость и объем продаж по подкатегориям 2-го уровня (level2_category)
+    
     cat_stats = (
         df_inv.groupby('level2_category', as_index=False)
         .agg(
@@ -586,7 +575,7 @@ def build_block_6_figures(df_inv, df_bikes):
     fig_cat.update_xaxes(title_text="Monthly Turnover Ratio (%) & Units Sold", range=[0, max_turn * 1.32], showgrid=True)
     fig_cat.update_yaxes(title_text="Product Subcategory (level2_category)")
 
-    # 2. Bubble Chart по моделям байков: Repair Cost (X) vs Procurement Price (Y) vs Avg Monthly Revenue (Size)
+    # 2. Bubble Chart: Repair Cost (X) vs Procurement Price (Y) vs Avg Monthly Revenue (Size)
     monthly_rev_by_model = (
         df_bikes.groupby('bike_title', as_index=False)['mtd_rental_revenue']
         .mean()
@@ -687,14 +676,13 @@ def build_block_6_figures(df_inv, df_bikes):
 
 
 # ==============================================================================
-# ФУНКЦИЯ ГЕНЕРАЦИИ АВТОНОМНОГО HTML-ФАЙЛА ДЛЯ СКАЧИВАНИЯ
+# HTML-file download
 # ==============================================================================
 def generate_html_report(kpis_data=None, block2_figs=None, block3_figs=None, block4_figs=None, block5_figs=None, block6_figs=None):
-    """Формирует единый HTML-файл со всеми открытыми блоками дашборда"""
+    
     html_parts = [
         "<!DOCTYPE html><html><head><meta charset='utf-8'>",
         "<title>Top Bikes Bangkok — Operations & Commercial Report</title>",
-        "<script src='https://cdn.plot.ly/plotly-latest.min.js'></script>",
         "<style>",
         "body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 30px; background: #f8f9fa; color: #2c3e50; }",
         "h1 { color: #1a252f; border-bottom: 2px solid #2980b9; padding-bottom: 10px; }",
@@ -738,40 +726,24 @@ def generate_html_report(kpis_data=None, block2_figs=None, block3_figs=None, blo
         </div>
         """)
 
-    if block2_figs and st.session_state.show_block_2:
-        html_parts.append("<h2>Block 2: Fleet Utilization & Field Service Dynamics</h2>")
-        html_parts.append("<div class='charts-row-2'>")
-        for fig in block2_figs:
-            html_parts.append(f"<div class='chart-box'>{fig.to_html(full_html=False, include_plotlyjs=False)}</div>")
-        html_parts.append("</div>")
+    plotly_js_included = False
 
-    if block3_figs and st.session_state.show_block_3:
-        html_parts.append("<h2>Block 3: Supply Chain Lead Time & Inventory Efficiency</h2>")
-        html_parts.append("<div class='charts-row-2'>")
-        for fig in block3_figs:
-            html_parts.append(f"<div class='chart-box'>{fig.to_html(full_html=False, include_plotlyjs=False)}</div>")
-        html_parts.append("</div>")
+    def render_chart_block(title, figs_tuple, is_shown):
+        nonlocal plotly_js_included
+        if figs_tuple and is_shown:
+            html_parts.append(f"<h2>{title}</h2>")
+            html_parts.append("<div class='charts-row-2'>")
+            for fig in figs_tuple:
+                js_mode = "cdn" if not plotly_js_included else False
+                plotly_js_included = True
+                html_parts.append(f"<div class='chart-box'>{fig.to_html(full_html=False, include_plotlyjs=js_mode)}</div>")
+            html_parts.append("</div>")
 
-    if block4_figs and st.session_state.show_block_4:
-        html_parts.append("<h2>Block 4: Fleet ROI by Class & Technical Condition Evolution</h2>")
-        html_parts.append("<div class='charts-row-2'>")
-        for fig in block4_figs:
-            html_parts.append(f"<div class='chart-box'>{fig.to_html(full_html=False, include_plotlyjs=False)}</div>")
-        html_parts.append("</div>")
-
-    if block5_figs and st.session_state.show_block_5:
-        html_parts.append("<h2>Block 5: Bottleneck Anatomy in Repairs & Procurements</h2>")
-        html_parts.append("<div class='charts-row-2'>")
-        for fig in block5_figs:
-            html_parts.append(f"<div class='chart-box'>{fig.to_html(full_html=False, include_plotlyjs=False)}</div>")
-        html_parts.append("</div>")
-
-    if block6_figs and st.session_state.show_block_6:
-        html_parts.append("<h2>Block 6: Category Inventory Turnover & Bike Model Efficiency Matrix</h2>")
-        html_parts.append("<div class='charts-row-2'>")
-        for fig in block6_figs:
-            html_parts.append(f"<div class='chart-box'>{fig.to_html(full_html=False, include_plotlyjs=False)}</div>")
-        html_parts.append("</div>")
+    render_chart_block("Block 2: Fleet Utilization & Field Service Dynamics", block2_figs, st.session_state.show_block_2)
+    render_chart_block("Block 3: Supply Chain Lead Time & Inventory Efficiency", block3_figs, st.session_state.show_block_3)
+    render_chart_block("Block 4: Fleet ROI by Class & Technical Condition Evolution", block4_figs, st.session_state.show_block_4)
+    render_chart_block("Block 5: Bottleneck Anatomy in Repairs & Procurements", block5_figs, st.session_state.show_block_5)
+    render_chart_block("Block 6: Category Inventory Turnover & Bike Model Efficiency Matrix", block6_figs, st.session_state.show_block_6)
 
     if not any([st.session_state[f"show_block_{i}"] for i in range(1, 7)]):
         html_parts.append("<p><i>No visualization blocks were expanded prior to export. Click 'Show plots' and download again.</i></p>")
@@ -780,7 +752,7 @@ def generate_html_report(kpis_data=None, block2_figs=None, block3_figs=None, blo
     return "\n".join(html_parts)
 
 # ==============================================================================
-# ПОДГОТОВКА ДАННЫХ ДЛЯ ОТКРЫТЫХ БЛОКОВ
+# Data preparing for opened blocks
 # ==============================================================================
 kpis_data = None
 db_error_b1 = None
@@ -838,7 +810,7 @@ if st.session_state.show_block_6:
         db_error_b6 = str(e)
 
 # ==============================================================================
-# ОСНОВНАЯ ЧАСТЬ СТРАНИЦЫ (СПРАВА): ШАПКА + БЛОКИ ВИЗУАЛИЗАЦИЙ
+# Main page (right side)
 # ==============================================================================
 header_col1, header_col2 = st.columns([4, 1], vertical_alignment="center")
 with header_col1:
@@ -859,7 +831,7 @@ with header_col2:
 st.divider()
 
 # ------------------------------------------------------------------------------
-# БЛОК 1: КАРТОЧКИ KPI (МАСШТАБ БИЗНЕСА И АКТИВОВ)
+# KPIs
 # ------------------------------------------------------------------------------
 st.subheader("1️⃣ Block 1: Business Scale & Asset KPIs")
 
@@ -912,7 +884,7 @@ if st.session_state.show_block_1:
 st.divider()
 
 # ------------------------------------------------------------------------------
-# БЛОК 2: УТИЛИЗАЦИЯ АВТОПАРКА И ВЫЕЗДНОЙ СЕРВИС (ГРАФИКИ 1 И 2)
+# Line plots (Fleet Utilization & Field Service Dynamics)
 # ------------------------------------------------------------------------------
 st.subheader("2️⃣ Block 2: Fleet Utilization & Field Service Dynamics")
 
@@ -934,7 +906,7 @@ if st.session_state.show_block_2:
 st.divider()
 
 # ------------------------------------------------------------------------------
-# БЛОК 3: ДЛИТЕЛЬНОСТЬ ЦЕПОЧЕК (LEAD TIME) И ОБОРАЧИВАЕМОСТЬ СКЛАДА (ГРАФИКИ 3 И 4)
+# Block 3: Supply Chain Lead Time & Inventory Efficiency
 # ------------------------------------------------------------------------------
 st.subheader("3️⃣ Block 3: Supply Chain Lead Time & Inventory Efficiency")
 
@@ -956,7 +928,7 @@ if st.session_state.show_block_3:
 st.divider()
 
 # ------------------------------------------------------------------------------
-# БЛОК 4: ОКУПАЕМОСТЬ ПО КЛАССАМ БАЙКОВ (ROI) И ТЕХНИЧЕСКАЯ ДЕГРАДАЦИЯ ПАРКА
+# Block 4: Fleet ROI by Class & Technical Condition Evolution
 # ------------------------------------------------------------------------------
 st.subheader("4️⃣ Block 4: Fleet ROI by Class & Technical Condition Evolution")
 
@@ -979,7 +951,7 @@ if st.session_state.show_block_4:
 st.divider()
 
 # ------------------------------------------------------------------------------
-# БЛОК 5: АНАЛИЗ «БУТЫЛОЧНЫХ ГОРЛЫШЕК» (LEAD TIME РЕМОНТОВ И ПОСТАВОК)
+# Block 5: Bottleneck Anatomy in Repairs & Procurements
 # ------------------------------------------------------------------------------
 st.subheader("5️⃣ Block 5: Bottleneck Anatomy in Repairs & Procurements")
 
@@ -1002,7 +974,7 @@ if st.session_state.show_block_5:
 st.divider()
 
 # ------------------------------------------------------------------------------
-# БЛОК 6: ОБОРАЧИВАЕМОСТЬ КАТЕГОРИЙ ТОВАРОВ И МАТРИЦА ЭФФЕКТИВНОСТИ МОДЕЛЕЙ БАЙКОВ
+# Block 6: Subcategory Turnover & Bike Model Efficiency Matrix
 # ------------------------------------------------------------------------------
 st.subheader("6️⃣ Block 6: Subcategory Turnover & Bike Model Efficiency Matrix")
 
