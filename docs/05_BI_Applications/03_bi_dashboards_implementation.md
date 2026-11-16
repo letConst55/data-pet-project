@@ -115,3 +115,6 @@ Built on `stats_by_inventory` and `stats_by_bikes`:
     *   *Workflow:* Reviewing **Block 3 (Out-of-Stock Rate at 0%)** alongside **Block 6 (Subcategory Turnover)**, the Retail Manager identifies that warehouse stock levels are overly conservative. They reduce reorder quantities for slow-moving subcategories (`Plastics & Body parts`, `Gloves`) while prioritizing shelf space and vendor SLAs for high-velocity items (`Motor oils`, `Helmets & Visors`, `Mirrors & Styling`).
 *   **Scenario 4: Offline Board & Investor Reporting (Executive Team)**
     *   *Workflow:* Before a monthly strategy meeting, an analyst expands all 6 visualization blocks and clicks **📥 Download HTML**. The resulting standalone `.html` report is shared in the executive chat, allowing founders to interactively inspect every Plotly chart, zoom into crisis periods, and hover over individual bike models on their laptops or tablets without needing local DWH access.
+
+
+### **[Check examples](https://github.com/letConst55/data-pet-project/blob/main/streamlit/dashboard_examples.md)**

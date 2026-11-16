@@ -31,7 +31,10 @@ The project documentation is structured strictly in accordance with the Kimball 
 * **[04. ETL Kitchen & Data Quality](https://github.com/letConst55/data-pet-project/tree/main/docs/04_ETL_Kitchen)**
   Implementation of ELT pipelines (Kafka -> S3 -> PostgreSQL -> dbt), mapping to Kimball's 34 subsystems, and a built-in data quality testing framework with audit logs pushed to Grafana.
 * **[05. BI Applications](https://github.com/letConst55/data-pet-project/tree/main/docs/05_BI_Applications)**
-  Design of the pre-calculated aggregation layer and specifications for analytical dashboards (Customer Intelligence, Fleet Utilization).
+  Design of the pre-calculated aggregation layer and specifications for analytical dashboards (Customer Intelligence, Fleet Utilization). BI apps description and dashboard examples. 
+
+   - **[Check streamlit examples](https://github.com/letConst55/data-pet-project/blob/main/streamlit/dashboard_examples.md)**
+   - **[Check Tableau dashboard](https://public.tableau.com/app/profile/konstantin3546/viz/Topbikesstartupdashboard/Overview)**
 * **[06. Deployment & Operations](https://github.com/letConst55/data-pet-project/tree/main/docs/06_Deployment_and_Operations)**
   Orchestration of ELT processes via Apache Airflow and Bash automation scripts for infrastructure lifecycle management (start/stop pipeline).
 
