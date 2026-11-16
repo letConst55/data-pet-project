@@ -6,7 +6,7 @@ All aggregations in the warehouse are logically partitioned into 4 business doma
 1.  **Customer Intelligence:** Focuses on behavior, LTV, cohorts, and segmentation.
 2.  **Asset & Operations Management:** Focuses on fleet utilization, workshop load, and repair logistics.
 3.  **Retail & Revenue Performance:** Focuses on shop sales structure, demand elasticity, and spare parts margins.
-4.  **Workforce & HR Analytics:** Focuses on mechanic/salesperson performance evaluation and staff turnover.
+4.  **Workforce & HR Analytics:** Focuses on mechanic/salesperson performance evaluation and staff turnover (in progress).
 
 Within each domain, we implement two data mart design paradigms: the "Sandbox Mart" and the "Reporting Mart."
 
