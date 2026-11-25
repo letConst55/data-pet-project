@@ -54,47 +54,47 @@ procurement_monthly as (
 
 select
     sm.report_month::date as report_month,
-    p.product_natural_key::text as product_natural_key,
-    p.title::text as product_title,
-    p.level1_category::text as level1_category,
-    p.level2_category::text as level2_category,
-    p.manufactory::text as manufactory,
+    p.product_natural_key::varchar as product_natural_key,
+    p.title::varchar as product_title,
+    p.level1_category::varchar as level1_category,
+    p.level2_category::varchar as level2_category,
+    p.manufactory::varchar as manufactory,
     p.is_spare_flag::boolean as is_spare_flag,
 
-    l.location_natural_key::text as location_natural_key,
-    l.title::text as location_title,
+    l.location_natural_key::varchar as location_natural_key,
+    l.title::varchar as location_title,
 
     -- Inventory condition metrics
     sm.weekly_snapshots_cnt::int as weekly_snapshots_cnt,
-    sm.avg_stock_qty::numeric as avg_stock_qty,
+    sm.avg_stock_qty::numeric(18, 2) as avg_stock_qty,
     sm.min_stock_qty::int as min_stock_qty,
     sm.max_stock_qty::int as max_stock_qty,
     sm.out_of_stock_weeks_cnt::int as out_of_stock_weeks_cnt,
     sm.in_transit_weeks_cnt::int as in_transit_weeks_cnt,
     round(
-        sm.out_of_stock_weeks_cnt::decimal / nullif(sm.weekly_snapshots_cnt, 0), 
+        sm.out_of_stock_weeks_cnt::numeric(18, 4) / nullif(sm.weekly_snapshots_cnt, 0),
         4
-    )::numeric as out_of_stock_rate,
+    )::numeric(10, 4) as out_of_stock_rate,
 
     -- Outflow metrics (retail sales)
     coalesce(sh.mtd_sold_qty, 0)::int as mtd_sold_qty,
-    coalesce(sh.mtd_sales_revenue, 0)::numeric as mtd_sales_revenue,
+    coalesce(sh.mtd_sales_revenue, 0)::numeric(18, 2) as mtd_sales_revenue,
 
     -- Inflow metrics (procurements from suppliers)
     coalesce(pr.mtd_shipments_cnt, 0)::int as mtd_shipments_cnt,
     coalesce(pr.mtd_procured_qty, 0)::int as mtd_procured_qty,
-    coalesce(pr.mtd_procurement_spend, 0)::numeric as mtd_procurement_spend,
+    coalesce(pr.mtd_procurement_spend, 0)::numeric(18, 2) as mtd_procurement_spend,
 
     -- Lead Time anatomy
-    pr.avg_vendor_processing_days::numeric as avg_vendor_processing_days,
-    pr.avg_carrier_transit_days::numeric as avg_carrier_transit_days,
-    pr.avg_procurement_lead_time_days::numeric as avg_procurement_lead_time_days,
+    pr.avg_vendor_processing_days::numeric(18, 2) as avg_vendor_processing_days,
+    pr.avg_carrier_transit_days::numeric(18, 2) as avg_carrier_transit_days,
+    pr.avg_procurement_lead_time_days::numeric(18, 2) as avg_procurement_lead_time_days,
 
     -- Monthly Inventory Turnover Ratio
     case
-        when sm.avg_stock_qty > 0 then round(coalesce(sh.mtd_sold_qty, 0)::decimal / sm.avg_stock_qty, 4)
+        when sm.avg_stock_qty > 0 then round(coalesce(sh.mtd_sold_qty, 0)::numeric(18, 4) / sm.avg_stock_qty, 4)
         else null
-    end::numeric as inventory_turnover_ratio
+    end::numeric(18, 4) as inventory_turnover_ratio
 
 from snapshot_monthly sm
 inner join {{ ref('dim_product') }} p on sm.product_sk = p.product_sk

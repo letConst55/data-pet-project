@@ -15,12 +15,18 @@ with new_orders_raw as (
     {% endif %}
 ),
 
--- Deduplication of raw events (protection against duplicates from S3 or generator restarts)
 new_orders as (
-    select distinct on (order_id, product_id)
-        *
-    from new_orders_raw
-    order by order_id, product_id, event_timestamp desc, loaded_at desc
+    select *
+    from (
+        select
+            *,
+            row_number() over (
+                partition by order_id, product_id
+                order by event_timestamp desc, loaded_at desc
+            ) as _rn
+        from new_orders_raw
+    ) t
+    where _rn = 1
 ),
 
 final as (

@@ -15,12 +15,18 @@ with new_repairs_raw as (
     {% endif %}
 ),
 
--- Deduplication of raw events
 new_repairs as (
-    select distinct on (repair_id)
-        *
-    from new_repairs_raw
-    order by repair_id, event_datetime desc, loaded_at desc
+    select *
+    from (
+        select
+            *,
+            row_number() over (
+                partition by repair_id
+                order by event_datetime desc, loaded_at desc
+            ) as _rn
+        from new_repairs_raw
+    ) t
+    where _rn = 1
 ),
 
 final as (

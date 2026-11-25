@@ -27,7 +27,7 @@ with stg_clients as (
 dim_summary as (
     select
         client_natural_key,
-        count(*) filter (where current_row_indicator = true) as active_rows_cnt
+        count(case when current_row_indicator = true then 1 end) as active_rows_cnt
     from {{ ref('dim_client') }}
     group by client_natural_key
 )

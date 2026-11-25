@@ -15,12 +15,18 @@ with new_snapshots_raw as (
     {% endif %}
 ),
 
--- Deduplication: guaranteeing only 1 record remains for a single Week+Product+Location combination
 new_snapshots as (
-    select distinct on (week_year, product_id, location_id)
-        *
-    from new_snapshots_raw
-    order by week_year, product_id, location_id, event_timestamp desc, loaded_at desc
+    select *
+    from (
+        select
+            *,
+            row_number() over (
+                partition by week_year, product_id, location_id
+                order by event_timestamp desc, loaded_at desc
+            ) as _rn
+        from new_snapshots_raw
+    ) t
+    where _rn = 1
 ),
 
 final as (

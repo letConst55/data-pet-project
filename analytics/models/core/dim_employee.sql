@@ -14,8 +14,8 @@ with new_events as (
     {% endif %}
 ),
 
-deduped_new_events as (
-    select distinct on (employee_id, event_timestamp)
+ranked_new_events as (
+    select
         employee_id as employee_natural_key,
         full_name,
         phone,
@@ -30,9 +30,32 @@ deduped_new_events as (
         can_workshop_repair_flg,
         can_sell_retail_flg,
         is_active_flg,
-        event_timestamp as row_effective_date
+        event_timestamp as row_effective_date,
+        row_number() over (
+            partition by employee_id, event_timestamp
+            order by loaded_at desc
+        ) as rn
     from new_events
-    order by employee_natural_key, event_timestamp, loaded_at desc
+),
+deduped_new_events as (
+    select
+        employee_natural_key,
+        full_name,
+        phone,
+        email,
+        department,
+        position_title,
+        grade_level,
+        assigned_location_id,
+        manager_employee_id,
+        can_dispense_return_flg,
+        can_field_service_flg,
+        can_workshop_repair_flg,
+        can_sell_retail_flg,
+        is_active_flg,
+        row_effective_date
+    from ranked_new_events
+    where rn = 1
 ),
 
 {% if is_incremental() %}

@@ -50,29 +50,29 @@ location_repairs as (
 
 select
     s.report_month::date as report_month,
-    s.location_natural_key::text as location_natural_key,
-    s.location_title::text as location_title,
+    s.location_natural_key::varchar as location_natural_key,
+    s.location_title::varchar as location_title,
 
     -- Inventory and turnover metrics
-    s.avg_location_stock_qty::numeric as avg_location_stock_qty,
-    s.location_out_of_stock_rate::numeric as location_out_of_stock_rate,
-    s.avg_location_turnover_ratio::numeric as avg_location_turnover_ratio,
+    s.avg_location_stock_qty::numeric(18, 2) as avg_location_stock_qty,
+    s.location_out_of_stock_rate::numeric(10, 4) as location_out_of_stock_rate,
+    s.avg_location_turnover_ratio::numeric(18, 4) as avg_location_turnover_ratio,
     s.total_sold_qty::int as total_sold_qty,
 
     -- Procurement and delivery stage metrics
     s.total_procured_qty::int as total_procured_qty,
-    s.total_procurement_spend::numeric as total_procurement_spend,
-    s.avg_vendor_processing_days::numeric as avg_vendor_processing_days,
-    s.avg_carrier_transit_days::numeric as avg_carrier_transit_days,
-    s.avg_procurement_lead_time_days::numeric as avg_procurement_lead_time_days,
+    s.total_procurement_spend::numeric(18, 2) as total_procurement_spend,
+    s.avg_vendor_processing_days::numeric(10, 2) as avg_vendor_processing_days,
+    s.avg_carrier_transit_days::numeric(10, 2) as avg_carrier_transit_days,
+    s.avg_procurement_lead_time_days::numeric(10, 2) as avg_procurement_lead_time_days,
 
     -- Repair bottleneck metrics
     coalesce(r.completed_repairs_cnt, 0)::int as completed_repairs_cnt,
-    coalesce(r.repair_revenue_usd, 0)::numeric as repair_revenue_usd,
-    r.avg_inbound_transport_days::numeric as avg_inbound_transport_days,
-    r.avg_active_repair_days::numeric as avg_active_repair_days,
-    r.avg_outbound_transport_days::numeric as avg_outbound_transport_days,
-    r.avg_total_repair_lead_time_days::numeric as avg_total_repair_lead_time_days
+    coalesce(r.repair_revenue_usd, 0)::numeric(18, 2) as repair_revenue_usd,
+    r.avg_inbound_transport_days::numeric(10, 2) as avg_inbound_transport_days,
+    r.avg_active_repair_days::numeric(10, 2) as avg_active_repair_days,
+    r.avg_outbound_transport_days::numeric(10, 2) as avg_outbound_transport_days,
+    r.avg_total_repair_lead_time_days::numeric(10, 2) as avg_total_repair_lead_time_days
 
 from location_supply s
 left join location_repairs r

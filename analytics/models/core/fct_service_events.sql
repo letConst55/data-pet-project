@@ -15,12 +15,18 @@ with new_service_events_raw as (
     {% endif %}
 ),
 
--- Deduplication of raw events (protection against duplicates from Kafka/S3)
 new_service_events as (
-    select distinct on (service_event_id)
-        *
-    from new_service_events_raw
-    order by service_event_id, event_datetime desc, loaded_at desc
+    select *
+    from (
+        select
+            *,
+            row_number() over (
+                partition by service_event_id
+                order by event_datetime desc, loaded_at desc
+            ) as _rn
+        from new_service_events_raw
+    ) t
+    where _rn = 1
 ),
 
 final as (

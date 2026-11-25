@@ -86,7 +86,12 @@ test_snapshot_day as (
         'snapshot_not_on_sunday' as error_reason
     from fct
     -- The extract(isodow) function in PostgreSQL returns 1 for Monday and 7 for Sunday
-    where extract(isodow from snapshot_date_key) != 7
+    where 
+    {% if target.type == 'snowflake' %}
+    dayofweekiso(snapshot_date_key) != 7
+    {% else %}
+        extract(isodow from snapshot_date_key) != 7
+    {% endif %}
 )
 
 -- Combine all validation results

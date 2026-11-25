@@ -17,7 +17,7 @@ with recursive active_employees as (
 ),
 
 -- Recursive CTE for traversing a tree (transitive closure)
-hierarchy_paths as (
+hierarchy_paths (manager_employee_id, subordinate_employee_id, hierarchy_depth) as (
     -- Base case: each employee reports to themselves (level 0)
     select
         employee_natural_key as manager_employee_id,

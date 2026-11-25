@@ -17,8 +17,8 @@ with new_events as (
         {% endif %}
 ),
 -- Deduplicated chain
-deduped_new_events as (
-    select distinct on (client_id, event_timestamp)
+ranked_new_events as (
+    select
         client_id as client_natural_key,
         full_name,
         gender,
@@ -33,9 +33,32 @@ deduped_new_events as (
         drive_license_category,
         drive_license_verified,
         rating_score,
-        event_timestamp as row_effective_date
+        event_timestamp as row_effective_date,
+        row_number() over (
+            partition by client_id, event_timestamp
+            order by loaded_at desc
+        ) as rn
     from new_events
-    order by client_id, event_timestamp, loaded_at desc
+),
+deduped_new_events as (
+    select
+        client_natural_key,
+        full_name,
+        gender,
+        birthday,
+        salutation,
+        preferred_payment_method,
+        phone,
+        email,
+        nationality,
+        residential_address,
+        driving_experience_years,
+        drive_license_category,
+        drive_license_verified,
+        rating_score,
+        row_effective_date
+    from ranked_new_events
+    where rn = 1
 ),
 -- We select only the active records from the existing `dim_clients` view (`{{ this }}`).
 -- and ONLY for those clients who appeared in the new batch of events

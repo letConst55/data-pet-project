@@ -15,12 +15,18 @@ with new_procurements_raw as (
     {% endif %}
 ),
 
--- Deduplication (keeping the freshest pipeline version for each item in the shipment)
 new_procurements as (
-    select distinct on (shipment_id, product_id)
-        *
-    from new_procurements_raw
-    order by shipment_id, product_id, event_timestamp desc, loaded_at desc
+    select *
+    from (
+        select
+            *,
+            row_number() over (
+                partition by shipment_id, product_id
+                order by event_timestamp desc, loaded_at desc
+            ) as _rn
+        from new_procurements_raw
+    ) t
+    where _rn = 1
 ),
 
 final as (

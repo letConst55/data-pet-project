@@ -31,3 +31,8 @@ models:
     core:
       +schema: core
       +materialized: table
+
+seeds:
+  analytics:
+    df_bikes:
+      +quote_columns: true

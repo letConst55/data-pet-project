@@ -71,3 +71,7 @@ Grafana (http://localhost:3000/):
 Streamlit (http://localhost:8501)
 
  - to launch `streamlit run streamlit/app.py`
+
+Snowflake
+
+ - to upload data from generator `python s3_to_snowflake.py --all`

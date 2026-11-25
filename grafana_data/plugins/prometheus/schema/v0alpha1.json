@@ -36,7 +36,7 @@
               ]
             },
             "customQueryParameters": {
-              "description": "Add custom parameters to the Prometheus query URL. For example timeout, partial_response, dedup, or max_source_resolution. Multiple parameters should be concatenated together with '\u0026'.",
+              "description": "Add custom parameters to the Prometheus query URL. For example timeout, partial_response, dedup, or max_source_resolution. Multiple parameters should be concatenated together with '&'.",
               "type": "string"
             },
             "defaultEditor": {
@@ -91,7 +91,7 @@
               }
             },
             "httpHeaders": {
-              "description": "Additional HTTP headers sent with every request. Header names are stored in jsonData (httpHeaderName\u003cN\u003e); header values are write-only in secureJsonData (httpHeaderValue\u003cN\u003e).",
+              "description": "Additional HTTP headers sent with every request. Header names are stored in jsonData (httpHeaderName<N>); header values are write-only in secureJsonData (httpHeaderValue<N>).",
               "type": "array",
               "items": {
                 "type": "object",
@@ -273,7 +273,7 @@
       },
       "getHTTPMethod": {
         "summary": "GET HTTP method (legacy or restricted networks)",
-        "description": "Older Prometheus (\u003c 2.1) or environments that block POST. Everything else stays default. seriesEndpoint is enabled to prefer /api/v1/series (which supports POST) over /api/v1/label/*/values.",
+        "description": "Older Prometheus (< 2.1) or environments that block POST. Everything else stays default. seriesEndpoint is enabled to prefer /api/v1/series (which supports POST) over /api/v1/label/*/values.",
         "value": {
           "jsonData": {
             "httpMethod": "GET",
@@ -366,5 +366,176 @@
         }
       }
     }
+  },
+  "queryTypes": {
+    "kind": "QueryTypeDefinitionList",
+    "apiVersion": "datasource.grafana.app/v0alpha1",
+    "metadata": {
+      "resourceVersion": "1781625650455"
+    },
+    "items": [
+      {
+        "metadata": {
+          "name": "default",
+          "resourceVersion": "1781625650455",
+          "creationTimestamp": "2026-06-16T16:00:50Z"
+        },
+        "spec": {
+          "schema": {
+            "$schema": "https://json-schema.org/draft-04/schema",
+            "additionalProperties": false,
+            "description": "PrometheusQueryProperties defines the specific properties used for prometheus",
+            "properties": {
+              "adhocFilters": {
+                "description": "Additional Ad-hoc filters that take precedence over Scope on conflict.",
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "key": {
+                      "type": "string"
+                    },
+                    "operator": {
+                      "type": "string"
+                    },
+                    "value": {
+                      "type": "string"
+                    },
+                    "values": {
+                      "items": {
+                        "type": "string"
+                      },
+                      "type": "array"
+                    }
+                  },
+                  "required": [
+                    "key",
+                    "value",
+                    "operator"
+                  ],
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "editorMode": {
+                "description": "what we should show in the editor\n\n\nPossible enum values:\n - `\"builder\"` \n - `\"code\"` ",
+                "enum": [
+                  "builder",
+                  "code"
+                ],
+                "type": "string",
+                "x-enum-description": {}
+              },
+              "exemplar": {
+                "description": "Execute an additional query to identify interesting raw samples relevant for the given expr",
+                "type": "boolean"
+              },
+              "expr": {
+                "description": "The actual expression/query that will be evaluated by Prometheus",
+                "type": "string"
+              },
+              "format": {
+                "description": "The response format\n\n\nPossible enum values:\n - `\"time_series\"` \n - `\"table\"` \n - `\"heatmap\"` ",
+                "enum": [
+                  "time_series",
+                  "table",
+                  "heatmap"
+                ],
+                "type": "string",
+                "x-enum-description": {}
+              },
+              "groupByKeys": {
+                "description": "Group By parameters to apply to aggregate expressions in the query",
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "instant": {
+                "description": "Returns only the latest value that Prometheus has scraped for the requested time series",
+                "type": "boolean"
+              },
+              "intervalFactor": {
+                "description": "Used to specify how many times to divide max data points by. We use max data points under query options\nSee https://github.com/grafana/grafana/issues/48081\nDeprecated: use interval",
+                "type": "integer"
+              },
+              "legendFormat": {
+                "description": "Series name override or template. Ex. {{hostname}} will be replaced with label value for hostname",
+                "type": "string"
+              },
+              "range": {
+                "description": "Returns a Range vector, comprised of a set of time series containing a range of data points over time for each time series",
+                "type": "boolean"
+              },
+              "scopes": {
+                "description": "A set of filters applied to apply to the query",
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "defaultPath": {
+                      "items": {
+                        "type": "string"
+                      },
+                      "type": "array"
+                    },
+                    "filters": {
+                      "items": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "key": {
+                            "type": "string"
+                          },
+                          "operator": {
+                            "type": "string"
+                          },
+                          "value": {
+                            "type": "string"
+                          },
+                          "values": {
+                            "items": {
+                              "type": "string"
+                            },
+                            "type": "array"
+                          }
+                        },
+                        "required": [
+                          "key",
+                          "value",
+                          "operator"
+                        ],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "title": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "title"
+                  ],
+                  "type": "object"
+                },
+                "type": "array"
+              }
+            },
+            "required": [
+              "expr"
+            ],
+            "type": "object"
+          }
+        }
+      }
+    ]
+  },
+  "queryExamples": {
+    "examples": [
+      {
+        "name": "simple health check",
+        "queryType": "default",
+        "saveModel": {
+          "expr": "1+1"
+        }
+      }
+    ]
   }
 }

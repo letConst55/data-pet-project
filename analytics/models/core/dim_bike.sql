@@ -6,7 +6,21 @@
 }}
 
 with source as (
-    select * from {{ ref('df_bikes') }}
+    select
+        "bike_id" as bike_id,
+        "WIN_number" as win_number,
+        "plate_number" as plate_number,
+        "title" as title,
+        "type" as type,
+        "model_year" as model_year,
+        "color" as color,
+        "brand" as brand,
+        "hourse_power" as hourse_power,
+        "engine_volume (cc)" as engine_volume_cc,
+        "gearbox_type" as gearbox_type,
+        "usb_charging_availability" as usb_charging_availability,
+        "procurement_price" as procurement_price
+    from {{ ref('df_bikes') }}
 ),
 
 final as (
@@ -17,12 +31,12 @@ final as (
 
         -- Surrogate primary key (PK)
         {{ dbt_utils.generate_surrogate_key(['bike_id']) }} as bike_sk,
-        
+
         -- Natural key (NK)
-        bike_id::text as bike_natural_key,
+        bike_id::varchar as bike_natural_key,
 
         -- Bike attributes
-        "WIN_number" as win_number,
+        win_number,
         plate_number,
         title,
         type,
@@ -30,7 +44,7 @@ final as (
         color,
         brand,
         hourse_power,
-        "engine_volume (cc)" as engine_volume_cc,
+        engine_volume_cc,
         gearbox_type,
         usb_charging_availability,
         procurement_price

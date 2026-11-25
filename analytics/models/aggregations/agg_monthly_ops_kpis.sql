@@ -30,8 +30,8 @@ inventory_monthly as (
         round(avg(inventory_turnover_ratio), 4) as avg_sku_turnover_ratio,
         sum(mtd_procurement_spend) as total_procurement_spend_usd,
         round(
-            sum(avg_procurement_lead_time_days * mtd_shipments_cnt)::decimal 
-            / nullif(sum(mtd_shipments_cnt), 0), 
+            sum(avg_procurement_lead_time_days * mtd_shipments_cnt)::numeric(18, 4)
+            / nullif(sum(mtd_shipments_cnt), 0),
             2
         ) as avg_procurement_lead_time_days
     from {{ ref('stats_by_inventory') }}
@@ -59,34 +59,34 @@ select
     f.total_rented_bike_days::int as total_rented_bike_days,
     f.total_available_bike_days::int as total_available_bike_days,
     round(
-        f.total_rented_bike_days::decimal / nullif(f.total_available_bike_days, 0), 
+        f.total_rented_bike_days::numeric(18, 4) / nullif(f.total_available_bike_days, 0),
         4
-    )::numeric as fleet_utilization_rate,
-    f.avg_fleet_condition_score::numeric as avg_fleet_condition_score,
+    )::numeric(10, 4) as fleet_utilization_rate,
+    f.avg_fleet_condition_score::numeric(10, 2) as avg_fleet_condition_score,
 
     -- 2. Field service and road incident frequency
-    f.total_fleet_mileage_km::numeric as total_fleet_mileage_km,
+    f.total_fleet_mileage_km::numeric(18, 2) as total_fleet_mileage_km,
     f.total_field_services_cnt::int as total_field_services_cnt,
-    f.total_field_service_cost_usd::numeric as total_field_service_cost_usd,
+    f.total_field_service_cost_usd::numeric(18, 2) as total_field_service_cost_usd,
     round(
-        (f.total_field_services_cnt * 1000.0)::decimal / nullif(f.total_fleet_mileage_km, 0), 
+        (f.total_field_services_cnt * 1000.0)::numeric(18, 4) / nullif(f.total_fleet_mileage_km, 0),
         2
-    )::numeric as field_services_per_1000km,
+    )::numeric(10, 2) as field_services_per_1000km,
 
     -- 3. Inventory management and Supply Chain
     round(
-        i.total_out_of_stock_records::decimal / nullif(i.total_snapshot_records, 0), 
+        i.total_out_of_stock_records::numeric(18, 4) / nullif(i.total_snapshot_records, 0),
         4
-    )::numeric as warehouse_out_of_stock_rate,
-    i.avg_sku_turnover_ratio::numeric as avg_sku_turnover_ratio,
-    coalesce(i.total_procurement_spend_usd, 0)::numeric as total_procurement_spend_usd,
-    i.avg_procurement_lead_time_days::numeric as avg_procurement_lead_time_days,
+    )::numeric(10, 4) as warehouse_out_of_stock_rate,
+    i.avg_sku_turnover_ratio::numeric(18, 4) as avg_sku_turnover_ratio,
+    coalesce(i.total_procurement_spend_usd, 0)::numeric(18, 2) as total_procurement_spend_usd,
+    i.avg_procurement_lead_time_days::numeric(10, 2) as avg_procurement_lead_time_days,
 
     -- 4. External workshop repairs (Lead Time)
     coalesce(r.external_repairs_cnt, 0)::int as external_repairs_cnt,
-    coalesce(r.external_repair_revenue_usd, 0)::numeric as external_repair_revenue_usd,
-    r.avg_repair_total_lead_time_days::numeric as avg_repair_total_lead_time_days,
-    r.avg_workshop_work_days::numeric as avg_workshop_work_days
+    coalesce(r.external_repair_revenue_usd, 0)::numeric(18, 2) as external_repair_revenue_usd,
+    r.avg_repair_total_lead_time_days::numeric(10, 2) as avg_repair_total_lead_time_days,
+    r.avg_workshop_work_days::numeric(10, 2) as avg_workshop_work_days
 
 from fleet_monthly f
 left join inventory_monthly i on f.report_month = i.report_month

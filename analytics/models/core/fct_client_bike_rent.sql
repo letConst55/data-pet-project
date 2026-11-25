@@ -2,7 +2,11 @@
     config(
         materialized='incremental',
         unique_key='rental_id',
-        schema='core'
+        schema='core',
+        incremental_strategy='merge' if target.type == 'snowflake' else 'delete+insert',
+        incremental_predicates=[
+            "DBT_INTERNAL_DEST.last_source_timestamp >= dateadd(day, -60, current_timestamp())"
+        ] if target.type == 'snowflake' else none
     )
 }}
 

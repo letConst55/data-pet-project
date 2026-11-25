@@ -13,12 +13,10 @@ with date_bounds as (
     from {{ ref('fct_client_bike_rent') }}
 ),
 
--- 2. Build the calendar spine: each bike x each month
 calendar_months as (
-    select 
-        distinct
+    select distinct
         date_trunc('month', cal.date)::date as report_month,
-        extract(day from (date_trunc('month', cal.date) + interval '1 month - 1 day'))::int as days_in_month
+        extract(day from cal.month_end_date)::int as days_in_month
     from {{ ref('dim_calendar') }} cal
     cross join date_bounds b
     where cal.date >= b.min_month
@@ -41,19 +39,15 @@ bike_spine as (
     cross join {{ ref('dim_bike') }} b
 ),
 
--- 3. Accurate calculation of rented days within each month (unrolling intervals by day, 
--- to prevent month-spanning rentals from yielding > 100% utilization)
 bike_active_days as (
     select
         fbr.bike_sk,
-        date_trunc('month', d.active_day)::date as event_month,
-        count(distinct d.active_day) as mtd_rented_days
+        date_trunc('month', cal.date)::date as event_month,
+        count(distinct cal.date) as mtd_rented_days
     from {{ ref('fct_client_bike_rent') }} fbr
-    cross join lateral generate_series(
-        fbr.fact_start_date,
-        greatest(fbr.fact_start_date, (fbr.fact_end_date - interval '1 day')::date),
-        '1 day'::interval
-    ) as d(active_day)
+    inner join {{ ref('dim_calendar') }} cal
+      on cal.date >= fbr.fact_start_date
+     and cal.date <= greatest(fbr.fact_start_date, fbr.fact_end_date - 1)
     where fbr.fact_start_date is not null
       and fbr.fact_end_date is not null
     group by 1, 2
@@ -149,50 +143,47 @@ monthly_rollup as (
 select
     report_month::date as report_month,
     bike_natural_key::int as bike_natural_key,
-    bike_title::text as bike_title,
-    bike_type::text as bike_type,
-    brand::text as brand,
+    bike_title::varchar as bike_title,
+    bike_type::varchar as bike_type,
+    brand::varchar as brand,
     model_year::int as model_year,
     engine_volume_cc::int as engine_volume_cc,
-    procurement_price::numeric as procurement_price,
+    procurement_price::numeric(18, 2) as procurement_price,
 
     days_in_month::int as days_in_month,
     mtd_rented_days::int as mtd_rented_days,
     (days_in_month - mtd_rented_days)::int as mtd_idle_days,
-    round(mtd_rented_days::decimal / nullif(days_in_month, 0), 4)::numeric as utilization_rate,
+    round(mtd_rented_days::numeric(18, 4) / nullif(days_in_month, 0), 4)::numeric(10, 4) as utilization_rate,
 
     mtd_completed_rentals::int as mtd_completed_rentals,
-    mtd_mileage::numeric as mtd_mileage,
-    mtd_rental_revenue::numeric as mtd_rental_revenue,
-    mtd_penalty_amount::numeric as mtd_penalty_amount,
+    mtd_mileage::numeric(18, 2) as mtd_mileage,
+    mtd_rental_revenue::numeric(18, 2) as mtd_rental_revenue,
+    mtd_penalty_amount::numeric(18, 2) as mtd_penalty_amount,
 
     mtd_field_services::int as mtd_field_services,
     mtd_towed_events::int as mtd_towed_events,
     mtd_tech_wear_incidents::int as mtd_tech_wear_incidents,
-    mtd_service_cost_usd::numeric as mtd_service_cost_usd,
-    (mtd_rental_revenue - mtd_service_cost_usd)::numeric as mtd_net_operating_income,
+    mtd_service_cost_usd::numeric(18, 2) as mtd_service_cost_usd,
+    (mtd_rental_revenue - mtd_service_cost_usd)::numeric(18, 2) as mtd_net_operating_income,
 
     lifetime_rented_days::int as lifetime_rented_days,
-    lifetime_mileage_ridden::numeric as lifetime_mileage_ridden,
-    coalesce(current_odometer_km, 1000)::numeric as current_odometer_km,
+    lifetime_mileage_ridden::numeric(18, 2) as lifetime_mileage_ridden,
+    coalesce(current_odometer_km, 1000)::numeric(18, 2) as current_odometer_km,
     end_of_month_condition_score::int as end_of_month_condition_score,
-    lifetime_rental_revenue::numeric as lifetime_rental_revenue,
-    lifetime_service_cost_usd::numeric as lifetime_service_cost_usd,
+    lifetime_rental_revenue::numeric(18, 2) as lifetime_rental_revenue,
+    lifetime_service_cost_usd::numeric(18, 2) as lifetime_service_cost_usd,
 
-    -- Bike ROI: ratio of cumulative net operating income to the bike purchase price
-    -- (Note: procurement_price in the dictionary is in THB, so we divide by the exchange rate ~35 THB/USD)
     round(
-        (lifetime_rental_revenue - lifetime_service_cost_usd)::decimal 
-        / nullif(procurement_price / 35.0, 0), 
+        (lifetime_rental_revenue - lifetime_service_cost_usd)::numeric(18, 4)
+        / nullif(procurement_price / 35.0, 0),
         4
-    )::numeric as lifetime_roi_ratio,
+    )::numeric(18, 4) as lifetime_roi_ratio,
 
-    -- Operational fleet health status
     case
         when end_of_month_condition_score >= 8 then 'Optimal (Score 8-10)'
         when end_of_month_condition_score >= 5 then 'Standard Wear (Score 5-7)'
         when end_of_month_condition_score >= 3 then 'Needs Overhaul (Score 3-4)'
         else 'Critical / Decommission Risk (Score 1-2)'
-    end::text as fleet_health_status
+    end::varchar as fleet_health_status
 
 from monthly_rollup

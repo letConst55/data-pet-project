@@ -8,12 +8,15 @@
 -- 1. Create the "Spine": Generate a grid of months for each client
 -- starting from the date of their first activity up to the current month
 with client_first_touch as (
-    select 
+    select
         c.client_natural_key,
-        least(
-            min(fbr.fact_start_date),
-            min(fso.order_date),
-            min(fr.transportation_start_date)
+        nullif(
+            least(
+                coalesce(min(fbr.fact_start_date), '9999-12-31'::date),
+                coalesce(min(fso.order_date), '9999-12-31'::date),
+                coalesce(min(fr.transportation_start_date), '9999-12-31'::date)
+            ),
+            '9999-12-31'::date
         ) as first_touch_date
     from {{ ref('dim_client') }} c
     left join {{ ref('fct_client_bike_rent') }} fbr on c.client_sk = fbr.client_sk
@@ -166,45 +169,44 @@ monthly_rollup as (
     left join repair_metrics rpm on spine.client_natural_key = rpm.client_natural_key and spine.report_month = rpm.event_month
 )
 -- 5. Final segment calculation based on cumulative (historical) data as of that point in time
-select 
+select
     mr.report_month::date as report_month,
-    mr.client_natural_key::text as client_natural_key,
+    mr.client_natural_key::varchar as client_natural_key,
     mr.drive_license_verified::boolean as drive_license_verified,
     mr.driving_experience_years::int as driving_experience_years,
-    mr.gender::text as gender,
-    mr.nationality::text as nationality,
+    mr.gender::varchar as gender,
+    mr.nationality::varchar as nationality,
     mr.rating_score::int as rating_score,
-    mr.first_rent_bike::text as first_rent_bike,
-    --mr.first_rent_bike_cc::text as first_rent_bike_cc,
-    mr.first_rent_dis_location::text as first_rent_dis_location,
-    mr.first_rental_result::text as first_rental_result,
+    mr.first_rent_bike::varchar as first_rent_bike,
+    mr.first_rent_dis_location::varchar as first_rent_dis_location,
+    mr.first_rental_result::varchar as first_rental_result,
     mr.mtd_rentals::int as mtd_rentals,
     mr.mtd_successful_rentals::int as mtd_successful_rentals,
     mr.mtd_unique_bike_models_rented::int as mtd_unique_bike_models_rented,
-    mr.mtd_rental_amount::numeric as mtd_rental_amount,
-    mr.mtd_shop_amount::numeric as mtd_shop_amount,
-    mr.mtd_repair_amount::numeric as mtd_repair_amount,
-    mr.mtd_avg_rental_mileage::numeric as mtd_avg_rental_mileage,
+    mr.mtd_rental_amount::numeric(18, 2) as mtd_rental_amount,
+    mr.mtd_shop_amount::numeric(18, 2) as mtd_shop_amount,
+    mr.mtd_repair_amount::numeric(18, 2) as mtd_repair_amount,
+    mr.mtd_avg_rental_mileage::numeric(18, 2) as mtd_avg_rental_mileage,
     mr.mtd_sum_rental_mileage::int as mtd_sum_rental_mileage,
     mr.lifetime_rentals::int as lifetime_rentals,
     mr.lifetime_successful_rentals::int as lifetime_successful_rentals,
     mr.lifetime_unique_bikes::int as lifetime_unique_bikes,
-    mr.lifetime_total_amount::numeric as lifetime_total_amount,
-    round(mr.lifetime_successful_rentals::decimal / nullif(mr.lifetime_rentals, 0), 2)::numeric as trouble_free_days_ratio,  
+    mr.lifetime_total_amount::numeric(18, 2) as lifetime_total_amount,
+    round(mr.lifetime_successful_rentals::numeric(18, 4) / nullif(mr.lifetime_rentals, 0), 2)::numeric(10, 2) as trouble_free_days_ratio,
     case
         when mr.lifetime_rentals = 0 then 'shop_only_customer'
-        when mr.lifetime_rentals = 1 then 'new_customer' 
-        when mr.lifetime_rentals > 1 and mr.lifetime_rentals <= 5 and (mr.lifetime_successful_rentals::decimal / nullif(mr.lifetime_rentals, 0)) >= 0.5 then 'loyal_customer'
-        when mr.lifetime_rentals > 5 and (mr.lifetime_successful_rentals::decimal / nullif(mr.lifetime_rentals, 0)) >= 0.5 then 'vip_customer'
+        when mr.lifetime_rentals = 1 then 'new_customer'
+        when mr.lifetime_rentals > 1 and mr.lifetime_rentals <= 5 and (mr.lifetime_successful_rentals::numeric(18, 4) / nullif(mr.lifetime_rentals, 0)) >= 0.5 then 'loyal_customer'
+        when mr.lifetime_rentals > 5 and (mr.lifetime_successful_rentals::numeric(18, 4) / nullif(mr.lifetime_rentals, 0)) >= 0.5 then 'vip_customer'
         else 'danger_customer'
-    end::text as loyalty_segment_at_month,
+    end::varchar as loyalty_segment_at_month,
     case
         when mr.lifetime_rentals = 0 then 'Shop_or_Garage_Only'
         when mr.driving_experience_years = 0 then 'Beginner'
-        when (mr.lifetime_sum_mileage::decimal / nullif(mr.lifetime_rentals, 0)) < 180 
+        when (mr.lifetime_sum_mileage::numeric(18, 4) / nullif(mr.lifetime_rentals, 0)) < 180
              and mr.driving_experience_years <= 5 then 'City_rider'
-        when (mr.driving_experience_years >= 5 or mr.lifetime_unique_bikes >= 3) 
-             and (mr.lifetime_sum_mileage::decimal / nullif(mr.lifetime_rentals, 0)) >= 350 then 'Pro_rider'
+        when (mr.driving_experience_years >= 5 or mr.lifetime_unique_bikes >= 3)
+             and (mr.lifetime_sum_mileage::numeric(18, 4) / nullif(mr.lifetime_rentals, 0)) >= 350 then 'Pro_rider'
         else 'Traveller_rider'
-    end::text as rider_profile_segment_at_month
+    end::varchar as rider_profile_segment_at_month
 from monthly_rollup mr
