@@ -38,6 +38,9 @@ The project documentation is structured strictly in accordance with the Kimball 
 * **[06. Deployment & Operations](https://github.com/letConst55/data-pet-project/tree/main/docs/06_Deployment_and_Operations)**
   Orchestration of ELT processes via Apache Airflow and Bash automation scripts for infrastructure lifecycle management (start/stop pipeline).
 
+* **[07. Snowflake migration](https://github.com/letConst55/data-pet-project/blob/snowflake_version/docs/07_SnowFlake_Migration/cloud_migration_to_snowflake.md)**
+  This document details the Multi-Warehouse evolution of the Top Bikes Bangkok data platform. We consider in detail all steps of migration to Snowflake Cloud Platform.
+
 
 ### *Service Access*
 
